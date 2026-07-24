@@ -44,7 +44,7 @@ export default function DeleteConfirmDialog({
           <Box
             sx={{
               p: 1,
-              borderRadius: '12px',
+              borderRadius: '14px',
               backgroundColor: 'rgba(239, 68, 68, 0.1)',
               display: 'flex',
               flexShrink: 0,

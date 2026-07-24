@@ -105,7 +105,7 @@ export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: leafletStylesHref },
 ];
 import { useTranslation } from 'react-i18next';
-import { listTokens, makeListTheme, getStoredMode, storeMode, type ListMode } from '~/listTheme';
+import { listTokens, makeListTheme, getStoredMode, storeMode, roundedFont, type ListMode } from '~/listTheme';
 
 /**
  * Turn whatever was thrown into a human-readable message. Supabase/PostgREST
@@ -969,9 +969,9 @@ export default function Dashboard() {
   const segBtnStyle = {
     border: 'none',
     cursor: 'pointer',
-    fontFamily: "'DM Sans',sans-serif",
+    fontFamily: roundedFont,
     fontSize: '13.5px',
-    fontWeight: 500,
+    fontWeight: 600,
     padding: '7px 18px',
     borderRadius: '999px',
   } as const;
@@ -979,9 +979,9 @@ export default function Dashboard() {
   const filterBtnStyle = {
     border: `1px solid ${t.pillBorder}`,
     cursor: 'pointer',
-    fontFamily: "'DM Sans',sans-serif",
+    fontFamily: roundedFont,
     fontSize: '13px',
-    fontWeight: 500,
+    fontWeight: 600,
     padding: '7px 15px',
     borderRadius: '999px',
   } as const;
@@ -1170,8 +1170,8 @@ export default function Dashboard() {
                     cursor: 'pointer',
                     background: t.accent,
                     color: t.accentText,
-                    fontFamily: "'DM Sans',sans-serif",
-                    fontWeight: 600,
+                    fontFamily: roundedFont,
+                    fontWeight: 700,
                     fontSize: '13.5px',
                     padding: '8px 16px',
                     borderRadius: '999px',
@@ -1431,8 +1431,8 @@ export default function Dashboard() {
                     cursor: 'pointer',
                     background: t.accent,
                     color: t.accentText,
-                    fontFamily: "'DM Sans',sans-serif",
-                    fontWeight: 600,
+                    fontFamily: roundedFont,
+                    fontWeight: 700,
                     fontSize: '14px',
                     padding: '10px 20px',
                     borderRadius: '999px',
@@ -1474,7 +1474,7 @@ export default function Dashboard() {
               {/* LIST */}
               {view === 'list' && (
                 <Box sx={{ padding: { xs: '16px 0 96px', sm: '24px 0 40px' } }}>
-                  <Box sx={{ border: `1px solid ${t.border}`, borderRadius: '14px', overflow: 'hidden' }}>
+                  <Box sx={{ border: `1px solid ${t.border}`, borderRadius: '16px', overflow: 'hidden' }}>
                     {sorted.map((r) => (
                       <Box
                         key={r.id}
@@ -1494,7 +1494,7 @@ export default function Dashboard() {
                           '&:last-of-type': { borderBottom: 'none' },
                         }}
                       >
-                        <Box sx={{ width: 46, height: 46, borderRadius: '11px', flex: 'none' }}>
+                        <Box sx={{ width: 46, height: 46, borderRadius: '14px', flex: 'none' }}>
                           <RestaurantThumb
                             image={r.image}
                             alt={r.name}
@@ -1502,7 +1502,7 @@ export default function Dashboard() {
                             serifFont={serif}
                             tokens={t}
                             initialFontSize={24}
-                            sx={{ width: '100%', height: '100%', borderRadius: '11px' }}
+                            sx={{ width: '100%', height: '100%', borderRadius: '14px' }}
                           />
                         </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -1679,7 +1679,7 @@ export default function Dashboard() {
                         onMouseLeave={() => setHoveredId((cur) => (cur === syncKey ? null : cur))}
                         sx={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderBottom: `1px solid ${t.borderSoft}`, cursor: 'pointer', background: hoveredId === syncKey ? t.searchBg : 'transparent', transition: 'background .12s', '&:hover': { filter: 'brightness(0.98)' } }}
                       >
-                        <Box sx={{ width: 34, height: 34, borderRadius: '9px', flex: 'none' }}>
+                        <Box sx={{ width: 34, height: 34, borderRadius: '12px', flex: 'none' }}>
                           <RestaurantThumb
                             image={r.image}
                             alt={r.name}
@@ -1687,7 +1687,7 @@ export default function Dashboard() {
                             serifFont={serif}
                             tokens={t}
                             initialFontSize={18}
-                            sx={{ width: '100%', height: '100%', borderRadius: '9px' }}
+                            sx={{ width: '100%', height: '100%', borderRadius: '12px' }}
                           />
                         </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -1901,7 +1901,7 @@ export default function Dashboard() {
               width: '100%',
               background: t.snackBg,
               color: t.snackFg,
-              borderRadius: '12px',
+              borderRadius: '16px',
               '& .MuiAlert-icon': { color: t.snackFg },
               '& .MuiAlert-action': { color: t.snackFg, alignItems: 'center', pt: 0 },
             }}

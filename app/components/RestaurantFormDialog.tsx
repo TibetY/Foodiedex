@@ -323,7 +323,7 @@ export default function RestaurantFormDialog({
 
   /** Same glow, on a plain container (image preview, place-types group). */
   const glowBoxSx = (key: string) => ({
-    borderRadius: '12px',
+    borderRadius: '16px',
     transition: 'box-shadow .5s ease',
     boxShadow: highlighted.has(key)
       ? `0 0 0 3px ${alpha(theme.palette.primary.main, 0.3)}`
@@ -1208,7 +1208,7 @@ export default function RestaurantFormDialog({
               sx={{
                 border: '1px solid',
                 borderColor: 'divider',
-                borderRadius: '12px',
+                borderRadius: '16px',
                 p: 2,
               }}
             >
