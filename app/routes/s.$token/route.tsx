@@ -22,6 +22,7 @@ import {
   storeMode,
   roundedFont,
   type ListMode,
+  modeFromCookieHeader,
 } from '~/listTheme';
 import type { RestaurantMapProps } from '~/components/RestaurantMap';
 
@@ -36,6 +37,8 @@ export const links: LinksFunction = () => [
 ];
 
 type LoaderData = {
+  /** Theme the request carries, so SSR paints the user's mode. */
+  initialMode: ListMode;
   token: string;
   signedIn: boolean;
   shared: SharedList | null;
@@ -48,7 +51,15 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     data: { user },
   } = await supabase.auth.getUser();
   const shared = await getSharedList(supabase, token);
-  return json<LoaderData>({ token, signedIn: !!user, shared }, { headers });
+  return json<LoaderData>(
+    {
+      token,
+      signedIn: !!user,
+      shared,
+      initialMode: modeFromCookieHeader(request.headers.get('Cookie')),
+    },
+    { headers }
+  );
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -86,13 +97,21 @@ type SortMode = 'recent' | 'rating' | 'name' | 'price';
 const SORT_MODES: SortMode[] = ['recent', 'rating', 'name', 'price'];
 
 export default function SharedListPage() {
-  const { token, signedIn, shared } = useLoaderData<LoaderData>();
+  const { token, signedIn, shared, initialMode } = useLoaderData<LoaderData>();
   const { t: tr } = useTranslation();
 
-  const [mode, setMode] = useState<ListMode>('light');
+  const [mode, setMode] = useState<ListMode>(initialMode);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  useEffect(() => setMode(getStoredMode()), []);
+  // Reconcile with localStorage for visitors who chose a theme before the
+  // cookie existed; storeMode then persists it so later loads never flip.
+  useEffect(() => {
+    const stored = getStoredMode();
+    if (stored !== initialMode) {
+      setMode(stored);
+      storeMode(stored);
+    }
+  }, [initialMode]);
   const changeMode = (m: ListMode) => {
     setMode(m);
     storeMode(m);
