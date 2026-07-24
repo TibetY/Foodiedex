@@ -7,10 +7,18 @@
 import { RemixBrowser } from "@remix-run/react";
 import { startTransition, StrictMode } from "react";
 import { hydrateRoot } from "react-dom/client";
+import { CacheProvider } from "@emotion/react";
 import i18next from "i18next";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
+import createEmotionCache from "~/createEmotionCache";
 import { i18nConfig } from "~/i18n";
+
+// One cache for the life of the page. It lives here rather than in root.tsx so
+// it is created only in the browser — the server render gets its own
+// request-scoped cache from entry.server, which is what the critical-CSS
+// extraction reads.
+const emotionCache = createEmotionCache();
 
 async function hydrate() {
   await i18next
@@ -29,9 +37,11 @@ async function hydrate() {
     hydrateRoot(
       document,
       <StrictMode>
-        <I18nextProvider i18n={i18next}>
-          <RemixBrowser />
-        </I18nextProvider>
+        <CacheProvider value={emotionCache}>
+          <I18nextProvider i18n={i18next}>
+            <RemixBrowser />
+          </I18nextProvider>
+        </CacheProvider>
       </StrictMode>
     );
   });
