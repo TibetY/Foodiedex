@@ -81,8 +81,8 @@ export default function ResetPasswordPage() {
           p: { xs: 3, sm: 5 },
           borderRadius: "24px",
           background: "#FFFFFF",
-          border: "1px solid #EAE0CF",
-          boxShadow: "0 22px 46px -28px rgba(35,25,16,.4)",
+          border: "1px solid #E6E1D4",
+          boxShadow: "0 22px 46px -28px rgba(28,26,20,.4)",
         }}
         className="animate-fade-in-up"
       >

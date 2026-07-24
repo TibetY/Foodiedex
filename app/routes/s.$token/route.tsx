@@ -162,7 +162,7 @@ export default function SharedListPage() {
     cursor: 'pointer',
     fontFamily: roundedFont,
     fontSize: '13.5px',
-    fontWeight: 600,
+    fontWeight: 500,
     padding: '7px 18px',
     borderRadius: '999px',
   });
@@ -173,7 +173,7 @@ export default function SharedListPage() {
     cursor: 'pointer',
     fontFamily: roundedFont,
     fontSize: '13px',
-    fontWeight: 600,
+    fontWeight: 500,
     padding: '7px 15px',
     borderRadius: '999px',
   });
@@ -331,7 +331,7 @@ export default function SharedListPage() {
               aria-label={tr('dashboard.sort_recent')}
               sx={{
                 background: 'transparent', border: `1px solid ${t.pillBorder}`, borderRadius: '999px',
-                padding: '7px 14px', color: t.chip, fontFamily: roundedFont, fontWeight: 600, fontSize: '13px', cursor: 'pointer',
+                padding: '7px 14px', color: t.chip, fontFamily: roundedFont, fontWeight: 500, fontSize: '13px', cursor: 'pointer',
               }}
             >
               {SORT_MODES.map((m) => (

@@ -75,7 +75,7 @@ export default function FilterSheet(props: FilterSheetProps) {
     padding: '6px 13px',
     fontSize: '13px',
     fontFamily: roundedFont,
-    fontWeight: 600,
+    fontWeight: 500,
     cursor: 'pointer',
     lineHeight: 1.4,
     transition: 'transform .12s ease',
@@ -238,7 +238,7 @@ export default function FilterSheet(props: FilterSheetProps) {
           borderRadius: '999px',
           padding: '7px 15px',
           fontSize: '13px',
-          fontWeight: 600,
+          fontWeight: 500,
           fontFamily: roundedFont,
           cursor: 'pointer',
         }}

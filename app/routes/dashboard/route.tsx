@@ -25,6 +25,7 @@ import {
   DialogActions,
   Button,
   TextField,
+  Divider,
 } from '@mui/material';
 import {
   Add,
@@ -38,6 +39,9 @@ import {
   Close,
   Search,
   Insights,
+  DarkMode,
+  LightMode,
+  Translate,
 } from '@mui/icons-material';
 import { createSupabaseServerClient } from '~/supabase.server';
 import { getRestaurants } from '~/services/restaurants.server';
@@ -962,17 +966,13 @@ export default function Dashboard() {
     background: filter === val ? t.pBg : 'transparent',
     color: filter === val ? t.pFg : t.pIdle,
   });
-  const themeBtn = (m: ListMode) => ({
-    background: mode === m ? t.accent : 'transparent',
-    color: mode === m ? t.accentText : t.faint,
-  });
 
   const segBtnStyle = {
     border: 'none',
     cursor: 'pointer',
     fontFamily: roundedFont,
     fontSize: '13.5px',
-    fontWeight: 600,
+    fontWeight: 500,
     padding: '7px 18px',
     borderRadius: '999px',
   } as const;
@@ -982,7 +982,7 @@ export default function Dashboard() {
     cursor: 'pointer',
     fontFamily: roundedFont,
     fontSize: '13px',
-    fontWeight: 600,
+    fontWeight: 500,
     padding: '7px 15px',
     borderRadius: '999px',
   } as const;
@@ -1145,17 +1145,6 @@ export default function Dashboard() {
               )}
             </Box>
 
-            {/* language toggle */}
-            <LanguageSwitcher />
-
-            {/* theme toggle */}
-            <Box sx={{ display: 'flex', background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px', padding: '3px' }}>
-              <Box component="button" onClick={() => changeMode('light')} title={tr('dashboard.themeLight')} aria-label={tr('dashboard.themeLight')}
-                sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, ...themeBtn('light') }}>☀</Box>
-              <Box component="button" onClick={() => changeMode('dark')} title={tr('dashboard.themeDark')} aria-label={tr('dashboard.themeDark')}
-                sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, ...themeBtn('dark') }}>☾</Box>
-            </Box>
-
             {/* add */}
             {canEdit && (
               <Tooltip title={tr('dashboard.addPlace')}>
@@ -1182,13 +1171,6 @@ export default function Dashboard() {
                 </Box>
               </Tooltip>
             )}
-
-            {/* share — hidden on phones (the account menu carries it) */}
-            <Tooltip title={tr('dashboard.shareMembers')}>
-              <IconButton onClick={() => setShareOpen(true)} aria-label={tr('dashboard.shareMembersLabel')} sx={{ color: t.muted, display: { xs: 'none', sm: 'inline-flex' } }}>
-                <PersonAddAlt1 />
-              </IconButton>
-            </Tooltip>
 
             {/* avatar stack → account menu */}
             <Box
@@ -1230,6 +1212,25 @@ export default function Dashboard() {
                 <ListItemIcon><PersonAddAlt1 fontSize="small" sx={{ color: t.muted }} /></ListItemIcon>
                 <ListItemText>{tr('dashboard.shareMembers')}</ListItemText>
               </MenuItem>
+              <Divider sx={{ my: 0.5 }} />
+              {/* Appearance + language live here rather than in the toolbar —
+                  they're set-once preferences, not per-session actions. */}
+              <MenuItem onClick={() => changeMode(mode === 'light' ? 'dark' : 'light')}>
+                <ListItemIcon>
+                  {mode === 'light'
+                    ? <DarkMode fontSize="small" sx={{ color: t.muted }} />
+                    : <LightMode fontSize="small" sx={{ color: t.muted }} />}
+                </ListItemIcon>
+                <ListItemText>
+                  {tr(mode === 'light' ? 'dashboard.themeDark' : 'dashboard.themeLight')}
+                </ListItemText>
+              </MenuItem>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1 }}>
+                <Translate fontSize="small" sx={{ color: t.muted }} />
+                <Box sx={{ flex: 1, fontSize: 14 }}>{tr('language.label')}</Box>
+                <LanguageSwitcher />
+              </Box>
+              <Divider sx={{ my: 0.5 }} />
               <MenuItem onClick={() => { setMenuAnchor(null); handleLogout(); }}>
                 <ListItemIcon><Logout fontSize="small" sx={{ color: t.muted }} /></ListItemIcon>
                 <ListItemText>{tr('dashboard.signOut')}</ListItemText>

@@ -108,11 +108,11 @@ const theme = createTheme({
           backgroundColor: l.pageBg,
           color: l.ink,
           scrollbarWidth: 'thin',
-          scrollbarColor: 'rgba(43,36,32,0.18) transparent',
+          scrollbarColor: 'rgba(31,30,26,0.18) transparent',
         },
         '*:focus-visible': {
           // Terracotta reads on both the cream chrome and the Supper app mode.
-          outline: '2px solid #B5532F',
+          outline: '2px solid #A8442A',
           outlineOffset: '2px',
         },
       },
@@ -133,7 +133,7 @@ const theme = createTheme({
           boxShadow: 'none',
           '&:hover': {
             backgroundColor: l.accentHover,
-            boxShadow: '0 10px 24px -12px rgba(181,83,47,.5)',
+            boxShadow: '0 10px 24px -12px rgba(168,68,42,.5)',
           },
         },
         outlined: {
@@ -141,12 +141,12 @@ const theme = createTheme({
           color: l.ink,
           '&:hover': {
             borderColor: l.accent,
-            backgroundColor: 'rgba(181,83,47,0.06)',
+            backgroundColor: 'rgba(168,68,42,0.06)',
           },
         },
         text: {
           color: l.ink,
-          '&:hover': { backgroundColor: 'rgba(43,36,32,0.05)' },
+          '&:hover': { backgroundColor: 'rgba(31,30,26,0.05)' },
         },
       },
     },
@@ -193,13 +193,13 @@ const theme = createTheme({
     },
     MuiChip: {
       styleOverrides: {
-        root: { borderRadius: 999, fontFamily: roundedFont, fontWeight: 600 },
+        root: { borderRadius: 999, fontFamily: roundedFont, fontWeight: 500 },
       },
     },
     MuiAppBar: {
       styleOverrides: {
         root: {
-          background: 'rgba(246,240,228,0.82)',
+          background: 'rgba(244,241,232,0.82)',
           backdropFilter: 'blur(14px)',
           borderBottom: `1px solid ${l.border}`,
           boxShadow: 'none',

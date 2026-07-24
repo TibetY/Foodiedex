@@ -202,12 +202,12 @@ export default function RestaurantDetailDialog({
                 onClick={() => onToggleFavorite(r)}
                 aria-label={tr(r.favorite ? 'dashboard.unfavorite' : 'dashboard.favorite', { name: r.name })}
                 aria-pressed={r.favorite ?? false}
-                sx={{ color: r.favorite ? '#C0492B' : t.muted }}
+                sx={{ color: r.favorite ? '#A5382C' : t.muted }}
               >
                 {r.favorite ? <Favorite /> : <FavoriteBorder />}
               </IconButton>
             ) : r.favorite ? (
-              <Favorite role="img" aria-label={tr('dashboard.favorited')} sx={{ color: '#C0492B' }} />
+              <Favorite role="img" aria-label={tr('dashboard.favorited')} sx={{ color: '#A5382C' }} />
             ) : null}
           </Box>
         </Box>
@@ -217,7 +217,7 @@ export default function RestaurantDetailDialog({
           {rating > 0 ? (
             <Stars value={r.rating ?? 0} tokens={t} size={17} />
           ) : (
-            <Box component="span" sx={{ color: t.notRated, fontSize: 13, fontStyle: 'italic' }}>
+            <Box component="span" sx={{ color: t.faint, fontSize: 13, fontStyle: 'italic' }}>
               {tr('detail.notRated')}
             </Box>
           )}
