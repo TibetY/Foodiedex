@@ -20,6 +20,7 @@ import {
   storeMode,
   type ListMode,
 } from '~/listTheme';
+import { cuisineEmoji } from '~/utils/cuisineEmoji';
 import LanguageSwitcher from '~/components/LanguageSwitcher';
 import type { RestaurantMapProps } from '~/components/RestaurantMap';
 
@@ -166,6 +167,7 @@ export default function StatsPage() {
 
           {stats.total === 0 ? (
             <Box sx={{ mt: 4, py: { xs: 6, md: 10 }, textAlign: 'center', border: `1px solid ${t.border}`, borderRadius: '16px', background: t.cardBg }}>
+              <Box aria-hidden sx={{ fontSize: 44, lineHeight: 1, mb: 1.5 }}>📊</Box>
               <Box sx={{ fontFamily: serif, fontSize: 30, mb: 1 }}>{tr('stats.emptyTitle')}</Box>
               <Box sx={{ color: t.muted, fontSize: 15, mb: 3 }}>{tr('stats.emptyBody')}</Box>
               <Button component={Link} to={backHref} variant="contained">{tr('stats.back')}</Button>
@@ -191,17 +193,17 @@ export default function StatsPage() {
 
               {/* stat tiles */}
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,1fr)', sm: 'repeat(3,1fr)', md: 'repeat(5,1fr)' }, gap: '12px', mt: 4 }}>
-                <StatTile tokens={t} serif={serif} value={stats.beenCount} label={tr('stats.been')} />
-                <StatTile tokens={t} serif={serif} value={stats.wantCount} label={tr('stats.want')} />
-                <StatTile tokens={t} serif={serif} value={stats.favoriteCount} label={tr('stats.favorites')} />
-                <StatTile tokens={t} serif={serif} value={stats.averageRating ?? '—'} label={tr('stats.avgRating')} />
-                <StatTile tokens={t} serif={serif} value={stats.totalMichelinStars} label={tr('stats.michelin')} />
+                <StatTile tokens={t} serif={serif} value={stats.beenCount} label={tr('stats.been')} emoji="👟" />
+                <StatTile tokens={t} serif={serif} value={stats.wantCount} label={tr('stats.want')} emoji="💭" />
+                <StatTile tokens={t} serif={serif} value={stats.favoriteCount} label={tr('stats.favorites')} emoji="❤️" />
+                <StatTile tokens={t} serif={serif} value={stats.averageRating ?? '—'} label={tr('stats.avgRating')} emoji="⭐" />
+                <StatTile tokens={t} serif={serif} value={stats.totalMichelinStars} label={tr('stats.michelin')} emoji="🏅" />
               </Box>
 
               {/* breakdowns */}
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: { xs: 3, md: 4 }, mt: 5 }}>
-                <BarSection tokens={t} serif={serif} title={tr('stats.topCuisines')} rows={stats.cuisines.slice(0, 6)} />
-                <BarSection tokens={t} serif={serif} title={tr('stats.cities')} rows={stats.cities.slice(0, 6)} emptyLabel={tr('stats.noCities')} />
+                <BarSection tokens={t} serif={serif} title={tr('stats.topCuisines')} rows={stats.cuisines.slice(0, 6)} glyph={cuisineEmoji} />
+                <BarSection tokens={t} serif={serif} title={tr('stats.cities')} rows={stats.cities.slice(0, 6)} emptyLabel={tr('stats.noCities')} glyph={() => '📍'} />
                 <BarSection tokens={t} serif={serif} title={tr('stats.priceRange')} rows={stats.priceTiers} mono />
                 <MostVisited tokens={t} serif={serif} title={tr('stats.mostVisited')} rows={stats.topVisited} visitsLabel={(n) => tr('dashboard.visitsCount', { count: n })} emptyLabel={tr('stats.noVisits')} />
               </Box>
@@ -247,9 +249,10 @@ function SectionTitle({ children, tokens: t }: { children: React.ReactNode; toke
   );
 }
 
-function StatTile({ tokens: t, serif, value, label }: { tokens: Tokens; serif: string; value: number | string; label: string }) {
+function StatTile({ tokens: t, serif, value, label, emoji }: { tokens: Tokens; serif: string; value: number | string; label: string; emoji: string }) {
   return (
     <Box sx={{ padding: '16px 18px', borderRadius: '16px', border: `1px solid ${t.border}`, background: t.cardBg }}>
+      <Box aria-hidden sx={{ fontSize: 20, lineHeight: 1, mb: '8px' }}>{emoji}</Box>
       <Box sx={{ fontFamily: serif, fontSize: 34, lineHeight: 1, color: t.ink }}>{value}</Box>
       <Box sx={{ color: t.muted, fontSize: 12.5, mt: '6px' }}>{label}</Box>
     </Box>
@@ -263,6 +266,7 @@ function BarSection({
   rows,
   mono,
   emptyLabel,
+  glyph,
 }: {
   tokens: Tokens;
   serif: string;
@@ -270,6 +274,8 @@ function BarSection({
   rows: LabelCount[];
   mono?: boolean;
   emptyLabel?: string;
+  /** Optional food/place glyph rendered before each row label. */
+  glyph?: (label: string) => string;
 }) {
   const max = rows[0]?.count ?? 1;
   return (
@@ -282,6 +288,9 @@ function BarSection({
           rows.map((r) => (
             <Box key={r.label} sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <Box sx={{ width: 120, flex: 'none', fontFamily: mono ? "'DM Mono',monospace" : serif, fontSize: mono ? 14 : 16, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {glyph && (
+                  <Box component="span" aria-hidden sx={{ mr: '6px' }}>{glyph(r.label)}</Box>
+                )}
                 {r.label}
               </Box>
               <Box sx={{ flex: 1, height: 10, borderRadius: '999px', background: t.skeleton, overflow: 'hidden' }}>
@@ -320,7 +329,9 @@ function MostVisited({
         ) : (
           rows.map((r, i) => (
             <Box key={`${r.name}-${i}`} sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Box sx={{ fontFamily: serif, fontSize: 18, color: t.accent, width: 22, flex: 'none' }}>{i + 1}</Box>
+              <Box aria-hidden sx={{ fontFamily: serif, fontSize: i < 3 ? 17 : 18, color: t.accent, width: 22, flex: 'none' }}>
+                {['🥇', '🥈', '🥉'][i] ?? i + 1}
+              </Box>
               <Box sx={{ flex: 1, fontFamily: serif, fontSize: 16, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</Box>
               <Box sx={{ color: t.muted, fontSize: 12.5, flex: 'none' }}>{visitsLabel(r.visitCount)}</Box>
             </Box>

@@ -162,7 +162,7 @@ export default function SharedListPage() {
     cursor: 'pointer',
     fontFamily: roundedFont,
     fontSize: '13.5px',
-    fontWeight: 600,
+    fontWeight: 500,
     padding: '7px 18px',
     borderRadius: '999px',
   });
@@ -173,7 +173,7 @@ export default function SharedListPage() {
     cursor: 'pointer',
     fontFamily: roundedFont,
     fontSize: '13px',
-    fontWeight: 600,
+    fontWeight: 500,
     padding: '7px 15px',
     borderRadius: '999px',
   });
@@ -198,6 +198,7 @@ export default function SharedListPage() {
             fontFamily: "'DM Sans',sans-serif",
           }}
         >
+          <Box aria-hidden sx={{ fontSize: 52, lineHeight: 1 }}>🍽️</Box>
           <Box sx={{ fontFamily: serif, fontSize: 34 }}>{tr('shared.unavailableTitle')}</Box>
           <Box sx={{ color: t.muted, maxWidth: 420 }}>{tr('shared.unavailableBody')}</Box>
           <Button component={Link} to="/" variant="contained" sx={{ mt: 1 }}>
@@ -330,7 +331,7 @@ export default function SharedListPage() {
               aria-label={tr('dashboard.sort_recent')}
               sx={{
                 background: 'transparent', border: `1px solid ${t.pillBorder}`, borderRadius: '999px',
-                padding: '7px 14px', color: t.chip, fontFamily: roundedFont, fontWeight: 600, fontSize: '13px', cursor: 'pointer',
+                padding: '7px 14px', color: t.chip, fontFamily: roundedFont, fontWeight: 500, fontSize: '13px', cursor: 'pointer',
               }}
             >
               {SORT_MODES.map((m) => (
@@ -347,6 +348,7 @@ export default function SharedListPage() {
           {/* content */}
           {sorted.length === 0 ? (
             <Box sx={{ mt: '24px', mb: '40px', textAlign: 'center', py: { xs: 6, md: 10 }, px: 3, borderRadius: '16px', border: `1px solid ${t.border}`, background: t.cardBg }}>
+              <Box aria-hidden sx={{ fontSize: 44, lineHeight: 1, mb: 1.5 }}>🔍</Box>
               <Box sx={{ fontFamily: serif, fontSize: 30, mb: 1 }}>{tr('dashboard.noMatchesTitle')}</Box>
               <Box sx={{ color: t.muted, fontSize: 15 }}>{tr('dashboard.emptyTryFilter')}</Box>
             </Box>
@@ -364,7 +366,7 @@ export default function SharedListPage() {
                   <Box key={r.id} role="button" tabIndex={0} aria-label={r.name} onClick={() => openDetail(r)} onKeyDown={activateOnKey(() => openDetail(r))}
                     sx={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderBottom: `1px solid ${t.borderSoft}`, cursor: 'pointer', '&:hover': { filter: 'brightness(0.98)' } }}>
                     <Box sx={{ width: 34, height: 34, borderRadius: '12px', flex: 'none' }}>
-                      <RestaurantThumb image={r.image} alt={r.name} initial={r.initial} serifFont={serif} tokens={t} initialFontSize={18} sx={{ width: '100%', height: '100%', borderRadius: '12px' }} />
+                      <RestaurantThumb image={r.image} alt={r.name} initial={r.initial} serifFont={serif} tokens={t} initialFontSize={18} cuisine={r.cuisine} sx={{ width: '100%', height: '100%', borderRadius: '12px' }} />
                     </Box>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box sx={{ fontSize: 14, fontWeight: 500 }}>{r.name}</Box>
@@ -382,7 +384,7 @@ export default function SharedListPage() {
                   <Box key={r.id} onClick={() => openDetail(r)}
                     sx={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '13px 18px', borderBottom: `1px solid ${t.borderSoft}`, background: t.cardBg, cursor: 'pointer', '&:hover': { filter: 'brightness(0.98)' }, '&:last-of-type': { borderBottom: 'none' } }}>
                     <Box sx={{ width: 46, height: 46, borderRadius: '14px', flex: 'none' }}>
-                      <RestaurantThumb image={r.image} alt={r.name} initial={r.initial} serifFont={serif} tokens={t} initialFontSize={24} sx={{ width: '100%', height: '100%', borderRadius: '14px' }} />
+                      <RestaurantThumb image={r.image} alt={r.name} initial={r.initial} serifFont={serif} tokens={t} initialFontSize={24} cuisine={r.cuisine} sx={{ width: '100%', height: '100%', borderRadius: '14px' }} />
                     </Box>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box component="button" type="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); openDetail(r); }}

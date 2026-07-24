@@ -248,6 +248,7 @@ export default function PlaceSearch({
                     serifFont={serifFont}
                     tokens={t}
                     initialFontSize={20}
+                    cuisine={c.cuisineType ?? undefined}
                     sx={{ width: '100%', height: '100%', borderRadius: '12px' }}
                   />
                 </Box>

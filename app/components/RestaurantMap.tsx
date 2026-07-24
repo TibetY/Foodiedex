@@ -40,8 +40,8 @@ function starsHtml(value: number): string {
   const base = 'display:block;letter-spacing:1px;line-height:1;white-space:nowrap;font-size:13px';
   return (
     `<span style="position:relative;display:inline-block;vertical-align:middle">` +
-    `<span style="${base};color:rgba(43,36,32,.25)">★★★★★</span>` +
-    `<span style="${base};position:absolute;left:0;top:0;width:${pct}%;overflow:hidden;color:#B5532F">★★★★★</span>` +
+    `<span style="${base};color:rgba(31,30,26,.25)">★★★★★</span>` +
+    `<span style="${base};position:absolute;left:0;top:0;width:${pct}%;overflow:hidden;color:#A8442A">★★★★★</span>` +
     `</span>`
   );
 }

@@ -28,7 +28,7 @@ interface OnboardingProps {
 interface StarterPack {
   id: string;
   labelKey: string;
-  /** The pack's food glyph — emoji's one job in this UI is cuisine/pack tiles. */
+  /** The pack's food glyph, shown on a tile tint like every other glyph. */
   glyph: string;
   places: PlaceSeed[];
 }
@@ -130,6 +130,7 @@ export default function Onboarding({
       className="animate-fade-in-up"
       sx={{ maxWidth: 680, mx: 'auto', mt: { xs: 3, md: 6 }, mb: 6, px: 1, textAlign: 'center' }}
     >
+      <Box aria-hidden className="animate-bob" sx={{ fontSize: 46, lineHeight: 1, mb: 1.5 }}>🍱</Box>
       <Box component="h2" sx={{ fontFamily: serifFont, fontWeight: 400, fontSize: { xs: 30, md: 40 }, color: t.ink, m: 0, lineHeight: 1.1 }}>
         {tr('onboarding.title')}
       </Box>

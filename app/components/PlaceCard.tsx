@@ -11,6 +11,7 @@ import type { Restaurant, RestaurantLocation } from '~/types/restaurant';
 import type { DecoratedRestaurant } from '~/utils/decorateRestaurant';
 import { roundedFont, type listTokens } from '~/listTheme';
 import RestaurantThumb from '~/components/RestaurantThumb';
+import { cuisineEmoji } from '~/utils/cuisineEmoji';
 import Stars from '~/components/Stars';
 
 type Tokens = (typeof listTokens)['light'];
@@ -109,6 +110,7 @@ export default function PlaceCard({
           initial={r.initial}
           serifFont={serifFont}
           tokens={t}
+          cuisine={r.cuisine}
           sx={{ height: '100%' }}
         />
         <Box
@@ -157,7 +159,7 @@ export default function PlaceCard({
               bottom: 10,
               right: 10,
               background: 'rgba(255,255,255,.9)',
-              color: '#2B2420',
+              color: '#1F1E1A',
               fontFamily: "'DM Mono',monospace",
               fontSize: '11.5px',
               fontWeight: 600,
@@ -235,6 +237,7 @@ export default function PlaceCard({
 
         {/* meta row */}
         <Box sx={{ height: { xs: 16, sm: 18 }, mt: '3px', color: t.muted, fontSize: { xs: 12, sm: 13 }, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <Box component="span" aria-hidden sx={{ mr: '4px' }}>{cuisineEmoji(r.cuisine)}</Box>
           {metaParts.join(' · ')}
         </Box>
 
@@ -261,7 +264,7 @@ export default function PlaceCard({
           {r.rated ? (
             <Stars value={r.rating ?? 0} tokens={t} size={15} />
           ) : (
-            <Box component="span" sx={{ color: t.notRated, fontSize: 13, fontStyle: 'italic' }}>
+            <Box component="span" sx={{ color: t.faint, fontSize: 13, fontStyle: 'italic' }}>
               {tr('dashboard.notRated')}
             </Box>
           )}
@@ -353,10 +356,10 @@ export function CardAction({
         height: 28,
         background: solid ? tokens.searchBg : 'rgba(255,255,255,0.9)',
         border: `1px solid ${tokens.border}`,
-        color: danger ? '#C0492B' : tokens.chip,
+        color: danger ? '#A5382C' : tokens.chip,
         '&:hover': {
           background: solid ? tokens.pillBorder : '#fff',
-          color: danger ? '#C0492B' : tokens.accent,
+          color: danger ? '#A5382C' : tokens.accent,
         },
       }}
     >

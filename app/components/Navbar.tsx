@@ -50,9 +50,9 @@ export default function Navbar() {
       component="nav"
       aria-label={t("nav.main")}
       sx={{
-        background: "rgba(246, 240, 228, 0.82)",
+        background: "rgba(244, 241, 232, 0.82)",
         backdropFilter: "blur(14px)",
-        borderBottom: "1px solid #EAE0CF",
+        borderBottom: "1px solid #E6E1D4",
       }}
     >
       <Toolbar
@@ -86,8 +86,8 @@ export default function Navbar() {
               PaperProps={{
                 sx: {
                   width: 280,
-                  background: "#FBF7F0",
-                  borderLeft: "1px solid #EAE0CF",
+                  background: "#FAF8F2",
+                  borderLeft: "1px solid #E6E1D4",
                 },
               }}
             >
@@ -111,7 +111,7 @@ export default function Navbar() {
                         px: 3,
                         py: 1.5,
                         "&:hover": {
-                          backgroundColor: "rgba(181, 83, 47, 0.08)",
+                          backgroundColor: "rgba(168, 68, 42, 0.08)",
                         },
                       }}
                     >
@@ -153,7 +153,7 @@ export default function Navbar() {
                     fontWeight: 600,
                     "&:hover": {
                       color: "text.primary",
-                      backgroundColor: "rgba(43,36,32,0.05)",
+                      backgroundColor: "rgba(31,30,26,0.05)",
                     },
                   }}
                 >

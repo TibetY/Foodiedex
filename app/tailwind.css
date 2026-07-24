@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 /* Base surface follows the brand tokens injected by brandCssVars() (root.tsx),
-   so the page ground is always the live theme — washi cream on the public
-   pages, Supper green when the app subtree flips data-theme="dark". */
+   so the page ground is always the live theme — washi paper on the public
+   pages, sumi night when the app subtree flips data-theme="dark". */
 html,
 body {
-  background-color: var(--bg, #F6F0E4);
-  color: var(--ink, #2B2420);
+  background-color: var(--bg, #F4F1E8);
+  color: var(--ink, #1F1E1A);
   color-scheme: light;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -27,7 +27,7 @@ body {
   left: 16px;
   z-index: 9999;
   padding: 12px 24px;
-  background: var(--accent, #B5532F);
+  background: var(--accent, #A8442A);
   color: var(--accent-text, #fff);
   border-radius: 0 0 16px 16px;
   font-weight: 600;
@@ -117,26 +117,26 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(43, 36, 32, 0.16);
+  background: rgba(31, 30, 26, 0.16);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(43, 36, 32, 0.28);
+  background: rgba(31, 30, 26, 0.28);
 }
 
 [data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: rgba(239, 228, 210, 0.14);
+  background: rgba(237, 231, 218, 0.14);
 }
 
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(239, 228, 210, 0.24);
+  background: rgba(237, 231, 218, 0.24);
 }
 
 /* Focus visible styles for WCAG. Uses the live brand accent (injected by
    brandCssVars) so it follows the theme, not the legacy template orange. */
 *:focus-visible {
-  outline: 2px solid var(--accent, #B5532F);
+  outline: 2px solid var(--accent, #A8442A);
   outline-offset: 2px;
 }
 

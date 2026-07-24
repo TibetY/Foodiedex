@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Box } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 import type { listTokens } from '~/listTheme';
+import { cuisineEmoji, cuisineTint } from '~/utils/cuisineEmoji';
 
 type Tokens = (typeof listTokens)['light'];
 
@@ -12,14 +13,17 @@ interface RestaurantThumbProps {
   serifFont: string;
   tokens: Tokens;
   initialFontSize?: number;
+  /** Cuisine of the place — drives the emoji tile shown when there's no photo. */
+  cuisine?: string;
   sx?: SxProps<Theme>;
 }
 
 /**
- * Restaurant thumbnail used by every card/popup/dialog. Falls back to the
- * initial-letter placeholder when there's no image, or when the image URL
- * fails to load (broken/expired scraped images are common — without this,
- * a failed <img> renders a broken-image icon instead of the placeholder).
+ * Restaurant thumbnail used by every card/popup/dialog. When there's no image —
+ * or the URL fails to load (broken/expired scraped images are common) — it
+ * falls back to the cuisine tile: the food glyph on its tint, so a list of
+ * photo-less places still reads as the cuisine-tile system rather than a wall
+ * of grey. Without a known cuisine it keeps the serif-initial placeholder.
  */
 export default function RestaurantThumb({
   image,
@@ -28,17 +32,21 @@ export default function RestaurantThumb({
   serifFont,
   tokens: t,
   initialFontSize = 68,
+  cuisine,
   sx,
 }: RestaurantThumbProps) {
   const [failed, setFailed] = useState(false);
+  const showTile = (!image || failed) && !!cuisine;
 
   return (
     <Box
       sx={{
         position: 'relative',
-        // Editorial diagonal-stripe placeholder (the refined card look); the
-        // serif initial sits over it when there's no photo.
-        background: `repeating-linear-gradient(135deg, ${t.thumbStripeA} 0 9px, ${t.thumbStripeB} 9px 18px)`,
+        // Cuisine tint under the glyph; the editorial diagonal stripes stay for
+        // places whose cuisine we don't know.
+        background: showTile
+          ? cuisineTint(cuisine, t)
+          : `repeating-linear-gradient(135deg, ${t.thumbStripeA} 0 9px, ${t.thumbStripeB} 9px 18px)`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -60,6 +68,10 @@ export default function RestaurantThumb({
             display: 'block',
           }}
         />
+      ) : showTile ? (
+        <Box component="span" aria-hidden sx={{ fontSize: initialFontSize * 0.72, lineHeight: 1 }}>
+          {cuisineEmoji(cuisine)}
+        </Box>
       ) : (
         <Box component="span" sx={{ fontFamily: serifFont, fontSize: initialFontSize, color: t.monoInitial, lineHeight: 1 }}>
           {initial}

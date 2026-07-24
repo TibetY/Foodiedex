@@ -68,7 +68,7 @@ export default function SavedViewsBar({
                 color: active ? t.pFg : t.chip,
                 fontFamily: roundedFont,
                 fontSize: '13px',
-                fontWeight: 600,
+                fontWeight: 500,
                 padding: '7px 6px 7px 14px',
                 cursor: 'pointer',
               }}

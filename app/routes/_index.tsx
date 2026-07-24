@@ -3,11 +3,6 @@ import { Link } from "@remix-run/react";
 import type { LoaderFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useTranslation } from "react-i18next";
-import {
-  RestaurantMenu,
-  Star,
-  Share,
-} from "@mui/icons-material";
 import { createSupabaseServerClient } from "~/supabase.server";
 import { heroTokens, listTokens, roundedFont } from "~/listTheme";
 
@@ -25,8 +20,9 @@ export const loader: LoaderFunction = async ({ request }) => {
 const t0 = listTokens.light;
 const ACCENT = t0.accent; // terracotta — Daylight's single accent
 
-/** The decorative cuisine bubbles floating under the hero. Emoji's one job in
- *  the brand is cuisine glyphs; the tint family is deliberately tiny (3). */
+/** The decorative cuisine bubbles floating under the hero. Glyphs always sit on
+ *  one of the three tile tints, never loose in copy — that's what keeps a
+ *  heavily-emoji UI feeling systematic instead of noisy. */
 const CUISINE_BUBBLES: { glyph: string; tint: string }[] = [
   { glyph: "🍣", tint: t0.tileTint },
   { glyph: "🍜", tint: t0.tileTint2 },
@@ -39,7 +35,8 @@ const CUISINE_BUBBLES: { glyph: string; tint: string }[] = [
 
 /** A small decorative restaurant card for the hero cluster (not interactive). */
 function PreviewCard({
-  initial,
+  glyph,
+  tint,
   name,
   meta,
   price,
@@ -47,7 +44,8 @@ function PreviewCard({
   statusLabel,
   been,
 }: {
-  initial: string;
+  glyph: string;
+  tint: string;
   name: string;
   meta: string;
   price: string;
@@ -74,16 +72,14 @@ function PreviewCard({
           height: 44,
           flex: "none",
           borderRadius: "14px",
-          background: t0.monoGrad,
-          color: t0.monoInitial,
+          background: tint,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontFamily: "'Instrument Serif', serif",
           fontSize: 22,
         }}
       >
-        {initial}
+        {glyph}
       </Box>
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
@@ -123,21 +119,9 @@ export default function Index() {
   const { t } = useTranslation();
 
   const features = [
-    {
-      icon: <RestaurantMenu sx={{ fontSize: 30, color: ACCENT }} />,
-      title: t("landing.curateTitle"),
-      description: t("landing.curateDesc"),
-    },
-    {
-      icon: <Star sx={{ fontSize: 30, color: ACCENT }} />,
-      title: t("landing.rateTitle"),
-      description: t("landing.rateDesc"),
-    },
-    {
-      icon: <Share sx={{ fontSize: 30, color: ACCENT }} />,
-      title: t("landing.shareTitle"),
-      description: t("landing.shareDesc"),
-    },
+    { glyph: "📓", tint: t0.tileTint, title: t("landing.curateTitle"), description: t("landing.curateDesc") },
+    { glyph: "⭐", tint: t0.tileTint3, title: t("landing.rateTitle"), description: t("landing.rateDesc") },
+    { glyph: "💌", tint: t0.tileTint2, title: t("landing.shareTitle"), description: t("landing.shareDesc") },
   ];
 
   return (
@@ -335,7 +319,8 @@ export default function Index() {
               </Box>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 <PreviewCard
-                  initial="W"
+                  glyph="🦞"
+                  tint={t0.tileTint}
                   name="The Whalesbone"
                   meta={`Ottawa · ${t("cuisines.Seafood", "Seafood")}`}
                   price="$$$"
@@ -344,7 +329,8 @@ export default function Index() {
                   been
                 />
                 <PreviewCard
-                  initial="A"
+                  glyph="🥐"
+                  tint={t0.tileTint2}
                   name="Atelier"
                   meta={`Ottawa · ${t("cuisines.French", "French")}`}
                   price="$$$$"
@@ -399,13 +385,14 @@ export default function Index() {
                     width: 56,
                     height: 56,
                     borderRadius: "18px",
-                    background: t0.wantBg,
+                    background: feature.tint,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    fontSize: 27,
                   }}
                 >
-                  {feature.icon}
+                  {feature.glyph}
                 </Box>
                 <Typography
                   component="h3"
