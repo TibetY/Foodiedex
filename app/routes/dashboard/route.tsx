@@ -109,7 +109,7 @@ export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: leafletStylesHref },
 ];
 import { useTranslation } from 'react-i18next';
-import { listTokens, makeListTheme, getStoredMode, storeMode, roundedFont, type ListMode } from '~/listTheme';
+import { listTokens, makeListTheme, getStoredMode, storeMode, roundedFont, type ListMode, modeFromCookieHeader } from '~/listTheme';
 import { cuisineEmoji } from '~/utils/cuisineEmoji';
 
 /**
@@ -146,10 +146,13 @@ type LoaderData = {
   profile: Profile | null;
   views: ListView[];
   error: string | null;
+  /** Theme the request carries, so SSR paints the user's mode, not a guess. */
+  initialMode: ListMode;
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { supabase, headers } = createSupabaseServerClient(request);
+  const initialMode = modeFromCookieHeader(request.headers.get('Cookie'));
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -202,6 +205,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         profile,
         views,
         error: null,
+        initialMode,
       },
       { headers }
     );
@@ -219,6 +223,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         profile: null,
         views: [],
         error: describeError(error),
+        initialMode,
       },
       { headers }
     );
@@ -309,12 +314,20 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>(initialRestaurants);
-  const [mode, setMode] = useState<ListMode>('light');
+  const [mode, setMode] = useState<ListMode>(data.initialMode);
   // The Leaflet map is client-only; render it after mount.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  // Load the saved theme after mount (avoids SSR/client hydration mismatch).
-  useEffect(() => setMode(getStoredMode()), []);
+  // Reconcile with localStorage once, for visitors who set a theme before the
+  // cookie existed. storeMode then writes the cookie, so later loads are
+  // server-rendered in the right mode and never flip.
+  useEffect(() => {
+    const stored = getStoredMode();
+    if (stored !== data.initialMode) {
+      setMode(stored);
+      storeMode(stored);
+    }
+  }, [data.initialMode]);
   const changeMode = (m: ListMode) => {
     setMode(m);
     storeMode(m);

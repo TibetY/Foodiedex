@@ -19,6 +19,7 @@ import {
   getStoredMode,
   storeMode,
   type ListMode,
+  modeFromCookieHeader,
 } from '~/listTheme';
 import { cuisineEmoji } from '~/utils/cuisineEmoji';
 import LanguageSwitcher from '~/components/LanguageSwitcher';
@@ -33,6 +34,8 @@ const RestaurantMap = lazy<React.ComponentType<RestaurantMapProps>>(() =>
 export const links: LinksFunction = () => [{ rel: 'stylesheet', href: leafletStylesHref }];
 
 type LoaderData = {
+  /** Theme the request carries, so SSR paints the user's mode. */
+  initialMode: ListMode;
   restaurants: Restaurant[];
   listId: string | null;
   listName: string;
@@ -67,19 +70,28 @@ export const loader: LoaderFunction = async ({ request }) => {
       listId: activeList?.id ?? null,
       listName: activeList?.name ?? 'My List',
       displayName: profile?.displayName ?? null,
+      initialMode: modeFromCookieHeader(request.headers.get('Cookie')),
     },
     { headers }
   );
 };
 
 export default function StatsPage() {
-  const { restaurants, listId, listName } = useLoaderData<LoaderData>();
+  const { restaurants, listId, listName, initialMode } = useLoaderData<LoaderData>();
   const { t: tr } = useTranslation();
 
-  const [mode, setMode] = useState<ListMode>('light');
+  const [mode, setMode] = useState<ListMode>(initialMode);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  useEffect(() => setMode(getStoredMode()), []);
+  // Reconcile with localStorage for visitors who chose a theme before the
+  // cookie existed; storeMode then persists it so later loads never flip.
+  useEffect(() => {
+    const stored = getStoredMode();
+    if (stored !== initialMode) {
+      setMode(stored);
+      storeMode(stored);
+    }
+  }, [initialMode]);
   const changeMode = (m: ListMode) => {
     setMode(m);
     storeMode(m);

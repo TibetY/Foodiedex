@@ -20,6 +20,8 @@ export type ListMode = 'light' | 'dark';
 export const roundedFont = "'Zen Maru Gothic','DM Sans',system-ui,sans-serif";
 
 const THEME_STORAGE_KEY = 'thelist.theme';
+/** Same preference, mirrored into a cookie so the SERVER can read it. */
+export const THEME_COOKIE_KEY = 'thelist_theme';
 
 /** Read the user's saved theme preference (client only; defaults to light). */
 export function getStoredMode(): ListMode {
@@ -28,11 +30,30 @@ export function getStoredMode(): ListMode {
   return v === 'dark' || v === 'light' ? v : 'light';
 }
 
-/** Persist the user's theme preference so it survives navigation/reloads. */
+/**
+ * Persist the theme preference. Written to BOTH localStorage (the long-standing
+ * store) and a cookie, because localStorage is invisible to the server: without
+ * the cookie every SSR render guesses "light", and a Supper user watches the
+ * page paint in Daylight and then flip after mount.
+ */
 export function storeMode(mode: ListMode): void {
-  if (typeof window !== 'undefined') {
-    window.localStorage.setItem(THEME_STORAGE_KEY, mode);
-  }
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(THEME_STORAGE_KEY, mode);
+  // Not httpOnly on purpose — the client owns this preference and writes it
+  // directly; the server only needs to read it to render the right first paint.
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `${THEME_COOKIE_KEY}=${mode}; Path=/; Max-Age=31536000; SameSite=Lax${secure}`;
+}
+
+/**
+ * Read the mode a request carries, for use in loaders. Falls back to light,
+ * which matches getStoredMode()'s default for a brand-new visitor.
+ */
+export function modeFromCookieHeader(cookieHeader: string | null): ListMode {
+  const m = cookieHeader?.match(
+    new RegExp(`(?:^|;\\s*)${THEME_COOKIE_KEY}=(light|dark)(?:;|$)`)
+  );
+  return (m?.[1] as ListMode) ?? 'light';
 }
 
 export interface ListTokens {
