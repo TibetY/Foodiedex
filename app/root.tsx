@@ -16,9 +16,6 @@ import {
   Link as RemixLink,
 } from "@remix-run/react";
 
-import { CacheProvider } from "@emotion/react";
-import createEmotionCache from "./createEmotionCache";
-
 import { ThemeProvider, CssBaseline, Box, Button, Typography } from "@mui/material";
 import theme from "./theme";
 
@@ -79,7 +76,6 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function App() {
-  const clientSideEmotionCache = createEmotionCache();
   const { ENV, locale } = useLoaderData<{ ENV: PublicEnv; locale: string }>();
   const { t, i18n } = useTranslation();
   // Keep the i18next client instance in sync with the server-detected locale.
@@ -99,15 +95,18 @@ export default function App() {
         <a href="#main-content" className="skip-to-main">
           {t("a11y.skipToMain")}
         </a>
-        <CacheProvider value={clientSideEmotionCache}>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <Navbar />
-            <main id="main-content">
-              <Outlet />
-            </main>
-          </ThemeProvider>
-        </CacheProvider>
+        {/* The Emotion cache is provided by entry.client (browser) and
+            entry.server (per request) — NOT here. A provider at this level runs
+            in both environments and shadowed the server's request-scoped cache,
+            leaving extractCriticalToChunks with nothing to inline and shipping
+            an unstyled first paint. */}
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Navbar />
+          <main id="main-content">
+            <Outlet />
+          </main>
+        </ThemeProvider>
         <ScrollRestoration />
         <script
           dangerouslySetInnerHTML={{
