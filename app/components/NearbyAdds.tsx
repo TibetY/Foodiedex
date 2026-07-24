@@ -3,7 +3,7 @@ import { Box, CircularProgress } from '@mui/material';
 import { NearMe } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import type { PlaceCandidate } from '~/types/restaurant';
-import type { listTokens } from '~/listTheme';
+import { roundedFont, type listTokens } from '~/listTheme';
 import RestaurantThumb from '~/components/RestaurantThumb';
 import { formatDistance } from '~/utils/geo';
 import { setCachedLocation } from '~/utils/userLocation.client';
@@ -105,11 +105,11 @@ export default function NearbyAdds({ tokens: t, serifFont, onPick, disabled }: N
           border: `1px solid ${t.pillBorder}`,
           background: 'transparent',
           color: t.accent,
-          borderRadius: '12px',
-          fontFamily: "'DM Sans',sans-serif",
+          borderRadius: '999px',
+          fontFamily: roundedFont,
           fontSize: '13.5px',
-          fontWeight: 600,
-          padding: '9px 14px',
+          fontWeight: 700,
+          padding: '9px 16px',
           cursor: 'pointer',
           '&:hover': { background: t.searchBg },
         }}
@@ -146,7 +146,7 @@ export default function NearbyAdds({ tokens: t, serifFont, onPick, disabled }: N
   return (
     <Box>
       {heading}
-      <Box sx={{ border: `1px solid ${t.border}`, borderRadius: '14px', overflow: 'hidden', background: t.cardBg }}>
+      <Box sx={{ border: `1px solid ${t.border}`, borderRadius: '16px', overflow: 'hidden', background: t.cardBg }}>
         {results.map((c, i) => (
           <Box
             key={`${c.name}-${c.lat}-${c.lng}-${i}`}
@@ -171,7 +171,7 @@ export default function NearbyAdds({ tokens: t, serifFont, onPick, disabled }: N
               '&:hover': disabled ? {} : { background: t.searchBg },
             }}
           >
-            <Box sx={{ width: 34, height: 34, borderRadius: '9px', flex: 'none' }}>
+            <Box sx={{ width: 34, height: 34, borderRadius: '12px', flex: 'none' }}>
               <RestaurantThumb
                 image={undefined}
                 alt={c.name}
@@ -179,7 +179,7 @@ export default function NearbyAdds({ tokens: t, serifFont, onPick, disabled }: N
                 serifFont={serifFont}
                 tokens={t}
                 initialFontSize={18}
-                sx={{ width: '100%', height: '100%', borderRadius: '9px' }}
+                sx={{ width: '100%', height: '100%', borderRadius: '12px' }}
               />
             </Box>
             <Box sx={{ flex: 1, minWidth: 0 }}>

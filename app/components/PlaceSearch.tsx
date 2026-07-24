@@ -145,8 +145,8 @@ export default function PlaceSearch({
           gap: '10px',
           background: t.searchBg,
           border: `1px solid ${t.border}`,
-          borderRadius: '14px',
-          padding: '11px 14px',
+          borderRadius: '999px',
+          padding: '11px 18px',
           cursor: 'text',
           transition: 'border-color .15s, box-shadow .15s',
           '&:focus-within': {
@@ -203,7 +203,7 @@ export default function PlaceSearch({
           sx={{
             mt: '8px',
             border: `1px solid ${t.border}`,
-            borderRadius: '14px',
+            borderRadius: '16px',
             overflow: 'hidden',
             background: t.cardBg,
             boxShadow: t.shadow2,
@@ -240,7 +240,7 @@ export default function PlaceSearch({
                   background: active === i ? t.searchBg : 'transparent',
                 }}
               >
-                <Box sx={{ width: 38, height: 38, borderRadius: '10px', flex: 'none' }}>
+                <Box sx={{ width: 38, height: 38, borderRadius: '12px', flex: 'none' }}>
                   <RestaurantThumb
                     image={undefined}
                     alt={c.name}
@@ -248,7 +248,7 @@ export default function PlaceSearch({
                     serifFont={serifFont}
                     tokens={t}
                     initialFontSize={20}
-                    sx={{ width: '100%', height: '100%', borderRadius: '10px' }}
+                    sx={{ width: '100%', height: '100%', borderRadius: '12px' }}
                   />
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -308,7 +308,7 @@ function SkeletonRow({ tokens: t, last }: { tokens: Tokens; last: boolean }) {
         borderBottom: last ? 'none' : `1px solid ${t.borderSoft}`,
       }}
     >
-      <Box sx={{ width: 38, height: 38, borderRadius: '10px', background: t.skeleton, flex: 'none' }} />
+      <Box sx={{ width: 38, height: 38, borderRadius: '12px', background: t.skeleton, flex: 'none' }} />
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '7px' }}>
         {bar('55%', 12)}
         {bar('80%', 10)}

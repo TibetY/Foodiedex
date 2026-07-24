@@ -3,7 +3,7 @@ import { Box, Menu, MenuItem } from '@mui/material';
 import { Bookmark, BookmarkBorder, MoreVert, Add } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import type { ListView } from '~/types/restaurant';
-import type { listTokens } from '~/listTheme';
+import { roundedFont, type listTokens } from '~/listTheme';
 
 type Tokens = (typeof listTokens)['light'];
 
@@ -66,9 +66,9 @@ export default function SavedViewsBar({
                 border: 'none',
                 background: 'transparent',
                 color: active ? t.pFg : t.chip,
-                fontFamily: "'DM Sans',sans-serif",
+                fontFamily: roundedFont,
                 fontSize: '13px',
-                fontWeight: 500,
+                fontWeight: 600,
                 padding: '7px 6px 7px 14px',
                 cursor: 'pointer',
               }}
@@ -102,9 +102,9 @@ export default function SavedViewsBar({
             background: 'transparent',
             color: t.accent,
             borderRadius: '999px',
-            fontFamily: "'DM Sans',sans-serif",
+            fontFamily: roundedFont,
             fontSize: '13px',
-            fontWeight: 600,
+            fontWeight: 700,
             padding: '7px 14px',
             cursor: 'pointer',
           }}

@@ -138,7 +138,7 @@ export default function RestaurantDetailDialog({
       fullScreen={fullScreen}
       aria-labelledby="restaurant-detail-title"
       PaperProps={{
-        sx: { background: t.cardBg, color: t.ink, borderRadius: fullScreen ? 0 : '18px', overflow: 'hidden' },
+        sx: { background: t.cardBg, color: t.ink, borderRadius: fullScreen ? 0 : '22px', overflow: 'hidden' },
       }}
     >
       {/* Hero image / initial */}

@@ -221,7 +221,7 @@ export default function StatsPage() {
               )}
 
               {/* share */}
-              <Box sx={{ mt: 5, padding: { xs: 3, md: 4 }, borderRadius: '18px', border: `1px solid ${t.border}`, background: t.cardBg }}>
+              <Box sx={{ mt: 5, padding: { xs: 3, md: 4 }, borderRadius: '22px', border: `1px solid ${t.border}`, background: t.cardBg }}>
                 <Box sx={{ fontFamily: serif, fontSize: { xs: 24, md: 30 }, color: t.ink }}>{tr('stats.shareTitle')}</Box>
                 <Box sx={{ color: t.muted, fontSize: 14.5, mt: 1, mb: 2.5, maxWidth: 520 }}>{tr('stats.shareBody')}</Box>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
@@ -249,7 +249,7 @@ function SectionTitle({ children, tokens: t }: { children: React.ReactNode; toke
 
 function StatTile({ tokens: t, serif, value, label }: { tokens: Tokens; serif: string; value: number | string; label: string }) {
   return (
-    <Box sx={{ padding: '16px 18px', borderRadius: '14px', border: `1px solid ${t.border}`, background: t.cardBg }}>
+    <Box sx={{ padding: '16px 18px', borderRadius: '16px', border: `1px solid ${t.border}`, background: t.cardBg }}>
       <Box sx={{ fontFamily: serif, fontSize: 34, lineHeight: 1, color: t.ink }}>{value}</Box>
       <Box sx={{ color: t.muted, fontSize: 12.5, mt: '6px' }}>{label}</Box>
     </Box>
