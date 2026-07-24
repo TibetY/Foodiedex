@@ -157,6 +157,9 @@ export function ErrorBoundary() {
               px: 3,
             }}
           >
+            <Box aria-hidden sx={{ fontSize: 52, lineHeight: 1 }}>
+              {isNotFound ? '🍽️' : '🍳'}
+            </Box>
             <Typography variant="h3" component="h1">
               {title}
             </Typography>

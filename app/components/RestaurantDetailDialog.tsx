@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 import type { Restaurant } from '~/types/restaurant';
 import type { listTokens } from '~/listTheme';
 import RestaurantThumb from '~/components/RestaurantThumb';
+import { cuisineEmoji, placeTypeEmoji, dietEmoji, menuTypeEmoji } from '~/utils/cuisineEmoji';
 import Stars from '~/components/Stars';
 
 type Tokens = (typeof listTokens)['light'];
@@ -150,6 +151,7 @@ export default function RestaurantDetailDialog({
           serifFont={serifFont}
           tokens={t}
           initialFontSize={88}
+          cuisine={r.cuisineType}
           sx={{ height: '100%' }}
         />
         <IconButton
@@ -269,9 +271,15 @@ export default function RestaurantDetailDialog({
           <Box sx={{ mt: '16px' }}>
             <Box component="span" sx={sectionLabel}>{tr('detail.about')}</Box>
             <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {r.cuisineType && <Chip size="small" label={tr(`cuisines.${r.cuisineType}`, r.cuisineType)} sx={chipSx} />}
+              {r.cuisineType && (
+                <Chip
+                  size="small"
+                  label={`${cuisineEmoji(r.cuisineType)} ${tr(`cuisines.${r.cuisineType}`, r.cuisineType)}`}
+                  sx={chipSx}
+                />
+              )}
               {r.placeTypes?.map((pt) => (
-                <Chip key={pt} size="small" label={tr(`placeTypes.${pt}`, pt)} sx={chipSx} />
+                <Chip key={pt} size="small" label={`${placeTypeEmoji(pt)} ${tr(`placeTypes.${pt}`, pt)}`} sx={chipSx} />
               ))}
             </Box>
           </Box>
@@ -283,7 +291,7 @@ export default function RestaurantDetailDialog({
             <Box component="span" sx={sectionLabel}>{tr('form.dietaryTags')}</Box>
             <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {r.dietaryTags.map((tag) => (
-                <Chip key={tag} size="small" label={tr(`dietary.${tag}`, tag)} sx={chipSx} />
+                <Chip key={tag} size="small" label={`${dietEmoji(tag)} ${tr(`dietary.${tag}`, tag)}`} sx={chipSx} />
               ))}
             </Box>
           </Box>
@@ -295,7 +303,7 @@ export default function RestaurantDetailDialog({
             <Box component="span" sx={sectionLabel}>{tr('form.menuTypes')}</Box>
             <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {r.menuTypes.map((m) => (
-                <Chip key={m} size="small" label={tr(`menuTypes.${m}`, m)} sx={chipSx} />
+                <Chip key={m} size="small" label={`${menuTypeEmoji(m)} ${tr(`menuTypes.${m}`, m)}`} sx={chipSx} />
               ))}
             </Box>
           </Box>

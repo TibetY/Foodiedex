@@ -179,6 +179,7 @@ export default function NearbyAdds({ tokens: t, serifFont, onPick, disabled }: N
                 serifFont={serifFont}
                 tokens={t}
                 initialFontSize={18}
+                cuisine={c.cuisineType ?? undefined}
                 sx={{ width: '100%', height: '100%', borderRadius: '12px' }}
               />
             </Box>

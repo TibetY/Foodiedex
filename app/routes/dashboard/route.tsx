@@ -106,6 +106,7 @@ export const links: LinksFunction = () => [
 ];
 import { useTranslation } from 'react-i18next';
 import { listTokens, makeListTheme, getStoredMode, storeMode, roundedFont, type ListMode } from '~/listTheme';
+import { cuisineEmoji } from '~/utils/cuisineEmoji';
 
 /**
  * Turn whatever was thrown into a human-readable message. Supabase/PostgREST
@@ -1409,6 +1410,9 @@ export default function Dashboard() {
                 background: t.cardBg,
               }}
             >
+              <Box aria-hidden sx={{ fontSize: 44, lineHeight: 1, mb: 1.5 }}>
+                {hasActiveFilters ? '🔍' : '🍽️'}
+              </Box>
               <Box sx={{ fontFamily: serif, fontSize: 30, mb: 1 }}>
                 {hasActiveFilters ? tr('dashboard.noMatchesTitle') : tr('dashboard.emptyTitle')}
               </Box>
@@ -1502,6 +1506,7 @@ export default function Dashboard() {
                             serifFont={serif}
                             tokens={t}
                             initialFontSize={24}
+                            cuisine={r.cuisine}
                             sx={{ width: '100%', height: '100%', borderRadius: '14px' }}
                           />
                         </Box>
@@ -1687,12 +1692,16 @@ export default function Dashboard() {
                             serifFont={serif}
                             tokens={t}
                             initialFontSize={18}
+                            cuisine={r.cuisine}
                             sx={{ width: '100%', height: '100%', borderRadius: '12px' }}
                           />
                         </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Box sx={{ fontSize: 14, fontWeight: 500 }}>{r.name}</Box>
-                          <Box sx={{ color: t.muted, fontSize: 12 }}>{r.cuisine}</Box>
+                          <Box sx={{ color: t.muted, fontSize: 12 }}>
+                            <Box component="span" aria-hidden sx={{ mr: '4px' }}>{cuisineEmoji(r.cuisine)}</Box>
+                            {tr(`cuisines.${r.cuisine}`, r.cuisine)}
+                          </Box>
                         </Box>
                         <Box component="span" sx={{ color: t.cost, fontSize: 13, fontWeight: 600, fontFamily: "'DM Mono',monospace" }}>{r.costStr}</Box>
                       </Box>

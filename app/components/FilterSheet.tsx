@@ -3,7 +3,7 @@ import { Box, Popover, Drawer, useMediaQuery, useTheme } from '@mui/material';
 import { FilterList, ArrowUpward, ArrowDownward } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { roundedFont, type listTokens } from '~/listTheme';
-import { cuisineEmoji } from '~/utils/cuisineEmoji';
+import { cuisineEmoji, placeTypeEmoji, dietEmoji, menuTypeEmoji } from '~/utils/cuisineEmoji';
 
 type Tokens = (typeof listTokens)['light'];
 type MultiSetter = (updater: string[] | ((prev: string[]) => string[])) => void;
@@ -166,6 +166,7 @@ export default function FilterSheet(props: FilterSheetProps) {
         <Section tokens={t} label={tr('dashboard.placeType')}>
           {props.placeOptions.map((p) => (
             <Box component="button" key={p} type="button" aria-pressed={props.placeFilter.includes(p)} onClick={() => props.setPlaceFilter((prev) => toggle(prev, p))} sx={pillSx(props.placeFilter.includes(p))}>
+              <Box component="span" aria-hidden sx={{ mr: '5px' }}>{placeTypeEmoji(p)}</Box>
               {tr(`placeTypes.${p}`, p)}
             </Box>
           ))}
@@ -177,6 +178,7 @@ export default function FilterSheet(props: FilterSheetProps) {
         <Section tokens={t} label={tr('dashboard.dietary')}>
           {props.dietOptions.map((d) => (
             <Box component="button" key={d} type="button" aria-pressed={props.dietFilter.includes(d)} onClick={() => props.setDietFilter((prev) => toggle(prev, d))} sx={pillSx(props.dietFilter.includes(d))}>
+              <Box component="span" aria-hidden sx={{ mr: '5px' }}>{dietEmoji(d)}</Box>
               {tr(`dietary.${d}`, d)}
             </Box>
           ))}
@@ -188,6 +190,7 @@ export default function FilterSheet(props: FilterSheetProps) {
         <Section tokens={t} label={tr('dashboard.menuType')}>
           {props.menuOptions.map((m) => (
             <Box component="button" key={m} type="button" aria-pressed={props.menuFilter.includes(m)} onClick={() => props.setMenuFilter((prev) => toggle(prev, m))} sx={pillSx(props.menuFilter.includes(m))}>
+              <Box component="span" aria-hidden sx={{ mr: '5px' }}>{menuTypeEmoji(m)}</Box>
               {tr(`menuTypes.${m}`, m)}
             </Box>
           ))}

@@ -11,6 +11,7 @@ import type { Restaurant, RestaurantLocation } from '~/types/restaurant';
 import type { DecoratedRestaurant } from '~/utils/decorateRestaurant';
 import { roundedFont, type listTokens } from '~/listTheme';
 import RestaurantThumb from '~/components/RestaurantThumb';
+import { cuisineEmoji } from '~/utils/cuisineEmoji';
 import Stars from '~/components/Stars';
 
 type Tokens = (typeof listTokens)['light'];
@@ -109,6 +110,7 @@ export default function PlaceCard({
           initial={r.initial}
           serifFont={serifFont}
           tokens={t}
+          cuisine={r.cuisine}
           sx={{ height: '100%' }}
         />
         <Box
@@ -235,6 +237,7 @@ export default function PlaceCard({
 
         {/* meta row */}
         <Box sx={{ height: { xs: 16, sm: 18 }, mt: '3px', color: t.muted, fontSize: { xs: 12, sm: 13 }, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <Box component="span" aria-hidden sx={{ mr: '4px' }}>{cuisineEmoji(r.cuisine)}</Box>
           {metaParts.join(' · ')}
         </Box>
 
