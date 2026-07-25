@@ -16,6 +16,7 @@ import {
   Link as RemixLink,
 } from "@remix-run/react";
 
+import { useContext } from "react";
 import { ThemeProvider, CssBaseline, Box, Button, Typography } from "@mui/material";
 import theme from "./theme";
 
@@ -28,6 +29,7 @@ import i18nextServer from "~/i18next.server";
 import { resources, fallbackLng } from "~/i18n";
 import Navbar from "./components/Navbar";
 import { brandCssVars } from "~/listTheme";
+import { EmotionStyleContext } from "~/emotionStyles";
 import tailwindHref from "~/tailwind.css?url";
 
 export const handle = { i18n: "common" };
@@ -77,6 +79,10 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export default function App() {
   const { ENV, locale } = useLoaderData<{ ENV: PublicEnv; locale: string }>();
+  // Server-extracted critical CSS on the server; the same tags read back out of
+  // the document on the client (see entry.client), so the markup is identical
+  // and React owns these nodes instead of leaving them orphaned in <head>.
+  const emotionStyles = useContext(EmotionStyleContext);
   const { t, i18n } = useTranslation();
   // Keep the i18next client instance in sync with the server-detected locale.
   useChangeLanguage(locale);
@@ -90,6 +96,13 @@ export default function App() {
             source as the MUI theme). Public pages inherit the light set; the
             dashboard/profile override with data-theme on their own root. */}
         <style dangerouslySetInnerHTML={{ __html: brandCssVars() }} />
+        {emotionStyles.map((chunk) => (
+          <style
+            key={chunk.key + chunk.ids}
+            data-emotion={`${chunk.key} ${chunk.ids}`}
+            dangerouslySetInnerHTML={{ __html: chunk.css }}
+          />
+        ))}
       </head>
       <body>
         <a href="#main-content" className="skip-to-main">
