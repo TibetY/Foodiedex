@@ -6,6 +6,7 @@ import {
   useRevalidator,
   useSearchParams,
   useNavigate,
+  useNavigation,
   type ShouldRevalidateFunction,
 } from '@remix-run/react';
 import Box from '@mui/material/Box';
@@ -72,6 +73,7 @@ import FilterSheet from '~/components/FilterSheet';
 import SavedViewsBar from '~/components/SavedViewsBar';
 import Bubbles from '~/components/Bubbles';
 import PlaceCard, { BookingPill, CardAction } from '~/components/PlaceCard';
+import SkeletonCard, { SkeletonListRow } from '~/components/SkeletonCard';
 import LanguageSwitcher from '~/components/LanguageSwitcher';
 import { uploadRestaurantImage } from '~/services/storage.client';
 import {
@@ -296,6 +298,7 @@ export default function Dashboard() {
     error,
   } = data;
   const revalidator = useRevalidator();
+  const navigation = useNavigation();
   const { t: tr } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -306,6 +309,14 @@ export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const [view, setView] = useState<ViewMode>('tile');
+  // Switching lists re-runs the loader while the OLD list's rows are still on
+  // screen — show shimmering placeholders for that window. Filter-only URL
+  // changes are skipped by shouldRevalidate and never flash skeletons.
+  const pendingListId =
+    navigation.state === 'loading' && navigation.location?.pathname === '/dashboard'
+      ? new URLSearchParams(navigation.location.search).get('list')
+      : undefined;
+  const listLoading = pendingListId !== undefined && pendingListId !== searchParams.get('list');
   // Map ↔ side-list hover sync (map view). The id is a restaurant's sync key
   // (`id ?? name`, matching RestaurantMap); refs let a pin-hover scroll its row
   // into view.
@@ -945,10 +956,6 @@ export default function Dashboard() {
     background: view === val ? t.segBg : 'transparent',
     color: view === val ? t.segFg : t.segIdle,
   });
-  const pill = (val: FilterMode) => ({
-    background: filter === val ? t.pBg : 'transparent',
-    color: filter === val ? t.pFg : t.pIdle,
-  });
   const themeBtn = (val: ListMode) => ({
     background: mode === val ? t.cardBg : 'transparent',
     color: mode === val ? t.ink : t.segIdle,
@@ -1310,12 +1317,90 @@ export default function Dashboard() {
               active filter to clear (e.g. carried over from another list). */}
           {(total > 0 || hasActiveFilters) && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px', mt: { xs: '12px', sm: '22px' }, flexWrap: 'wrap' }}>
-            <Box role="group" aria-label={tr('dashboard.filterStatusLabel')} sx={{ display: 'contents' }}>
-              <Box component="button" aria-pressed={filter === 'all'} onClick={() => setFilter('all')} sx={{ ...filterBtnStyle, ...pill('all') }}>{tr('dashboard.filterAll')}</Box>
-              <Box component="button" aria-pressed={filter === 'been'} onClick={() => setFilter('been')} sx={{ ...filterBtnStyle, ...pill('been') }}>{tr('dashboard.filterBeen')}</Box>
-              <Box component="button" aria-pressed={filter === 'want'} onClick={() => setFilter('want')} sx={{ ...filterBtnStyle, ...pill('want') }}>{tr('dashboard.filterWant')}</Box>
+            {/* been / want — the prototype's segmented track */}
+            <Box role="group" aria-label={tr('dashboard.filterStatusLabel')} sx={{ display: 'flex', gap: '4px', padding: '4px', background: t.track, borderRadius: '999px' }}>
+              {(['all', 'been', 'want'] as FilterMode[]).map((f) => (
+                <Box
+                  key={f}
+                  component="button"
+                  aria-pressed={filter === f}
+                  onClick={() => setFilter(f)}
+                  sx={{
+                    border: 0,
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: filter === f ? 600 : 400,
+                    padding: '7px 15px',
+                    borderRadius: '999px',
+                    background: filter === f ? t.cardBg : 'transparent',
+                    color: filter === f ? t.ink : t.muted,
+                    boxShadow: filter === f ? t.shadow1 : 'none',
+                  }}
+                >
+                  {tr(f === 'all' ? 'dashboard.filterAll' : f === 'been' ? 'dashboard.filterBeen' : 'dashboard.filterWant')}
+                </Box>
+              ))}
             </Box>
-            <Box sx={{ width: '1px', height: 22, background: t.divider, mx: '4px' }} />
+            {/* tag (cuisine) chips — visible on wider screens, per the design's
+                toolbar; the sheet remains the compact path on phones. */}
+            {cuisineOptions.length > 0 && (
+              <Box role="group" aria-label={tr('dashboard.cuisine')} sx={{ display: { xs: 'none', md: 'flex' }, gap: '7px', flexWrap: 'wrap' }}>
+                {['', ...cuisineOptions.slice(0, 5)].map((c) => {
+                  const on = cuisineFilter === c;
+                  return (
+                    <Box
+                      key={c || 'all'}
+                      component="button"
+                      aria-pressed={on}
+                      onClick={() => setCuisineFilter(c)}
+                      sx={{
+                        border: on ? '1px solid transparent' : `1px solid ${t.hair}`,
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: on ? 600 : 400,
+                        padding: '6px 14px',
+                        borderRadius: '999px',
+                        background: on ? t.pBg : t.cardBg,
+                        color: on ? t.pFg : t.muted,
+                      }}
+                    >
+                      {c ? `${cuisineEmoji(c)} ${tr(`cuisines.${c}`, c)}` : tr('dashboard.filterAll')}
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+            {costOptions.length > 0 && <Box sx={{ width: '1px', height: 20, background: t.hair, display: { xs: 'none', md: 'block' } }} />}
+            {/* cost chips */}
+            {costOptions.length > 0 && (
+              <Box role="group" aria-label={tr('dashboard.cost')} sx={{ display: { xs: 'none', md: 'flex' }, gap: '7px' }}>
+                {['', ...costOptions].map((c) => {
+                  const on = costFilter === c;
+                  return (
+                    <Box
+                      key={c || 'all'}
+                      component="button"
+                      aria-pressed={on}
+                      onClick={() => setCostFilter(c)}
+                      sx={{
+                        border: on ? '1px solid transparent' : `1px solid ${t.hair}`,
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: on ? 600 : 400,
+                        letterSpacing: '.04em',
+                        padding: '6px 13px',
+                        borderRadius: '999px',
+                        background: on ? t.pBg : t.cardBg,
+                        color: on ? t.pFg : t.muted,
+                      }}
+                    >
+                      {c || tr('dashboard.filterAll')}
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+            <Box sx={{ width: '1px', height: 22, background: t.divider, mx: '4px', display: { xs: 'none', sm: 'block' } }} />
             <FilterSheet
               tokens={t}
               cuisineOptions={cuisineOptions}
@@ -1355,12 +1440,36 @@ export default function Dashboard() {
                 {tr('dashboard.clearFilters')}
               </Box>
             )}
-            <Box sx={{ ml: 'auto', fontSize: 13, color: t.faint }}>{tr('dashboard.showing', { count: filtered.length })}</Box>
+            {/* sort — the design's visible select, right-aligned */}
+            <Box component="label" sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: '9px', fontSize: 12.5, color: t.faint }}>
+              {tr('dashboard.sortLabel')}
+              <Box
+                component="select"
+                value={sort}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSort(e.target.value as SortMode)}
+                sx={{
+                  font: 'inherit',
+                  fontSize: '12.5px',
+                  color: t.ink,
+                  background: t.cardBg,
+                  border: `1px solid ${t.hair}`,
+                  borderRadius: '999px',
+                  padding: '7px 14px',
+                  cursor: 'pointer',
+                  appearance: 'none',
+                }}
+              >
+                {SORT_MODES.map((m) => (
+                  <option key={m} value={m}>{tr(`dashboard.sort_${m}`)}</option>
+                ))}
+              </Box>
+            </Box>
+            <Box sx={{ fontSize: 13, color: t.faint, display: { xs: 'none', sm: 'block' } }}>{tr('dashboard.showing', { count: filtered.length })}</Box>
           </Box>
           )}
 
           {/* empty state */}
-          {filtered.length === 0 ? (
+          {filtered.length === 0 && !listLoading ? (
             // A brand-new, editable list gets the first-run onboarding; the plain
             // empty card is kept for filtered-empty and view-only cases.
             total === 0 && !hasActiveFilters && canEdit && activeList ? (
@@ -1431,7 +1540,9 @@ export default function Dashboard() {
                   {/* Two-up on phones — 87 places at one giant card per screen
                       is unbrowsable; the compact card keeps the same slots. */}
                   <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(auto-fill, minmax(160px, 1fr))', sm: 'repeat(auto-fill, minmax(240px, 1fr))' }, gap: { xs: '12px', sm: '20px' } }}>
-                    {sorted.map((r) => (
+                    {listLoading
+                      ? Array.from({ length: 8 }, (_, i) => <SkeletonCard key={i} tokens={t} />)
+                      : sorted.map((r) => (
                       <PlaceCard
                         key={r.id}
                         r={r}
@@ -1453,7 +1564,8 @@ export default function Dashboard() {
               {view === 'list' && (
                 <Box sx={{ padding: { xs: '16px 0 96px', sm: '24px 0 40px' } }}>
                   <Box sx={{ border: `1px solid ${t.border}`, borderRadius: '16px', overflow: 'hidden' }}>
-                    {sorted.map((r) => (
+                    {listLoading && Array.from({ length: 6 }, (_, i) => <SkeletonListRow key={i} tokens={t} />)}
+                    {!listLoading && sorted.map((r) => (
                       <Box
                         key={r.id}
                         onClick={() => handleViewRestaurant(r)}
@@ -1622,7 +1734,15 @@ export default function Dashboard() {
                       </Box>
                     </Box>
                     <Box component="tbody">
-                      {sorted.map((r) => (
+                      {listLoading &&
+                        Array.from({ length: 7 }, (_, i) => (
+                          <Box component="tr" key={i} aria-hidden>
+                            <Box component="td" colSpan={8} sx={{ padding: 0, borderBottom: `1px solid ${t.borderSoft}` }}>
+                              <SkeletonListRow tokens={t} />
+                            </Box>
+                          </Box>
+                        ))}
+                      {!listLoading && sorted.map((r) => (
                         <Box
                           component="tr"
                           key={r.id}

@@ -3,6 +3,7 @@ import IconButton from '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EventSeat from '@mui/icons-material/EventSeat';
+import PlaceOutlined from '@mui/icons-material/PlaceOutlined';
 import Favorite from '@mui/icons-material/Favorite';
 import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
 import { useTranslation } from 'react-i18next';
@@ -50,12 +51,12 @@ interface PlaceCardProps {
  * whether or not its data exists, so name / meta / note / rating / booking sit
  * at identical positions on every card and the grid reads as one set:
  *
- *   image 158 (status pill · price chip · hover actions)
- *   name row 26        — serif name, heart pinned right
- *   meta row 18        — cuisine · city · visits · ★ Michelin · Bib (one line)
+ *   image 158 (status pill · hover actions)
+ *   name row 26        — name, cost split ($$ strong + $$ faint), heart right
+ *   tag row 22         — cuisine + place-type pills, honours pill last
  *   note slot 38       — the note as a 2-line italic pull-quote (or empty)
- *   rating row 18      — half-star aware, or "Not rated yet"
- *   action row 30      — filled Book pill / walk-ins note (or empty)
+ *   rating row 18      — five bubbles + "4.0 avg" / "not rated yet"
+ *   footer 30          — hairline rule · place pin + city/visits · booking
  */
 export default function PlaceCard({
   r,
@@ -70,13 +71,28 @@ export default function PlaceCard({
 }: PlaceCardProps) {
   const { t: tr } = useTranslation();
 
-  const metaParts: string[] = [tr(`cuisines.${r.cuisine}`, r.cuisine)];
-  if (r.city) metaParts.push(r.city);
-  if ((r.visitCount ?? 0) > 0) metaParts.push(tr('dashboard.visitsCount', { count: r.visitCount ?? 0 }));
-  if ((r.locations?.length ?? 0) > 1) metaParts.push(tr('dashboard.locationsCount', { count: r.locations?.length ?? 0 }));
-  if ((r.michelinStars ?? 0) > 0) metaParts.push(`${'★'.repeat(r.michelinStars ?? 0)} ${tr('dashboard.michelinChip')}`);
-  if (r.bibGourmand) metaParts.push(tr('dashboard.bibGourmand'));
+  // Tag pills, per the design: cuisine first, then place types; honours
+  // (Michelin/Bib) render as one accent-tinted pill at the end.
+  const tags: string[] = [tr(`cuisines.${r.cuisine}`, r.cuisine)];
+  for (const p of r.placeTypes ?? []) {
+    if (tags.length >= 3) break;
+    const label = tr(`placeTypes.${p}`, p);
+    if (!tags.includes(label)) tags.push(label);
+  }
+  const honour =
+    (r.michelinStars ?? 0) > 0
+      ? `${'★'.repeat(r.michelinStars ?? 0)} ${tr('dashboard.michelinChip')}`
+      : r.bibGourmand
+        ? tr('dashboard.bibGourmand')
+        : null;
+  const footerParts: string[] = [];
+  if (r.city) footerParts.push(r.city);
+  if ((r.visitCount ?? 0) > 0) footerParts.push(tr('dashboard.visitsCount', { count: r.visitCount ?? 0 }));
+  if ((r.locations?.length ?? 0) > 1) footerParts.push(tr('dashboard.locationsCount', { count: r.locations?.length ?? 0 }));
   const note = r.comment?.trim();
+  // Cost as the design's filled + faint split: "$$" strong, "$$" quiet.
+  const costOn = r.costStr;
+  const costOff = costOn ? '$'.repeat(Math.max(0, 4 - costOn.length)) : '';
 
   const statusInteractive = canEdit && onToggleStatus;
 
@@ -149,24 +165,6 @@ export default function PlaceCard({
         >
           {r.isBeen ? tr('dashboard.statusBeen') : tr('dashboard.statusWant')}
         </Box>
-        {r.costStr && (
-          <Box
-            component="span"
-            sx={{
-              position: 'absolute',
-              bottom: 10,
-              right: 10,
-              background: 'rgba(255,255,255,.9)',
-              color: '#2B2B2B',
-              fontSize: '11.5px',
-              fontWeight: 600,
-              padding: '3px 8px',
-              borderRadius: '8px',
-            }}
-          >
-            {r.costStr}
-          </Box>
-        )}
         {canEdit && onEdit && onDelete && (
           <Box className="card-actions" sx={{ position: 'absolute', top: 10, left: 10, display: 'flex', gap: '6px', opacity: 0, transition: 'opacity .15s' }}>
             <CardAction label={tr('dashboard.editX', { name: r.name })} onClick={() => onEdit(r)} tokens={t}>
@@ -211,7 +209,18 @@ export default function PlaceCard({
           >
             {r.name}
           </Box>
-          {/* heart — the box is always reserved so names align */}
+          {/* cost — filled + faint split, then the heart (box always reserved
+              so names align) */}
+          {costOn && (
+            <Box
+              component="span"
+              aria-label={tr('dashboard.cost') + ' ' + costOn}
+              sx={{ flex: 'none', fontSize: { xs: 11.5, sm: 12.5 }, letterSpacing: '.06em', color: t.notRated }}
+            >
+              <Box component="span" sx={{ color: t.muted, fontWeight: 600 }}>{costOn}</Box>
+              <Box component="span" aria-hidden>{costOff}</Box>
+            </Box>
+          )}
           <Box sx={{ width: 26, height: 26, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {canEdit && onToggleFavorite ? (
               <IconButton
@@ -232,10 +241,43 @@ export default function PlaceCard({
           </Box>
         </Box>
 
-        {/* meta row */}
-        <Box sx={{ height: { xs: 16, sm: 18 }, mt: '3px', color: t.muted, fontSize: { xs: 12, sm: 13 }, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          <Box component="span" aria-hidden sx={{ mr: '4px' }}>{cuisineEmoji(r.cuisine)}</Box>
-          {metaParts.join(' · ')}
+        {/* tag pills row */}
+        <Box sx={{ height: { xs: 20, sm: 22 }, mt: '5px', display: 'flex', gap: '6px', overflow: 'hidden', alignItems: 'center' }}>
+          <Box component="span" aria-hidden sx={{ fontSize: { xs: 11, sm: 12 }, flex: 'none' }}>{cuisineEmoji(r.cuisine)}</Box>
+          {tags.map((tag) => (
+            <Box
+              key={tag}
+              component="span"
+              sx={{
+                flex: 'none',
+                fontSize: '11px',
+                padding: '3px 10px',
+                borderRadius: '999px',
+                background: t.chip,
+                color: t.muted,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {tag}
+            </Box>
+          ))}
+          {honour && (
+            <Box
+              component="span"
+              sx={{
+                flex: 'none',
+                fontSize: '11px',
+                fontWeight: 600,
+                padding: '3px 10px',
+                borderRadius: '999px',
+                background: t.beenBg,
+                color: t.beenFg,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {honour}
+            </Box>
+          )}
         </Box>
 
         {/* note slot — reserved even when empty so rating/booking never move */}
@@ -256,20 +298,41 @@ export default function PlaceCard({
           {note ? `“${note}”` : ''}
         </Box>
 
-        {/* rating row */}
-        <Box sx={{ mt: { xs: '7px', sm: '9px' }, height: 18 }}>
-          {r.rated ? (
-            <Bubbles value={r.rating ?? 0} tokens={t} size={11} gap={5} />
-          ) : (
-            <Box component="span" sx={{ color: t.faint, fontSize: 13, fontStyle: 'italic' }}>
-              {tr('dashboard.notRated')}
-            </Box>
-          )}
+        {/* rating row — five bubbles, filled to the score, with the numeric
+            line beside them (the design's "4.0 avg" / "not rated yet") */}
+        <Box sx={{ mt: { xs: '7px', sm: '9px' }, height: 18, display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <Bubbles value={r.rating ?? 0} tokens={t} size={11} gap={5} />
+          <Box component="span" sx={{ color: t.faint, fontSize: 11.5, pl: '5px', whiteSpace: 'nowrap' }}>
+            {r.rated ? tr('dashboard.ratingAvg', { rating: (r.rating ?? 0).toFixed(1) }) : tr('dashboard.notRated')}
+          </Box>
         </Box>
 
-        {/* action row */}
-        <Box sx={{ mt: { xs: '8px', sm: '10px' }, height: { xs: 28, sm: 30 }, display: 'flex', alignItems: 'center' }}>
-          <BookingPill locations={r.locations ?? []} tokens={t} />
+        {/* footer — hairline rule, place + visits at left, booking at right */}
+        <Box
+          sx={{
+            mt: { xs: '8px', sm: '10px' },
+            pt: { xs: '8px', sm: '10px' },
+            height: { xs: 28, sm: 30 },
+            boxSizing: 'content-box',
+            borderTop: `1px solid ${t.hair}`,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '7px',
+            color: t.faint,
+            fontSize: 11.5,
+          }}
+        >
+          {footerParts.length > 0 && (
+            <>
+              <PlaceOutlined sx={{ fontSize: 13, flex: 'none' }} aria-hidden />
+              <Box component="span" sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {footerParts.join(' · ')}
+              </Box>
+            </>
+          )}
+          <Box sx={{ ml: 'auto', flex: 'none', display: 'flex', alignItems: 'center' }}>
+            <BookingPill locations={r.locations ?? []} tokens={t} />
+          </Box>
         </Box>
       </Box>
     </Box>
