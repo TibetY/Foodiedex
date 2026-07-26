@@ -35,6 +35,27 @@ module.exports = {
         "plugin:react-hooks/recommended",
         "plugin:jsx-a11y/recommended",
       ],
+      rules: {
+        // Barrel imports from these two pull the whole package into every
+        // chunk that touches them — always import the individual subpath
+        // (e.g. `@mui/material/Button`, `@mui/icons-material/Add`) instead.
+        // See scripts/mui-import-codemod.cjs for the one-shot fixer.
+        "no-restricted-imports": [
+          "error",
+          {
+            paths: [
+              {
+                name: "@mui/material",
+                message: "Import from '@mui/material/<Component>' (or '@mui/material/styles' for theme utilities) instead of the package root.",
+              },
+              {
+                name: "@mui/icons-material",
+                message: "Import from '@mui/icons-material/<IconName>' instead of the package root.",
+              },
+            ],
+          },
+        ],
+      },
       settings: {
         react: {
           version: "detect",

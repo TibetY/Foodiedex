@@ -8,17 +8,17 @@ import { safeRedirect } from "~/utils/safeRedirect";
 import { getSiteUrl } from "~/utils/siteUrl.server";
 import i18nextServer from "~/i18next.server";
 import GoogleButton from "~/components/GoogleButton";
-import {
-  Box,
-  Container,
-  Typography,
-  TextField,
-  Button,
-  Alert,
-  IconButton,
-  InputAdornment,
-} from "@mui/material";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import Logo from "~/components/Logo";
+import { useKanpaiTheme } from "~/listTheme";
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 type LoaderData = {
   next: string;
@@ -90,45 +90,43 @@ export default function SignUpPage() {
   const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const { tokens: tk } = useKanpaiTheme();
 
   return (
-    <Container
-      maxWidth="sm"
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        px: { xs: 3, sm: 4 },
-        pt: 8,
-      }}
-    >
+    <Box sx={{ minHeight: "100vh", display: "grid", gridTemplateColumns: { xs: "1fr", md: ".85fr 1fr" }, background: tk.pageBg }}>
       <Box
         sx={{
-          width: "100%",
-          maxWidth: 440,
-          p: { xs: 3, sm: 5 },
-          borderRadius: "24px",
-          background: "#FFFFFF",
-          border: "1px solid #E6E1D4",
-          boxShadow: "0 22px 46px -28px rgba(28,26,20,.4)",
+          display: { xs: "none", md: "flex" },
+          flexDirection: "column",
+          background: tk.accent,
+          color: tk.accentText,
+          padding: "40px",
         }}
-        className="animate-fade-in-up"
       >
+        <Box sx={{ mb: "auto" }}>
+          <Logo />
+        </Box>
+        <Typography sx={{ fontSize: 26, fontWeight: 600, lineHeight: 1.3, mb: 1.5, maxWidth: '20ch' }}>
+          {t("signup.quote", "“Two lists, six friends, one running argument about the ramen place.”")}
+        </Typography>
+      </Box>
+
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", px: { xs: 3, sm: 4 }, py: 8 }}>
+      <Box sx={{ width: "100%", maxWidth: 400 }}>
         <Typography
           variant="h4"
           component="h1"
-          sx={{ fontFamily: "'Instrument Serif', serif", fontWeight: 400, mb: 1, letterSpacing: "-0.01em" }}
+          sx={{ fontWeight: 600, mb: 1, letterSpacing: "-0.02em", color: tk.ink }}
         >
           {t("signup.title")}
         </Typography>
-        <Typography variant="body1" sx={{ color: "text.secondary", mb: 4 }}>
+        <Typography variant="body1" sx={{ color: tk.muted, mb: 4 }}>
           {t("signup.haveAccount")}{" "}
           <Box
             component={Link}
             to={`/login?next=${encodeURIComponent(next)}`}
             sx={{
-              color: "primary.main",
+              color: tk.accent,
               textDecoration: "none",
               fontWeight: 600,
               "&:hover": { textDecoration: "underline" },
@@ -242,6 +240,7 @@ export default function SignUpPage() {
           {t("signup.disclaimer")}
         </Typography>
       </Box>
-    </Container>
+      </Box>
+    </Box>
   );
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { cuisineEmoji, cuisineTint, placeTypeEmoji, dietEmoji, menuTypeEmoji } from './cuisineEmoji';
-import { listTokens } from '~/listTheme';
+import { getListTokens } from '~/listTheme';
 
 describe('cuisineEmoji', () => {
   it('maps known cuisines', () => {
@@ -38,7 +38,7 @@ describe('cuisineEmoji', () => {
 
 describe('cuisineTint', () => {
   it('is stable for a given cuisine and stays inside the tint family', () => {
-    const t = listTokens.light;
+    const t = getListTokens('light', 'matcha');
     const family = [t.tileTint, t.tileTint2, t.tileTint3];
     expect(cuisineTint('Japanese', t)).toBe(cuisineTint('Japanese', t));
     for (const c of ['Japanese', 'Italian', 'Mexican', 'Ramen', 'Other', '']) {

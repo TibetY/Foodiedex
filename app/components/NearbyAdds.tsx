@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { Box, CircularProgress } from '@mui/material';
-import { NearMe } from '@mui/icons-material';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import NearMe from '@mui/icons-material/NearMe';
 import { useTranslation } from 'react-i18next';
 import type { PlaceCandidate } from '~/types/restaurant';
-import { roundedFont, type listTokens } from '~/listTheme';
+import type { ListTokens } from '~/listTheme';
 import RestaurantThumb from '~/components/RestaurantThumb';
 import { formatDistance } from '~/utils/geo';
 import { setCachedLocation } from '~/utils/userLocation.client';
 
-type Tokens = (typeof listTokens)['light'];
+type Tokens = ListTokens;
 type Status = 'idle' | 'locating' | 'loading' | 'ready' | 'empty' | 'denied' | 'unsupported';
 
 interface NearbyAddsProps {
@@ -105,8 +106,7 @@ export default function NearbyAdds({ tokens: t, serifFont, onPick, disabled }: N
           border: `1px solid ${t.pillBorder}`,
           background: 'transparent',
           color: t.accent,
-          borderRadius: '999px',
-          fontFamily: roundedFont,
+          borderRadius: '12px',
           fontSize: '13.5px',
           fontWeight: 700,
           padding: '9px 16px',
@@ -191,7 +191,7 @@ export default function NearbyAdds({ tokens: t, serifFont, onPick, disabled }: N
                 {c.cuisineType ? tr(`cuisines.${c.cuisineType}`, c.cuisineType) : tr('map.cuisineUnknown')}
               </Box>
             </Box>
-            <Box component="span" sx={{ flex: 'none', fontFamily: "'DM Mono',monospace", fontSize: 12, color: t.faint }}>
+            <Box component="span" sx={{ flex: 'none', fontWeight: 600, fontSize: 12, color: t.faint }}>
               {formatDistance(c.distanceM)}
             </Box>
           </Box>

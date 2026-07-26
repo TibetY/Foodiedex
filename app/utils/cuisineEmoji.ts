@@ -4,9 +4,9 @@
  * Tints come from the deliberately tiny tile-tint family (3 values, assigned by
  * a stable hash) so a wall of cuisine tiles reads calm rather than carnival.
  */
-import type { listTokens } from '~/listTheme';
+import type { ListTokens } from '~/listTheme';
 
-type Tokens = (typeof listTokens)['light'];
+type Tokens = ListTokens;
 
 const CUISINE_EMOJI: Record<string, string> = {
   Italian: '🍝',

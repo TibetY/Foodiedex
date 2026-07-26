@@ -15,24 +15,28 @@ export function setCachedLocation(lat: number, lng: number): void {
 }
 
 /**
- * Resolve the user's coordinates WITHOUT ever prompting for permission.
- * Returns the cached value if we already have one (e.g. from a prior "Nearby"
- * tap this session); otherwise, only if the Permissions API reports
- * geolocation is already `granted`, silently reads the position (this can't
- * prompt — permission is already granted) and caches it. Any other case
- * (not yet granted, denied, or the Permissions API is unavailable — e.g.
- * Safari) resolves `null` immediately rather than risking a surprise prompt.
+ * Resolve the user's coordinates for search bias, requesting permission if
+ * needed. Unlike a page-load prompt, this is only ever called from inside
+ * PlaceSearch once the user has actually typed a query — i.e. in direct
+ * response to using the one feature that benefits from it, not proactively
+ * on mount. Returns the cached value if we already have one (e.g. from a
+ * prior "Nearby" tap, or an earlier call this session); if the user has
+ * already said no, skips straight to `null` instead of re-prompting (the
+ * browser wouldn't re-show its own dialog either, but this skips the
+ * `getCurrentPosition` round trip/timeout too).
  */
-export async function getSilentLocation(): Promise<{ lat: number; lng: number } | null> {
+export async function requestLocationForSearch(): Promise<{ lat: number; lng: number } | null> {
   if (cached) return cached;
   if (typeof navigator === 'undefined' || !navigator.geolocation) return null;
-  if (!navigator.permissions?.query) return null;
 
-  try {
-    const status = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
-    if (status.state !== 'granted') return null;
-  } catch {
-    return null;
+  if (navigator.permissions?.query) {
+    try {
+      const status = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+      if (status.state === 'denied') return null;
+    } catch {
+      // Permissions API can't answer for this query in some browsers — fall
+      // through and let getCurrentPosition itself prompt/decide.
+    }
   }
 
   return new Promise((resolve) => {

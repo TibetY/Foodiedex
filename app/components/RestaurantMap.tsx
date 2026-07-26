@@ -4,7 +4,7 @@ import L from 'leaflet';
 import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import { MyLocation } from '@mui/icons-material';
+import MyLocation from '@mui/icons-material/MyLocation';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import type { Restaurant, RestaurantLocation } from '~/types/restaurant';
@@ -31,19 +31,15 @@ interface LocatedPin {
 // Default view when nothing is geocoded yet (Ottawa — "Ottawa & beyond").
 const DEFAULT_CENTER: [number, number] = [45.4215, -75.6972];
 
-/** Half-star-aware rating for the popup: two ★★★★★ layers, the accent one clipped
- *  to the rating fraction (leaflet popups are always on a light surface). */
-function starsHtml(value: number): string {
-  const pct = (Math.max(0, Math.min(5, value)) / 5) * 100;
-  // display:block on both layers keeps them origin-aligned (an inline base gets
-  // baseline-shifted by the popup's line-height while the overlay sits at top:0).
-  const base = 'display:block;letter-spacing:1px;line-height:1;white-space:nowrap;font-size:13px';
-  return (
-    `<span style="position:relative;display:inline-block;vertical-align:middle">` +
-    `<span style="${base};color:rgba(31,30,26,.25)">★★★★★</span>` +
-    `<span style="${base};position:absolute;left:0;top:0;width:${pct}%;overflow:hidden;color:#A8442A">★★★★★</span>` +
-    `</span>`
-  );
+/** Bubble rating for the popup — 5 small dots, filled up to the rounded value
+ *  (leaflet popups are always on a light surface, so the outline is ink-based). */
+function bubblesHtml(value: number, accent: string): string {
+  const rounded = Math.round(Math.max(0, Math.min(5, value)));
+  const dots = Array.from({ length: 5 }, (_, i) => {
+    const filled = i < rounded;
+    return `<span style="display:inline-block;width:8px;height:8px;margin-right:4px;border-radius:50%;box-sizing:border-box;background:${filled ? accent : 'transparent'};border:${filled ? 'none' : '1.5px solid rgba(43,43,43,.25)'}"></span>`;
+  }).join('');
+  return `<span style="display:inline-flex;align-items:center;vertical-align:middle">${dots}</span>`;
 }
 
 /** Escape user-supplied text before it goes into a Leaflet popup's innerHTML. */
@@ -75,7 +71,7 @@ function pinIcon(accent: string, active = false) {
 
 /** Build a pin's popup HTML — a small card peek: photo, name, rating, cuisine,
  *  reservation/walk-in. */
-function popupHtml(pin: LocatedPin, t: TFunction): string {
+function popupHtml(pin: LocatedPin, t: TFunction, accent: string): string {
   const { restaurant: r, location } = pin;
   const title = location.label ? `${r.name} (${location.label})` : r.name;
   let html = '';
@@ -84,7 +80,7 @@ function popupHtml(pin: LocatedPin, t: TFunction): string {
   }
   html += `<strong>${escapeHtml(title)}</strong>`;
   if ((r.rating ?? 0) > 0) {
-    html += `<br/>${starsHtml(r.rating ?? 0)}`;
+    html += `<br/>${bubblesHtml(r.rating ?? 0, accent)}`;
   }
   if (r.cuisineType) {
     html += `<br/>${escapeHtml(t(`cuisines.${r.cuisineType}`, r.cuisineType))}`;
@@ -170,7 +166,7 @@ function ClusterLayer({
     for (const pin of points) {
       const active = pin.restaurantKey === hoveredKeyRef.current;
       const marker = L.marker([pin.lat, pin.lng], { icon: pinIcon(accent, active) });
-      marker.bindPopup(popupHtml(pin, tRef.current));
+      marker.bindPopup(popupHtml(pin, tRef.current, accent));
       marker.on('click', () => onSelectRef.current(pin.restaurant));
       marker.on('mouseover', () => onHoverRef.current?.(pin.restaurantKey));
       marker.on('mouseout', () => onHoverRef.current?.(null));
