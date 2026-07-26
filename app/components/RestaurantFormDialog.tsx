@@ -11,11 +11,8 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import FormGroup from '@mui/material/FormGroup';
 import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
-import ToggleButton from '@mui/material/ToggleButton';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Collapse from '@mui/material/Collapse';
@@ -50,6 +47,7 @@ import type { ListTokens } from '~/listTheme';
 import PlaceSearch from '~/components/PlaceSearch';
 import NearbyAdds from '~/components/NearbyAdds';
 import { BubbleInput } from '~/components/Bubbles';
+import { placeTypeEmoji, dietEmoji, menuTypeEmoji } from '~/utils/cuisineEmoji';
 
 type Tokens = ListTokens;
 
@@ -876,31 +874,51 @@ export default function RestaurantFormDialog({
             >
               {t('form.status')}
             </Typography>
-            <ToggleButtonGroup
-              exclusive
-              value={formData.status || 'want'}
-              onChange={(_, value: RestaurantStatus | null) => {
-                if (!value) return;
-                setFormData((prev) => ({
-                  ...prev,
-                  status: value,
-                  // Marking a place "been" implies at least one visit.
-                  visitCount:
-                    value === 'been' && (prev.visitCount ?? 0) === 0 ? 1 : prev.visitCount,
-                }));
-              }}
-              size="small"
+            {/* Which list — the design's segmented track, not a button group */}
+            <Box
+              role="group"
               aria-label={t('form.statusLabel')}
+              sx={{ display: 'flex', gap: '4px', padding: '4px', background: tokens.track, borderRadius: '999px', width: 'max-content' }}
             >
-              <ToggleButton value="want" aria-label={t('form.wantToTry')}>
-                <BookmarkBorder fontSize="small" sx={{ mr: 0.75 }} />
-                {t('form.wantToTry')}
-              </ToggleButton>
-              <ToggleButton value="been" aria-label={t('form.been')}>
-                <Check fontSize="small" sx={{ mr: 0.75 }} />
-                {t('form.been')}
-              </ToggleButton>
-            </ToggleButtonGroup>
+              {(['want', 'been'] as RestaurantStatus[]).map((value) => {
+                const on = (formData.status || 'want') === value;
+                return (
+                  <Box
+                    key={value}
+                    component="button"
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: value,
+                        // Marking a place "been" implies at least one visit.
+                        visitCount:
+                          value === 'been' && (prev.visitCount ?? 0) === 0 ? 1 : prev.visitCount,
+                      }))
+                    }
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      border: 0,
+                      cursor: 'pointer',
+                      font: 'inherit',
+                      fontSize: '13px',
+                      fontWeight: on ? 600 : 400,
+                      padding: '8px 18px',
+                      borderRadius: '999px',
+                      background: on ? tokens.cardBg : 'transparent',
+                      color: on ? tokens.ink : tokens.muted,
+                      boxShadow: on ? tokens.shadow1 : 'none',
+                    }}
+                  >
+                    {value === 'want' ? <BookmarkBorder sx={{ fontSize: 16 }} /> : <Check sx={{ fontSize: 16 }} />}
+                    {value === 'want' ? t('form.wantToTry') : t('form.been')}
+                  </Box>
+                );
+              })}
+            </Box>
           </Grid>
 
           {/* Favourite + times visited */}
@@ -989,23 +1007,50 @@ export default function RestaurantFormDialog({
             </TextField>
           </Grid>
           <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              select
-              label={t('form.priceRange')}
-              value={formData.priceRange}
-              onChange={(e) => {
-                priceTouched.current = true;
-                setFormData({ ...formData, priceRange: e.target.value });
-              }}
-              sx={glowSx('price')}
+            <Typography
+              component="span"
+              sx={{ display: 'block', mb: 0.75, fontWeight: 500, color: 'text.secondary', fontSize: '0.875rem' }}
             >
-              {priceRanges.map((range) => (
-                <MenuItem key={range} value={range}>
-                  {range}
-                </MenuItem>
-              ))}
-            </TextField>
+              {t('form.priceRange')}
+            </Typography>
+            {/* Cost as the design's $ chips rather than a dropdown */}
+            <Box
+              role="group"
+              aria-label={t('form.priceRange')}
+              sx={{ display: 'flex', gap: '6px', flexWrap: 'wrap', minHeight: 44, alignItems: 'center', ...glowBoxSx('price') }}
+            >
+              {priceRanges.map((range) => {
+                const on = formData.priceRange === range;
+                return (
+                  <Box
+                    key={range}
+                    component="button"
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => {
+                      priceTouched.current = true;
+                      // Tapping the active chip clears it, so "no price yet"
+                      // stays reachable without a separate Any option.
+                      setFormData({ ...formData, priceRange: on ? '' : range });
+                    }}
+                    sx={{
+                      border: on ? '1px solid transparent' : `1px solid ${tokens.pillBorder}`,
+                      cursor: 'pointer',
+                      font: 'inherit',
+                      fontSize: '13px',
+                      fontWeight: on ? 600 : 400,
+                      letterSpacing: '.04em',
+                      padding: '8px 16px',
+                      borderRadius: '999px',
+                      background: on ? tokens.accent : tokens.cardBg,
+                      color: on ? tokens.accentText : tokens.muted,
+                    }}
+                  >
+                    {range}
+                  </Box>
+                );
+              })}
+            </Box>
           </Grid>
 
           {/* Custom cuisine — shown only when "Other" is selected */}
@@ -1028,21 +1073,16 @@ export default function RestaurantFormDialog({
             <Typography component="label" sx={sectionLabelSx}>
               {t('form.placeTypes')}
             </Typography>
-            <Box sx={glowBoxSx('placeTypes')}>
-              <FormGroup row>
-                {placeTypes.map((type) => (
-                  <FormControlLabel
-                    key={type}
-                    control={
-                      <Checkbox
-                        checked={formData.placeTypes?.includes(type) ?? false}
-                        onChange={() => toggleArrayValue('placeTypes', type)}
-                      />
-                    }
-                    label={t(`placeTypes.${type}`, type)}
-                  />
-                ))}
-              </FormGroup>
+            <Box sx={{ ...glowBoxSx('placeTypes'), display: 'flex', gap: '7px', flexWrap: 'wrap' }}>
+              {placeTypes.map((type) => (
+                <TagChip
+                  key={type}
+                  tokens={tokens}
+                  label={`${placeTypeEmoji(type)} ${t(`placeTypes.${type}`, type)}`}
+                  selected={formData.placeTypes?.includes(type) ?? false}
+                  onClick={() => toggleArrayValue('placeTypes', type)}
+                />
+              ))}
             </Box>
           </Grid>
 
@@ -1051,20 +1091,17 @@ export default function RestaurantFormDialog({
             <Typography component="label" sx={sectionLabelSx}>
               {t('form.menuTypes')}
             </Typography>
-            <FormGroup row>
+            <Box sx={{ display: 'flex', gap: '7px', flexWrap: 'wrap' }}>
               {menuTypes.map((type) => (
-                <FormControlLabel
+                <TagChip
                   key={type}
-                  control={
-                    <Checkbox
-                      checked={formData.menuTypes?.includes(type) ?? false}
-                      onChange={() => toggleArrayValue('menuTypes', type)}
-                    />
-                  }
-                  label={t(`menuTypes.${type}`, type)}
+                  tokens={tokens}
+                  label={`${menuTypeEmoji(type)} ${t(`menuTypes.${type}`, type)}`}
+                  selected={formData.menuTypes?.includes(type) ?? false}
+                  onClick={() => toggleArrayValue('menuTypes', type)}
                 />
               ))}
-            </FormGroup>
+            </Box>
           </Grid>
 
           {/* Dietary options — multi-select */}
@@ -1072,21 +1109,16 @@ export default function RestaurantFormDialog({
             <Typography component="label" sx={sectionLabelSx}>
               {t('form.dietaryTags')}
             </Typography>
-            <Box sx={glowBoxSx('dietary')}>
-              <FormGroup row>
-                {dietaryTags.map((tag) => (
-                  <FormControlLabel
-                    key={tag}
-                    control={
-                      <Checkbox
-                        checked={formData.dietaryTags?.includes(tag) ?? false}
-                        onChange={() => toggleArrayValue('dietaryTags', tag)}
-                      />
-                    }
-                    label={t(`dietary.${tag}`, tag)}
-                  />
-                ))}
-              </FormGroup>
+            <Box sx={{ ...glowBoxSx('dietary'), display: 'flex', gap: '7px', flexWrap: 'wrap' }}>
+              {dietaryTags.map((tag) => (
+                <TagChip
+                  key={tag}
+                  tokens={tokens}
+                  label={`${dietEmoji(tag)} ${t(`dietary.${tag}`, tag)}`}
+                  selected={formData.dietaryTags?.includes(tag) ?? false}
+                  onClick={() => toggleArrayValue('dietaryTags', tag)}
+                />
+              ))}
             </Box>
           </Grid>
 
@@ -1555,5 +1587,45 @@ export default function RestaurantFormDialog({
         )}
       </DialogActions>
     </Dialog>
+  );
+}
+
+/**
+ * A selectable tag pill — the form's counterpart to the chips the cards and
+ * toolbar use, replacing the old checkbox rows so tags read the same way
+ * everywhere in the app.
+ */
+function TagChip({
+  tokens,
+  label,
+  selected,
+  onClick,
+}: {
+  tokens: Tokens;
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Box
+      component="button"
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      sx={{
+        border: selected ? '1px solid transparent' : `1px solid ${tokens.pillBorder}`,
+        cursor: 'pointer',
+        font: 'inherit',
+        fontSize: '12px',
+        fontWeight: selected ? 600 : 400,
+        padding: '7px 15px',
+        borderRadius: '999px',
+        background: selected ? tokens.accent : tokens.cardBg,
+        color: selected ? tokens.accentText : tokens.muted,
+        transition: 'background .12s ease, color .12s ease',
+      }}
+    >
+      {label}
+    </Box>
   );
 }

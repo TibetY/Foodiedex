@@ -536,7 +536,9 @@
     "cancel": "Annuler",
     "done": "Terminé",
     "somethingWrong": "Une erreur s'est produite",
-    "couldNotCopy": "Impossible de copier le lien"
+    "couldNotCopy": "Impossible de copier le lien",
+    "editorNote": "Peut ajouter des adresses et les noter",
+    "viewerNote": "Peut voir la liste et les notes, sans rien ajouter"
   },
   "shared": {
     "byline": "Une liste de {{name}}",

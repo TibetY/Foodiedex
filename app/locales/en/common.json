@@ -536,7 +536,9 @@
     "cancel": "Cancel",
     "done": "Done",
     "somethingWrong": "Something went wrong",
-    "couldNotCopy": "Could not copy link"
+    "couldNotCopy": "Could not copy link",
+    "editorNote": "Can add spots and rate them",
+    "viewerNote": "Can see the list and the notes, but not add"
   },
   "shared": {
     "byline": "A list by {{name}}",
