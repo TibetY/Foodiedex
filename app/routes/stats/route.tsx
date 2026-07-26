@@ -3,8 +3,10 @@ import type { LoaderFunction, LinksFunction } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
 import { useLoaderData, Link } from '@remix-run/react';
 import leafletStylesHref from 'leaflet/dist/leaflet.css?url';
-import { Box, Button, ThemeProvider } from '@mui/material';
-import { ArrowBack, Download } from '@mui/icons-material';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import ArrowBack from '@mui/icons-material/ArrowBack';
+import Download from '@mui/icons-material/Download';
 import { useTranslation } from 'react-i18next';
 import { createSupabaseServerClient } from '~/supabase.server';
 import { getLists, ensureDefaultList } from '~/services/lists.server';
@@ -13,13 +15,7 @@ import { getProfile } from '~/services/profiles.server';
 import type { Restaurant } from '~/types/restaurant';
 import { computeFoodStats, type LabelCount } from '~/utils/foodStats';
 import { downloadShareCard, type ShareSize } from '~/utils/shareCard.client';
-import {
-  listTokens,
-  makeListTheme,
-  getStoredMode,
-  storeMode,
-  type ListMode,
-} from '~/listTheme';
+import { useKanpaiTheme, type ListTokens } from '~/listTheme';
 import LanguageSwitcher from '~/components/LanguageSwitcher';
 import type { RestaurantMapProps } from '~/components/RestaurantMap';
 
@@ -75,18 +71,9 @@ export default function StatsPage() {
   const { restaurants, listId, listName } = useLoaderData<LoaderData>();
   const { t: tr } = useTranslation();
 
-  const [mode, setMode] = useState<ListMode>('light');
+  const { mode, accent, tokens: t, setMode } = useKanpaiTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  useEffect(() => setMode(getStoredMode()), []);
-  const changeMode = (m: ListMode) => {
-    setMode(m);
-    storeMode(m);
-  };
-
-  const t = listTokens[mode];
-  const muiTheme = useMemo(() => makeListTheme(mode), [mode]);
-  const serif = "'Instrument Serif',serif";
 
   const stats = useMemo(() => computeFoodStats(restaurants), [restaurants]);
   const hasMap = useMemo(
@@ -102,6 +89,7 @@ export default function StatsPage() {
   const share = (size: ShareSize) =>
     downloadShareCard(stats, {
       mode,
+      accent,
       size,
       listName,
       brand: tr('brand'),
@@ -116,16 +104,13 @@ export default function StatsPage() {
     });
 
   return (
-    <ThemeProvider theme={muiTheme}>
       <Box
-        data-theme={mode}
         sx={{
           minHeight: '100dvh',
           display: 'flex',
           flexDirection: 'column',
           background: t.pageBg,
           color: t.ink,
-          fontFamily: "'DM Sans',sans-serif",
         }}
       >
         {/* header */}
@@ -151,9 +136,9 @@ export default function StatsPage() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <LanguageSwitcher />
             <Box sx={{ display: 'flex', background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px', padding: '3px' }}>
-              <Box component="button" onClick={() => changeMode('light')} aria-label={tr('dashboard.themeLight')} aria-pressed={mode === 'light'}
+              <Box component="button" onClick={() => setMode('light')} aria-label={tr('dashboard.themeLight')} aria-pressed={mode === 'light'}
                 sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, background: mode === 'light' ? t.accent : 'transparent', color: mode === 'light' ? t.accentText : t.faint }}>☀</Box>
-              <Box component="button" onClick={() => changeMode('dark')} aria-label={tr('dashboard.themeDark')} aria-pressed={mode === 'dark'}
+              <Box component="button" onClick={() => setMode('dark')} aria-label={tr('dashboard.themeDark')} aria-pressed={mode === 'dark'}
                 sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, background: mode === 'dark' ? t.accent : 'transparent', color: mode === 'dark' ? t.accentText : t.faint }}>☾</Box>
             </Box>
           </Box>
@@ -166,7 +151,7 @@ export default function StatsPage() {
 
           {stats.total === 0 ? (
             <Box sx={{ mt: 4, py: { xs: 6, md: 10 }, textAlign: 'center', border: `1px solid ${t.border}`, borderRadius: '16px', background: t.cardBg }}>
-              <Box sx={{ fontFamily: serif, fontSize: 30, mb: 1 }}>{tr('stats.emptyTitle')}</Box>
+              <Box sx={{ fontWeight: 600, fontSize: 30, mb: 1 }}>{tr('stats.emptyTitle')}</Box>
               <Box sx={{ color: t.muted, fontSize: 15, mb: 3 }}>{tr('stats.emptyBody')}</Box>
               <Button component={Link} to={backHref} variant="contained">{tr('stats.back')}</Button>
             </Box>
@@ -174,10 +159,10 @@ export default function StatsPage() {
             <>
               {/* hero */}
               <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, flexWrap: 'wrap' }}>
-                <Box component="h1" sx={{ fontFamily: serif, fontWeight: 400, fontSize: { xs: 72, md: 120 }, lineHeight: 0.95, m: 0, color: t.ink }}>
+                <Box component="h1" sx={{ fontWeight: 800, fontSize: { xs: 72, md: 120 }, lineHeight: 0.95, m: 0, color: t.ink }}>
                   {stats.total}
                 </Box>
-                <Box component="span" sx={{ fontFamily: serif, fontSize: { xs: 30, md: 44 }, color: t.accent }}>
+                <Box component="span" sx={{ fontWeight: 600, fontSize: { xs: 30, md: 44 }, color: t.accent }}>
                   {tr('stats.spotsWord')}
                 </Box>
               </Box>
@@ -191,19 +176,19 @@ export default function StatsPage() {
 
               {/* stat tiles */}
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,1fr)', sm: 'repeat(3,1fr)', md: 'repeat(5,1fr)' }, gap: '12px', mt: 4 }}>
-                <StatTile tokens={t} serif={serif} value={stats.beenCount} label={tr('stats.been')} />
-                <StatTile tokens={t} serif={serif} value={stats.wantCount} label={tr('stats.want')} />
-                <StatTile tokens={t} serif={serif} value={stats.favoriteCount} label={tr('stats.favorites')} />
-                <StatTile tokens={t} serif={serif} value={stats.averageRating ?? '—'} label={tr('stats.avgRating')} />
-                <StatTile tokens={t} serif={serif} value={stats.totalMichelinStars} label={tr('stats.michelin')} />
+                <StatTile tokens={t} value={stats.beenCount} label={tr('stats.been')} />
+                <StatTile tokens={t} value={stats.wantCount} label={tr('stats.want')} />
+                <StatTile tokens={t} value={stats.favoriteCount} label={tr('stats.favorites')} />
+                <StatTile tokens={t} value={stats.averageRating ?? '—'} label={tr('stats.avgRating')} />
+                <StatTile tokens={t} value={stats.totalMichelinStars} label={tr('stats.michelin')} />
               </Box>
 
               {/* breakdowns */}
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: { xs: 3, md: 4 }, mt: 5 }}>
-                <BarSection tokens={t} serif={serif} title={tr('stats.topCuisines')} rows={stats.cuisines.slice(0, 6)} />
-                <BarSection tokens={t} serif={serif} title={tr('stats.cities')} rows={stats.cities.slice(0, 6)} emptyLabel={tr('stats.noCities')} />
-                <BarSection tokens={t} serif={serif} title={tr('stats.priceRange')} rows={stats.priceTiers} mono />
-                <MostVisited tokens={t} serif={serif} title={tr('stats.mostVisited')} rows={stats.topVisited} visitsLabel={(n) => tr('dashboard.visitsCount', { count: n })} emptyLabel={tr('stats.noVisits')} />
+                <BarSection tokens={t} title={tr('stats.topCuisines')} rows={stats.cuisines.slice(0, 6)} />
+                <BarSection tokens={t} title={tr('stats.cities')} rows={stats.cities.slice(0, 6)} emptyLabel={tr('stats.noCities')} />
+                <BarSection tokens={t} title={tr('stats.priceRange')} rows={stats.priceTiers} mono />
+                <MostVisited tokens={t} title={tr('stats.mostVisited')} rows={stats.topVisited} visitsLabel={(n) => tr('dashboard.visitsCount', { count: n })} emptyLabel={tr('stats.noVisits')} />
               </Box>
 
               {/* map */}
@@ -222,7 +207,7 @@ export default function StatsPage() {
 
               {/* share */}
               <Box sx={{ mt: 5, padding: { xs: 3, md: 4 }, borderRadius: '18px', border: `1px solid ${t.border}`, background: t.cardBg }}>
-                <Box sx={{ fontFamily: serif, fontSize: { xs: 24, md: 30 }, color: t.ink }}>{tr('stats.shareTitle')}</Box>
+                <Box sx={{ fontWeight: 600, fontSize: { xs: 24, md: 30 }, color: t.ink }}>{tr('stats.shareTitle')}</Box>
                 <Box sx={{ color: t.muted, fontSize: 14.5, mt: 1, mb: 2.5, maxWidth: 520 }}>{tr('stats.shareBody')}</Box>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                   <Button onClick={() => share('square')} variant="contained" startIcon={<Download />}>{tr('stats.downloadSquare')}</Button>
@@ -233,11 +218,10 @@ export default function StatsPage() {
           )}
         </Box>
       </Box>
-    </ThemeProvider>
   );
 }
 
-type Tokens = (typeof listTokens)['light'];
+type Tokens = ListTokens;
 
 function SectionTitle({ children, tokens: t }: { children: React.ReactNode; tokens: Tokens }) {
   return (
@@ -247,10 +231,10 @@ function SectionTitle({ children, tokens: t }: { children: React.ReactNode; toke
   );
 }
 
-function StatTile({ tokens: t, serif, value, label }: { tokens: Tokens; serif: string; value: number | string; label: string }) {
+function StatTile({ tokens: t, value, label }: { tokens: Tokens; value: number | string; label: string }) {
   return (
     <Box sx={{ padding: '16px 18px', borderRadius: '14px', border: `1px solid ${t.border}`, background: t.cardBg }}>
-      <Box sx={{ fontFamily: serif, fontSize: 34, lineHeight: 1, color: t.ink }}>{value}</Box>
+      <Box sx={{ fontWeight: 800, fontSize: 34, lineHeight: 1, color: t.ink }}>{value}</Box>
       <Box sx={{ color: t.muted, fontSize: 12.5, mt: '6px' }}>{label}</Box>
     </Box>
   );
@@ -258,14 +242,12 @@ function StatTile({ tokens: t, serif, value, label }: { tokens: Tokens; serif: s
 
 function BarSection({
   tokens: t,
-  serif,
   title,
   rows,
   mono,
   emptyLabel,
 }: {
   tokens: Tokens;
-  serif: string;
   title: string;
   rows: LabelCount[];
   mono?: boolean;
@@ -281,13 +263,13 @@ function BarSection({
         ) : (
           rows.map((r) => (
             <Box key={r.label} sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Box sx={{ width: 120, flex: 'none', fontFamily: mono ? "'DM Mono',monospace" : serif, fontSize: mono ? 14 : 16, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <Box sx={{ width: 120, flex: 'none', fontWeight: mono ? 600 : 400, fontSize: mono ? 14 : 16, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {r.label}
               </Box>
               <Box sx={{ flex: 1, height: 10, borderRadius: '999px', background: t.skeleton, overflow: 'hidden' }}>
                 <Box sx={{ width: `${Math.max(6, (r.count / max) * 100)}%`, height: '100%', background: t.accent, borderRadius: '999px' }} />
               </Box>
-              <Box sx={{ width: 34, flex: 'none', textAlign: 'right', fontFamily: "'DM Mono',monospace", fontSize: 13, color: t.muted }}>{r.count}</Box>
+              <Box sx={{ width: 34, flex: 'none', textAlign: 'right', fontWeight: 600, fontSize: 13, color: t.muted }}>{r.count}</Box>
             </Box>
           ))
         )}
@@ -298,14 +280,12 @@ function BarSection({
 
 function MostVisited({
   tokens: t,
-  serif,
   title,
   rows,
   visitsLabel,
   emptyLabel,
 }: {
   tokens: Tokens;
-  serif: string;
   title: string;
   rows: { name: string; visitCount: number }[];
   visitsLabel: (n: number) => string;
@@ -320,8 +300,8 @@ function MostVisited({
         ) : (
           rows.map((r, i) => (
             <Box key={`${r.name}-${i}`} sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Box sx={{ fontFamily: serif, fontSize: 18, color: t.accent, width: 22, flex: 'none' }}>{i + 1}</Box>
-              <Box sx={{ flex: 1, fontFamily: serif, fontSize: 16, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</Box>
+              <Box sx={{ fontWeight: 600, fontSize: 18, color: t.accent, width: 22, flex: 'none' }}>{i + 1}</Box>
+              <Box sx={{ flex: 1, fontWeight: 600, fontSize: 16, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</Box>
               <Box sx={{ color: t.muted, fontSize: 12.5, flex: 'none' }}>{visitsLabel(r.visitCount)}</Box>
             </Box>
           ))

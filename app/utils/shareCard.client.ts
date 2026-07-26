@@ -1,5 +1,5 @@
 import type { FoodStats } from '~/utils/foodStats';
-import { listTokens, type ListMode } from '~/listTheme';
+import { getListTokens, type ListMode, type AccentName } from '~/listTheme';
 
 export type ShareSize = 'square' | 'story';
 
@@ -10,6 +10,7 @@ const DIMENSIONS: Record<ShareSize, { w: number; h: number }> = {
 
 interface ShareCardOptions {
   mode: ListMode;
+  accent: AccentName;
   size: ShareSize;
   listName: string;
   brand: string;
@@ -24,20 +25,17 @@ interface ShareCardOptions {
   };
 }
 
-const SERIF = '"Instrument Serif", Georgia, serif';
-const SANS = '"DM Sans", system-ui, sans-serif';
-const MONO = '"DM Mono", ui-monospace, monospace';
+const SANS = '"Archivo", system-ui, sans-serif';
 
-/** Best-effort: make sure the brand fonts are ready before we rasterize text. */
+/** Best-effort: make sure the brand font is ready before we rasterize text. */
 async function ensureFonts(): Promise<void> {
   const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
   if (!fonts) return;
   try {
     await Promise.all([
-      fonts.load(`400 120px ${SERIF}`),
       fonts.load(`400 40px ${SANS}`),
       fonts.load(`600 40px ${SANS}`),
-      fonts.load(`500 40px ${MONO}`),
+      fonts.load(`800 120px ${SANS}`),
     ]);
     await fonts.ready;
   } catch {
@@ -78,7 +76,7 @@ export async function renderShareCard(
   canvas.height = h;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
-  const t = listTokens[opts.mode];
+  const t = getListTokens(opts.mode, opts.accent);
   await ensureFonts();
 
   const margin = Math.round(w * 0.09);
@@ -108,7 +106,7 @@ export async function renderShareCard(
   ctx.fill();
   ctx.restore();
   ctx.fillStyle = t.ink;
-  ctx.font = `400 ${Math.round(w * 0.045)}px ${SERIF}`;
+  ctx.font = `800 ${Math.round(w * 0.042)}px ${SANS}`;
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
   ctx.fillText(opts.brand, margin + chip * 1.6, y + chip / 2);
@@ -123,11 +121,11 @@ export async function renderShareCard(
   // hero number
   y += Math.round(w * 0.155);
   ctx.fillStyle = t.ink;
-  ctx.font = `400 ${Math.round(w * 0.2)}px ${SERIF}`;
+  ctx.font = `800 ${Math.round(w * 0.19)}px ${SANS}`;
   ctx.fillText(String(stats.total), margin, y);
   const totalW = ctx.measureText(String(stats.total)).width;
   ctx.fillStyle = t.accent;
-  ctx.font = `400 ${Math.round(w * 0.06)}px ${SERIF}`;
+  ctx.font = `600 ${Math.round(w * 0.06)}px ${SANS}`;
   ctx.fillText(opts.labels.spots, margin + totalW + Math.round(w * 0.03), y);
 
   // sub-line: cuisines · cities · visited
@@ -165,7 +163,7 @@ export async function renderShareCard(
   const barMax = contentW - labelW - Math.round(w * 0.07);
   for (const c of top) {
     ctx.fillStyle = t.ink;
-    ctx.font = `400 ${Math.round(w * 0.035)}px ${SERIF}`;
+    ctx.font = `600 ${Math.round(w * 0.032)}px ${SANS}`;
     ctx.textBaseline = 'middle';
     ctx.fillText(c.label, margin, y + rowH / 2);
     // track
@@ -179,7 +177,7 @@ export async function renderShareCard(
     ctx.fill();
     // count
     ctx.fillStyle = t.muted;
-    ctx.font = `500 ${Math.round(w * 0.028)}px ${MONO}`;
+    ctx.font = `600 ${Math.round(w * 0.028)}px ${SANS}`;
     ctx.textAlign = 'right';
     ctx.fillText(String(c.count), w - margin, y + rowH / 2);
     ctx.textAlign = 'left';

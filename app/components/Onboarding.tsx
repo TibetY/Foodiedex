@@ -1,16 +1,19 @@
 import { useState } from 'react';
-import { Box, CircularProgress } from '@mui/material';
-import { Check, ErrorOutline, Add } from '@mui/icons-material';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Check from '@mui/icons-material/Check';
+import ErrorOutline from '@mui/icons-material/ErrorOutline';
+import Add from '@mui/icons-material/Add';
 import { useTranslation } from 'react-i18next';
 import type { PlaceCandidate } from '~/types/restaurant';
-import type { listTokens } from '~/listTheme';
+import type { ListTokens } from '~/listTheme';
 import PlaceSearch from '~/components/PlaceSearch';
 import NearbyAdds from '~/components/NearbyAdds';
 import RestaurantThumb from '~/components/RestaurantThumb';
 import { buildEnrichedRestaurant, type PlaceSeed } from '~/services/placeEnrich.client';
 import { createRestaurant } from '~/services/restaurants.client';
 
-type Tokens = (typeof listTokens)['light'];
+type Tokens = ListTokens;
 
 interface OnboardingProps {
   tokens: Tokens;
@@ -125,7 +128,7 @@ export default function Onboarding({
       className="animate-fade-in-up"
       sx={{ maxWidth: 680, mx: 'auto', mt: { xs: 3, md: 6 }, mb: 6, px: 1, textAlign: 'center' }}
     >
-      <Box component="h2" sx={{ fontFamily: serifFont, fontWeight: 400, fontSize: { xs: 30, md: 40 }, color: t.ink, m: 0, lineHeight: 1.1 }}>
+      <Box component="h2" sx={{ fontFamily: serifFont, fontWeight: 600, letterSpacing: '-.02em', fontSize: { xs: 30, md: 40 }, color: t.ink, m: 0, lineHeight: 1.1 }}>
         {tr('onboarding.title')}
       </Box>
       <Box component="p" sx={{ color: t.muted, fontSize: 15.5, lineHeight: 1.6, mt: 1.5, mb: 3.5, maxWidth: 460, mx: 'auto' }}>
@@ -233,7 +236,6 @@ export default function Onboarding({
                 borderRadius: '10px',
                 background: 'transparent',
                 color: busy ? t.faint : t.accent,
-                fontFamily: "'DM Sans',sans-serif",
                 fontWeight: 600,
                 fontSize: '13.5px',
                 padding: '8px 12px',
@@ -251,7 +253,7 @@ export default function Onboarding({
         component="button"
         type="button"
         onClick={onAddManually}
-        sx={{ mt: 3, border: 'none', background: 'transparent', color: t.muted, fontFamily: "'DM Sans',sans-serif", fontSize: '13.5px', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '3px' }}
+        sx={{ mt: 3, border: 'none', background: 'transparent', color: t.muted, fontSize: '13.5px', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '3px' }}
       >
         {tr('onboarding.manual')}
       </Box>

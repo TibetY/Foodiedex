@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Box } from '@mui/material';
-import type { SxProps, Theme } from '@mui/material';
-import type { listTokens } from '~/listTheme';
+import Box from '@mui/material/Box';
+import { type SxProps, type Theme } from '@mui/material/styles';
+import type { ListTokens } from '~/listTheme';
 
-type Tokens = (typeof listTokens)['light'];
+type Tokens = ListTokens;
 
 interface RestaurantThumbProps {
   image?: string;

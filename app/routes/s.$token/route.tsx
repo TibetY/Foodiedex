@@ -3,8 +3,9 @@ import type { LoaderFunction, ActionFunction, LinksFunction } from '@remix-run/n
 import { json, redirect } from '@remix-run/node';
 import { useLoaderData, Link, Form } from '@remix-run/react';
 import leafletStylesHref from 'leaflet/dist/leaflet.css?url';
-import { Box, Button, ThemeProvider } from '@mui/material';
-import { Bookmark } from '@mui/icons-material';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Bookmark from '@mui/icons-material/Bookmark';
 import { useTranslation } from 'react-i18next';
 import { createSupabaseServerClient } from '~/supabase.server';
 import { getSharedList, forkSharedList, type SharedList } from '~/services/sharedList.server';
@@ -12,16 +13,10 @@ import { decorate } from '~/utils/decorateRestaurant';
 import type { Restaurant } from '~/types/restaurant';
 import RestaurantThumb from '~/components/RestaurantThumb';
 import RestaurantDetailDialog from '~/components/RestaurantDetailDialog';
-import Stars from '~/components/Stars';
+import Bubbles from '~/components/Bubbles';
 import PlaceCard, { BookingPill } from '~/components/PlaceCard';
 import LanguageSwitcher from '~/components/LanguageSwitcher';
-import {
-  listTokens,
-  makeListTheme,
-  getStoredMode,
-  storeMode,
-  type ListMode,
-} from '~/listTheme';
+import { useKanpaiTheme, type ListTokens } from '~/listTheme';
 import type { RestaurantMapProps } from '~/components/RestaurantMap';
 
 const RestaurantMap = lazy<React.ComponentType<RestaurantMapProps>>(() =>
@@ -88,14 +83,9 @@ export default function SharedListPage() {
   const { token, signedIn, shared } = useLoaderData<LoaderData>();
   const { t: tr } = useTranslation();
 
-  const [mode, setMode] = useState<ListMode>('light');
+  const { mode, tokens: t, setMode } = useKanpaiTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  useEffect(() => setMode(getStoredMode()), []);
-  const changeMode = (m: ListMode) => {
-    setMode(m);
-    storeMode(m);
-  };
 
   const [view, setView] = useState<ViewMode>('tile');
   const [filter, setFilter] = useState<FilterMode>('all');
@@ -104,9 +94,7 @@ export default function SharedListPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [selected, setSelected] = useState<Restaurant | null>(null);
 
-  const t = listTokens[mode];
-  const muiTheme = useMemo(() => makeListTheme(mode), [mode]);
-  const serif = "'Instrument Serif',serif";
+  const serif = "'Archivo',sans-serif";
 
   const decorated = useMemo(() => (shared?.restaurants ?? []).map(decorate), [shared]);
 
@@ -159,7 +147,7 @@ export default function SharedListPage() {
     color: view === val ? t.segFg : t.segIdle,
     border: 'none',
     cursor: 'pointer',
-    fontFamily: "'DM Sans',sans-serif",
+
     fontSize: '13.5px',
     fontWeight: 500,
     padding: '7px 18px',
@@ -170,7 +158,7 @@ export default function SharedListPage() {
     color: filter === val ? t.pFg : t.pIdle,
     border: `1px solid ${t.pillBorder}`,
     cursor: 'pointer',
-    fontFamily: "'DM Sans',sans-serif",
+
     fontSize: '13px',
     fontWeight: 500,
     padding: '7px 15px',
@@ -180,9 +168,7 @@ export default function SharedListPage() {
   // ---- Unavailable (missing / revoked / expired) -------------------------
   if (!shared) {
     return (
-      <ThemeProvider theme={muiTheme}>
         <Box
-          data-theme={mode}
           sx={{
             minHeight: '100dvh',
             display: 'flex',
@@ -194,30 +180,25 @@ export default function SharedListPage() {
             px: 3,
             background: t.pageBg,
             color: t.ink,
-            fontFamily: "'DM Sans',sans-serif",
           }}
         >
-          <Box sx={{ fontFamily: serif, fontSize: 34 }}>{tr('shared.unavailableTitle')}</Box>
+          <Box sx={{ fontWeight: 700, fontSize: 34 }}>{tr('shared.unavailableTitle')}</Box>
           <Box sx={{ color: t.muted, maxWidth: 420 }}>{tr('shared.unavailableBody')}</Box>
           <Button component={Link} to="/" variant="contained" sx={{ mt: 1 }}>
             {tr('errors.backHome')}
           </Button>
         </Box>
-      </ThemeProvider>
     );
   }
 
   return (
-    <ThemeProvider theme={muiTheme}>
       <Box
-        data-theme={mode}
         sx={{
           minHeight: '100dvh',
           display: 'flex',
           flexDirection: 'column',
           background: t.pageBg,
           color: t.ink,
-          fontFamily: "'DM Sans',sans-serif",
         }}
       >
         {/* header */}
@@ -257,9 +238,9 @@ export default function SharedListPage() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <LanguageSwitcher />
             <Box sx={{ display: 'flex', background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px', padding: '3px' }}>
-              <Box component="button" onClick={() => changeMode('light')} aria-label={tr('dashboard.themeLight')} aria-pressed={mode === 'light'}
+              <Box component="button" onClick={() => setMode('light')} aria-label={tr('dashboard.themeLight')} aria-pressed={mode === 'light'}
                 sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, background: mode === 'light' ? t.accent : 'transparent', color: mode === 'light' ? t.accentText : t.faint }}>☀</Box>
-              <Box component="button" onClick={() => changeMode('dark')} aria-label={tr('dashboard.themeDark')} aria-pressed={mode === 'dark'}
+              <Box component="button" onClick={() => setMode('dark')} aria-label={tr('dashboard.themeDark')} aria-pressed={mode === 'dark'}
                 sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, background: mode === 'dark' ? t.accent : 'transparent', color: mode === 'dark' ? t.accentText : t.faint }}>☾</Box>
             </Box>
           </Box>
@@ -270,7 +251,7 @@ export default function SharedListPage() {
           {/* title + save-a-copy */}
           <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
             <Box>
-              <Box component="h1" sx={{ fontFamily: serif, fontSize: { xs: 34, md: 44 }, fontWeight: 400, m: 0, lineHeight: 1.05 }}>
+              <Box component="h1" sx={{ fontFamily: serif, fontSize: { xs: 34, md: 44 }, fontWeight: 600, letterSpacing: '-.02em', m: 0, lineHeight: 1.05 }}>
                 {shared.list.name}
               </Box>
               <Box component="p" sx={{ color: t.muted, fontSize: 15, mt: '8px', mb: 0 }}>
@@ -311,7 +292,7 @@ export default function SharedListPage() {
               aria-label={tr('dashboard.searchLabel')}
               sx={{
                 background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px',
-                padding: '8px 16px', color: t.ink, fontFamily: "'DM Sans',sans-serif",
+                padding: '8px 16px', color: t.ink,
                 // ≥16px on phones — iOS auto-zooms on smaller inputs.
                 fontSize: { xs: '16px', sm: '13.5px' },
                 outline: 'none', minWidth: { xs: '100%', sm: 200 }, '::placeholder': { color: t.faint },
@@ -329,7 +310,7 @@ export default function SharedListPage() {
               aria-label={tr('dashboard.sort_recent')}
               sx={{
                 background: 'transparent', border: `1px solid ${t.pillBorder}`, borderRadius: '999px',
-                padding: '7px 14px', color: t.chip, fontFamily: "'DM Sans',sans-serif", fontSize: '13px', cursor: 'pointer',
+                padding: '7px 14px', color: t.chip, fontSize: '13px', cursor: 'pointer',
               }}
             >
               {SORT_MODES.map((m) => (
@@ -369,7 +350,7 @@ export default function SharedListPage() {
                       <Box sx={{ fontSize: 14, fontWeight: 500 }}>{r.name}</Box>
                       <Box sx={{ color: t.muted, fontSize: 12 }}>{r.cuisine}</Box>
                     </Box>
-                    <Box component="span" sx={{ color: t.cost, fontSize: 13, fontWeight: 600, fontFamily: "'DM Mono',monospace" }}>{r.costStr}</Box>
+                    <Box component="span" sx={{ color: t.cost, fontSize: 13, fontWeight: 600 }}>{r.costStr}</Box>
                   </Box>
                 ))}
               </Box>
@@ -393,9 +374,9 @@ export default function SharedListPage() {
                     <Box sx={{ display: { xs: 'none', md: 'flex' }, flex: 'none' }}>
                       <BookingPill locations={r.locations ?? []} tokens={t} />
                     </Box>
-                    <Box sx={{ width: 90, color: t.cost, fontSize: 14, fontWeight: 600, fontFamily: "'DM Mono',monospace", display: { xs: 'none', sm: 'block' } }}>{r.costStr}</Box>
+                    <Box sx={{ width: 90, color: t.cost, fontSize: 14, fontWeight: 600, display: { xs: 'none', sm: 'block' } }}>{r.costStr}</Box>
                     <Box sx={{ width: 110, display: { xs: 'none', sm: 'block' } }}>
-                      {r.rated ? <Stars value={r.rating ?? 0} tokens={t} size={14} letterSpacing="1px" /> : null}
+                      {r.rated ? <Bubbles value={r.rating ?? 0} tokens={t} size={12} gap={5} /> : null}
                     </Box>
                     <StatusLabel been={r.isBeen} tokens={t} tr={tr} />
                   </Box>
@@ -424,12 +405,11 @@ export default function SharedListPage() {
           onDelete={() => undefined}
         />
       </Box>
-    </ThemeProvider>
   );
 }
 
 /** Non-interactive been/want label (the public view never toggles status). */
-function StatusLabel({ been, tokens: t, tr }: { been: boolean; tokens: (typeof listTokens)['light']; tr: (k: string) => string }) {
+function StatusLabel({ been, tokens: t, tr }: { been: boolean; tokens: ListTokens; tr: (k: string) => string }) {
   return (
     <Box component="span" sx={{ background: been ? t.beenBg : t.wantBg, color: been ? t.beenFg : t.wantFg, fontSize: '11.5px', fontWeight: 600, padding: '5px 11px', borderRadius: '999px', whiteSpace: 'nowrap' }}>
       {been ? tr('dashboard.statusBeen') : tr('dashboard.statusWant')}

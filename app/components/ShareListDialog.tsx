@@ -1,23 +1,25 @@
 import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  MenuItem,
-  Typography,
-  Box,
-  IconButton,
-  Avatar,
-  Select,
-  Chip,
-  Alert,
-  CircularProgress,
-  TextField,
-  InputAdornment,
-} from '@mui/material';
-import { Close, Delete, ContentCopy, Link as LinkIcon, Public } from '@mui/icons-material';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import MenuItem from '@mui/material/MenuItem';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import Avatar from '@mui/material/Avatar';
+import Select from '@mui/material/Select';
+import Chip from '@mui/material/Chip';
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
+import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
+import Close from '@mui/icons-material/Close';
+import Delete from '@mui/icons-material/Delete';
+import ContentCopy from '@mui/icons-material/ContentCopy';
+import LinkIcon from '@mui/icons-material/Link';
+import Public from '@mui/icons-material/Public';
 import { useTranslation } from 'react-i18next';
 import type {
   InviteLink,

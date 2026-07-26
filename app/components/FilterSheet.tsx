@@ -1,10 +1,16 @@
 import { useState } from 'react';
-import { Box, Popover, Drawer, useMediaQuery, useTheme } from '@mui/material';
-import { FilterList, ArrowUpward, ArrowDownward } from '@mui/icons-material';
+import Box from '@mui/material/Box';
+import Popover from '@mui/material/Popover';
+import Drawer from '@mui/material/Drawer';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
+import FilterList from '@mui/icons-material/FilterList';
+import ArrowUpward from '@mui/icons-material/ArrowUpward';
+import ArrowDownward from '@mui/icons-material/ArrowDownward';
 import { useTranslation } from 'react-i18next';
-import type { listTokens } from '~/listTheme';
+import type { ListTokens } from '~/listTheme';
 
-type Tokens = (typeof listTokens)['light'];
+type Tokens = ListTokens;
 type MultiSetter = (updater: string[] | ((prev: string[]) => string[])) => void;
 
 interface FilterSheetProps {
@@ -73,7 +79,6 @@ export default function FilterSheet(props: FilterSheetProps) {
     borderRadius: '999px',
     padding: '6px 13px',
     fontSize: '13px',
-    fontFamily: "'DM Sans',sans-serif",
     cursor: 'pointer',
     lineHeight: 1.4,
   });
@@ -119,7 +124,7 @@ export default function FilterSheet(props: FilterSheetProps) {
             {tr('dashboard.anyCost')}
           </Box>
           {props.costOptions.map((c) => (
-            <Box component="button" key={c} type="button" onClick={() => props.setCostFilter(c)} sx={{ ...pillSx(props.costFilter === c), fontFamily: "'DM Mono',monospace" }}>
+            <Box component="button" key={c} type="button" onClick={() => props.setCostFilter(c)} sx={{ ...pillSx(props.costFilter === c), fontWeight: 600 }}>
               {c}
             </Box>
           ))}
@@ -194,7 +199,7 @@ export default function FilterSheet(props: FilterSheetProps) {
           type="button"
           onClick={props.onClear}
           disabled={activeCount === 0}
-          sx={{ border: 'none', background: 'transparent', color: activeCount === 0 ? t.faint : t.muted, fontFamily: "'DM Sans',sans-serif", fontSize: '13.5px', cursor: activeCount === 0 ? 'default' : 'pointer' }}
+          sx={{ border: 'none', background: 'transparent', color: activeCount === 0 ? t.faint : t.muted, fontSize: '13.5px', cursor: activeCount === 0 ? 'default' : 'pointer' }}
         >
           {tr('dashboard.clearFilters')}
         </Box>
@@ -202,7 +207,7 @@ export default function FilterSheet(props: FilterSheetProps) {
           component="button"
           type="button"
           onClick={() => setAnchor(null)}
-          sx={{ border: 'none', background: t.accent, color: t.accentText, fontFamily: "'DM Sans',sans-serif", fontWeight: 600, fontSize: '13.5px', padding: '8px 18px', borderRadius: '10px', cursor: 'pointer' }}
+          sx={{ border: 'none', background: t.accent, color: t.accentText, fontWeight: 600, fontSize: '13.5px', padding: '8px 18px', borderRadius: '10px', cursor: 'pointer' }}
         >
           {tr('filters.done')}
         </Box>
@@ -229,7 +234,6 @@ export default function FilterSheet(props: FilterSheetProps) {
           padding: '7px 15px',
           fontSize: '13px',
           fontWeight: 500,
-          fontFamily: "'DM Sans',sans-serif",
           cursor: 'pointer',
         }}
       >

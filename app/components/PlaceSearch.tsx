@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { Box, CircularProgress } from '@mui/material';
-import { Search, Close } from '@mui/icons-material';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Search from '@mui/icons-material/Search';
+import Close from '@mui/icons-material/Close';
 import { useTranslation } from 'react-i18next';
 import type { PlaceCandidate } from '~/types/restaurant';
-import type { listTokens } from '~/listTheme';
+import type { ListTokens } from '~/listTheme';
 import RestaurantThumb from '~/components/RestaurantThumb';
 import { formatDistance } from '~/utils/geo';
-import { getSilentLocation } from '~/utils/userLocation.client';
+import { requestLocationForSearch } from '~/utils/userLocation.client';
 
-type Tokens = (typeof listTokens)['light'];
+type Tokens = ListTokens;
 
 interface PlaceSearchProps {
   tokens: Tokens;
@@ -49,19 +51,13 @@ export default function PlaceSearch({
   const [loading, setLoading] = useState(false);
   const [active, setActive] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
-  // Resolved once per mount, never re-triggers the search effect below — this
-  // never prompts for permission (see getSilentLocation), so it's safe to
-  // fire on every place-search instance without surprising the user.
+  // Populated on the user's first real query (not on mount — only typing
+  // into the search box counts as the explicit action that warrants asking
+  // for location). Stored in a ref, not state, so resolving it doesn't
+  // retrigger the search effect below; the in-flight search just won't have
+  // a bias yet, and the next keystroke's search will.
   const biasRef = useRef<{ lat: number; lng: number } | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    getSilentLocation().then((loc) => {
-      if (!cancelled) biasRef.current = loc;
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const locationRequestedRef = useRef(false);
 
   const q = query.trim();
   const open = q.length >= MIN_QUERY;
@@ -74,6 +70,12 @@ export default function PlaceSearch({
     }
     let cancelled = false;
     setLoading(true);
+    if (!locationRequestedRef.current) {
+      locationRequestedRef.current = true;
+      requestLocationForSearch().then((loc) => {
+        if (!cancelled) biasRef.current = loc;
+      });
+    }
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       try {
@@ -172,7 +174,6 @@ export default function PlaceSearch({
             outline: 'none',
             background: 'transparent',
             color: t.ink,
-            fontFamily: "'DM Sans',sans-serif",
             // ≥16px on phones — iOS auto-zooms (and stays zoomed) on smaller inputs.
             fontSize: { xs: '16px', sm: '15px' },
             width: '100%',
@@ -262,7 +263,7 @@ export default function PlaceSearch({
                 {c.distanceM != null && (
                   <Box
                     component="span"
-                    sx={{ flex: 'none', fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: t.faint }}
+                    sx={{ flex: 'none', fontWeight: 600, fontSize: 11.5, color: t.faint }}
                   >
                     {formatDistance(c.distanceM)}
                   </Box>

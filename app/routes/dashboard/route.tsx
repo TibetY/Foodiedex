@@ -8,37 +8,32 @@ import {
   useNavigate,
   type ShouldRevalidateFunction,
 } from '@remix-run/react';
-import {
-  Box,
-  IconButton,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  Snackbar,
-  Alert,
-  ThemeProvider,
-  Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-} from '@mui/material';
-import {
-  Add,
-  Logout,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  PersonAddAlt1,
-  Person,
-  Favorite,
-  FavoriteBorder,
-  Close,
-  Search,
-  Insights,
-} from '@mui/icons-material';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import Tooltip from '@mui/material/Tooltip';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Add from '@mui/icons-material/Add';
+import Logout from '@mui/icons-material/Logout';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import PersonAddAlt1 from '@mui/icons-material/PersonAddAlt1';
+import Person from '@mui/icons-material/Person';
+import Favorite from '@mui/icons-material/Favorite';
+import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
+import Close from '@mui/icons-material/Close';
+import Search from '@mui/icons-material/Search';
+import Insights from '@mui/icons-material/Insights';
 import { createSupabaseServerClient } from '~/supabase.server';
 import { getRestaurants } from '~/services/restaurants.server';
 import {
@@ -74,7 +69,7 @@ import ShareListDialog from '~/components/ShareListDialog';
 import Onboarding from '~/components/Onboarding';
 import FilterSheet from '~/components/FilterSheet';
 import SavedViewsBar from '~/components/SavedViewsBar';
-import Stars from '~/components/Stars';
+import Bubbles from '~/components/Bubbles';
 import PlaceCard, { BookingPill, CardAction } from '~/components/PlaceCard';
 import LanguageSwitcher from '~/components/LanguageSwitcher';
 import { uploadRestaurantImage } from '~/services/storage.client';
@@ -105,7 +100,7 @@ export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: leafletStylesHref },
 ];
 import { useTranslation } from 'react-i18next';
-import { listTokens, makeListTheme, getStoredMode, storeMode, type ListMode } from '~/listTheme';
+import { useKanpaiTheme, type ListMode } from '~/listTheme';
 
 /**
  * Turn whatever was thrown into a human-readable message. Supabase/PostgREST
@@ -258,7 +253,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
   return defaultShouldRevalidate;
 };
 
-type ViewMode = 'tile' | 'list' | 'map';
+type ViewMode = 'tile' | 'list' | 'table' | 'map';
 type FilterMode = 'all' | 'been' | 'want';
 type SortMode = 'recent' | 'rating' | 'name' | 'price' | 'visits' | 'favorite';
 const SORT_MODES: SortMode[] = ['recent', 'rating', 'name', 'price', 'visits', 'favorite'];
@@ -304,16 +299,10 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>(initialRestaurants);
-  const [mode, setMode] = useState<ListMode>('light');
+  const { mode, tokens: t, setMode } = useKanpaiTheme();
   // The Leaflet map is client-only; render it after mount.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  // Load the saved theme after mount (avoids SSR/client hydration mismatch).
-  useEffect(() => setMode(getStoredMode()), []);
-  const changeMode = (m: ListMode) => {
-    setMode(m);
-    storeMode(m);
-  };
   const [view, setView] = useState<ViewMode>('tile');
   // Map ↔ side-list hover sync (map view). The id is a restaurant's sync key
   // (`id ?? name`, matching RestaurantMap); refs let a pin-hover scroll its row
@@ -481,9 +470,6 @@ export default function Dashboard() {
     setSearchParams(params, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
-
-  const t = listTokens[mode];
-  const muiTheme = useMemo(() => makeListTheme(mode), [mode]);
 
   const role = activeList?.role ?? 'viewer';
   const canEdit = role === 'owner' || role === 'editor';
@@ -969,8 +955,7 @@ export default function Dashboard() {
   const segBtnStyle = {
     border: 'none',
     cursor: 'pointer',
-    fontFamily: "'DM Sans',sans-serif",
-    fontSize: '13.5px',
+        fontSize: '13.5px',
     fontWeight: 500,
     padding: '7px 18px',
     borderRadius: '999px',
@@ -979,14 +964,13 @@ export default function Dashboard() {
   const filterBtnStyle = {
     border: `1px solid ${t.pillBorder}`,
     cursor: 'pointer',
-    fontFamily: "'DM Sans',sans-serif",
-    fontSize: '13px',
+        fontSize: '13px',
     fontWeight: 500,
     padding: '7px 15px',
     borderRadius: '999px',
   } as const;
 
-  const serif = "'Instrument Serif',serif";
+  const serif = "'Archivo',sans-serif";
 
   const renderAvatar = (m: ListMember, idx: number) => {
     const name = m.profile?.displayName?.trim();
@@ -1020,20 +1004,17 @@ export default function Dashboard() {
   };
 
   return (
-    <ThemeProvider theme={muiTheme}>
       <Box
-        data-theme={mode}
         sx={{
           minHeight: '100dvh',
           display: 'flex',
           flexDirection: 'column',
           background: t.pageBg,
           color: t.ink,
-          fontFamily: "'DM Sans',sans-serif",
           transition: 'background .25s',
           '& *::-webkit-scrollbar': { width: 10, height: 10 },
           '& *::-webkit-scrollbar-thumb': {
-            background: 'rgba(120,110,95,.3)',
+            background: t.skeleton,
             borderRadius: 8,
           },
         }}
@@ -1124,8 +1105,7 @@ export default function Dashboard() {
                   outline: 'none',
                   background: 'transparent',
                   color: t.ink,
-                  fontFamily: "'DM Sans',sans-serif",
-                  fontSize: '13.5px',
+                                    fontSize: '13.5px',
                   width: '100%',
                   '::placeholder': { color: t.faint },
                 }}
@@ -1149,9 +1129,9 @@ export default function Dashboard() {
 
             {/* theme toggle */}
             <Box sx={{ display: 'flex', background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px', padding: '3px' }}>
-              <Box component="button" onClick={() => changeMode('light')} title={tr('dashboard.themeLight')} aria-label={tr('dashboard.themeLight')}
+              <Box component="button" onClick={() => setMode('light')} title={tr('dashboard.themeLight')} aria-label={tr('dashboard.themeLight')}
                 sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, ...themeBtn('light') }}>☀</Box>
-              <Box component="button" onClick={() => changeMode('dark')} title={tr('dashboard.themeDark')} aria-label={tr('dashboard.themeDark')}
+              <Box component="button" onClick={() => setMode('dark')} title={tr('dashboard.themeDark')} aria-label={tr('dashboard.themeDark')}
                 sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, ...themeBtn('dark') }}>☾</Box>
             </Box>
 
@@ -1170,8 +1150,7 @@ export default function Dashboard() {
                     cursor: 'pointer',
                     background: t.accent,
                     color: t.accentText,
-                    fontFamily: "'DM Sans',sans-serif",
-                    fontWeight: 600,
+                                        fontWeight: 600,
                     fontSize: '13.5px',
                     padding: '8px 16px',
                     borderRadius: '999px',
@@ -1264,6 +1243,7 @@ export default function Dashboard() {
             <Box role="group" aria-label={tr('dashboard.viewLabel')} sx={{ display: 'flex', background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px', padding: '4px' }}>
               <Box component="button" aria-pressed={view === 'tile'} onClick={() => setView('tile')} sx={{ ...segBtnStyle, ...seg('tile') }}>{tr('dashboard.viewTile')}</Box>
               <Box component="button" aria-pressed={view === 'list'} onClick={() => setView('list')} sx={{ ...segBtnStyle, ...seg('list') }}>{tr('dashboard.viewList')}</Box>
+              <Box component="button" aria-pressed={view === 'table'} onClick={() => setView('table')} sx={{ ...segBtnStyle, ...seg('table') }}>{tr('dashboard.viewTable', 'Table')}</Box>
               <Box component="button" aria-pressed={view === 'map'} onClick={() => setView('map')} sx={{ ...segBtnStyle, ...seg('map') }}>{tr('dashboard.viewMap')}</Box>
             </Box>
           </Box>
@@ -1296,8 +1276,7 @@ export default function Dashboard() {
                 outline: 'none',
                 background: 'transparent',
                 color: t.ink,
-                fontFamily: "'DM Sans',sans-serif",
-                // ≥16px so iOS doesn't auto-zoom (and stay zoomed) on focus.
+                                // ≥16px so iOS doesn't auto-zoom (and stay zoomed) on focus.
                 fontSize: '16px',
                 width: '100%',
                 '::placeholder': { color: t.faint },
@@ -1431,8 +1410,7 @@ export default function Dashboard() {
                     cursor: 'pointer',
                     background: t.accent,
                     color: t.accentText,
-                    fontFamily: "'DM Sans',sans-serif",
-                    fontWeight: 600,
+                                        fontWeight: 600,
                     fontSize: '14px',
                     padding: '10px 20px',
                     borderRadius: '999px',
@@ -1566,9 +1544,9 @@ export default function Dashboard() {
                         <Box sx={{ display: { xs: 'none', md: 'flex' }, flex: 'none' }}>
                           <BookingPill locations={r.locations ?? []} tokens={t} />
                         </Box>
-                        <Box sx={{ width: 90, color: t.cost, fontSize: 14, fontWeight: 600, fontFamily: "'DM Mono',monospace", display: { xs: 'none', sm: 'block' } }}>{r.costStr}</Box>
+                        <Box sx={{ width: 90, color: t.cost, fontSize: 14, fontWeight: 600, display: { xs: 'none', sm: 'block' } }}>{r.costStr}</Box>
                         <Box sx={{ width: 110, display: { xs: 'none', sm: 'block' } }}>
-                          {r.rated ? <Stars value={r.rating ?? 0} tokens={t} size={14} letterSpacing="1px" /> : null}
+                          {r.rated ? <Bubbles value={r.rating ?? 0} tokens={t} size={12} gap={5} /> : null}
                         </Box>
                         {canEdit ? (
                           <IconButton
@@ -1617,6 +1595,59 @@ export default function Dashboard() {
                         )}
                       </Box>
                     ))}
+                  </Box>
+                </Box>
+              )}
+
+              {/* TABLE — dense index for when the list gets long */}
+              {view === 'table' && (
+                <Box sx={{ padding: { xs: '16px 0 96px', sm: '24px 0 40px' }, overflowX: 'auto' }}>
+                  <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+                    <Box component="thead">
+                      <Box component="tr">
+                        {[
+                          '', tr('dashboard.tableColPlace', 'Place'), tr('dashboard.tableColCuisine', 'Cuisine'),
+                          tr('dashboard.tableColRating', 'Rating'), tr('dashboard.tableColCost', 'Cost'),
+                          tr('dashboard.tableColCity', 'City'), tr('dashboard.tableColStatus', 'Status'),
+                        ].map((h) => (
+                          <Box
+                            key={h}
+                            component="th"
+                            sx={{ textAlign: 'left', fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: t.faint, padding: '10px 12px', borderBottom: `2px solid ${t.divider}` }}
+                          >
+                            {h}
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                    <Box component="tbody">
+                      {sorted.map((r) => (
+                        <Box
+                          component="tr"
+                          key={r.id}
+                          onClick={() => handleViewRestaurant(r)}
+                          sx={{ cursor: 'pointer', '&:hover': { background: t.rowHover } }}
+                        >
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, width: 44 }}>
+                            <Box sx={{ width: 32, height: 32, borderRadius: '11px', overflow: 'hidden' }}>
+                              <RestaurantThumb image={r.image} alt={r.name} initial={r.initial} serifFont={serif} tokens={t} initialFontSize={13} sx={{ width: '100%', height: '100%' }} />
+                            </Box>
+                          </Box>
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, fontWeight: 600 }}>{r.name}</Box>
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, color: t.muted, fontSize: 12.5 }}>{r.cuisine}</Box>
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}` }}>
+                            {r.rated ? <Bubbles value={r.rating ?? 0} tokens={t} size={9} gap={4} /> : <Box component="span" sx={{ color: t.notRated, fontSize: 12, fontStyle: 'italic' }}>{tr('dashboard.notRated')}</Box>}
+                          </Box>
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, color: t.cost, fontWeight: 600 }}>{r.costStr}</Box>
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, color: t.muted }}>{r.city ?? '—'}</Box>
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}` }}>
+                            <Box component="span" sx={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: '999px', background: r.isBeen ? t.beenBg : t.wantBg, color: r.isBeen ? t.beenFg : t.wantFg }}>
+                              {r.isBeen ? tr('dashboard.statusBeen') : tr('dashboard.statusWant')}
+                            </Box>
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
                   </Box>
                 </Box>
               )}
@@ -1694,7 +1725,7 @@ export default function Dashboard() {
                           <Box sx={{ fontSize: 14, fontWeight: 500 }}>{r.name}</Box>
                           <Box sx={{ color: t.muted, fontSize: 12 }}>{r.cuisine}</Box>
                         </Box>
-                        <Box component="span" sx={{ color: t.cost, fontSize: 13, fontWeight: 600, fontFamily: "'DM Mono',monospace" }}>{r.costStr}</Box>
+                        <Box component="span" sx={{ color: t.cost, fontSize: 13, fontWeight: 600 }}>{r.costStr}</Box>
                       </Box>
                       );
                     })}
@@ -1910,6 +1941,5 @@ export default function Dashboard() {
           </Alert>
         </Snackbar>
       </Box>
-    </ThemeProvider>
   );
 }

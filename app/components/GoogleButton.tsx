@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { Button, CircularProgress, Divider, Typography, Box, Alert } from "@mui/material";
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
+import Divider from '@mui/material/Divider';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Alert from '@mui/material/Alert';
 import { useTranslation } from "react-i18next";
 import { getSupabaseBrowserClient } from "~/supabase.client";
 

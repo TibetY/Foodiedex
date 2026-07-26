@@ -1,19 +1,18 @@
-import { Box, IconButton } from '@mui/material';
-import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  EventSeat,
-  Favorite,
-  FavoriteBorder,
-} from '@mui/icons-material';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EventSeat from '@mui/icons-material/EventSeat';
+import Favorite from '@mui/icons-material/Favorite';
+import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
 import { useTranslation } from 'react-i18next';
 import type { Restaurant, RestaurantLocation } from '~/types/restaurant';
 import type { DecoratedRestaurant } from '~/utils/decorateRestaurant';
-import type { listTokens } from '~/listTheme';
+import type { ListTokens } from '~/listTheme';
 import RestaurantThumb from '~/components/RestaurantThumb';
-import Stars from '~/components/Stars';
+import Bubbles from '~/components/Bubbles';
 
-type Tokens = (typeof listTokens)['light'];
+type Tokens = ListTokens;
 
 function reservationLabel(platform: string): string {
   if (platform === 'resy') return 'Resy';
@@ -85,7 +84,7 @@ export default function PlaceCard({
       onClick={() => onView(r)}
       sx={{
         border: `1px solid ${t.border}`,
-        borderRadius: '18px',
+        borderRadius: '22px',
         overflow: 'hidden',
         // Grid items default to min-width:auto, so the nowrap name/meta lines
         // would force the card wider than its track on narrow (2-up phone)
@@ -157,8 +156,7 @@ export default function PlaceCard({
               bottom: 10,
               right: 10,
               background: 'rgba(255,255,255,.9)',
-              color: '#2B2420',
-              fontFamily: "'DM Mono',monospace",
+              color: '#2B2B2B',
               fontSize: '11.5px',
               fontWeight: 600,
               padding: '3px 8px',
@@ -192,7 +190,7 @@ export default function PlaceCard({
               onView(r);
             }}
             sx={{
-              fontFamily: serifFont,
+              fontWeight: 600,
               fontSize: { xs: 17, sm: 21 },
               lineHeight: 1.15,
               minWidth: 0,
@@ -259,7 +257,7 @@ export default function PlaceCard({
         {/* rating row */}
         <Box sx={{ mt: { xs: '7px', sm: '9px' }, height: 18 }}>
           {r.rated ? (
-            <Stars value={r.rating ?? 0} tokens={t} size={15} />
+            <Bubbles value={r.rating ?? 0} tokens={t} size={11} gap={5} />
           ) : (
             <Box component="span" sx={{ color: t.notRated, fontSize: 13, fontStyle: 'italic' }}>
               {tr('dashboard.notRated')}
@@ -298,9 +296,8 @@ export function BookingPill({ locations, tokens: t }: { locations: RestaurantLoc
           alignItems: 'center',
           background: t.accent,
           color: t.accentText,
-          borderRadius: '10px',
-          padding: '6px 11px',
-          fontFamily: "'DM Sans',sans-serif",
+          borderRadius: '999px',
+          padding: '6px 12px',
           fontSize: '12px',
           fontWeight: 600,
           textDecoration: 'none',
@@ -353,10 +350,10 @@ export function CardAction({
         height: 28,
         background: solid ? tokens.searchBg : 'rgba(255,255,255,0.9)',
         border: `1px solid ${tokens.border}`,
-        color: danger ? '#C0492B' : tokens.chip,
+        color: danger ? tokens.error : tokens.chip,
         '&:hover': {
           background: solid ? tokens.pillBorder : '#fff',
-          color: danger ? '#C0492B' : tokens.accent,
+          color: danger ? tokens.error : tokens.accent,
         },
       }}
     >

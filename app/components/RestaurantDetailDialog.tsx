@@ -1,38 +1,34 @@
 import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  Box,
-  Button,
-  IconButton,
-  Chip,
-  Tabs,
-  Tab,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
-import {
-  Close,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  EventSeat,
-  Language,
-  Facebook,
-  Instagram,
-  Twitter,
-  Email as EmailIcon,
-  Phone as PhoneIcon,
-  Favorite,
-  FavoriteBorder,
-  Add as AddIcon,
-} from '@mui/icons-material';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Chip from '@mui/material/Chip';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
+import Close from '@mui/icons-material/Close';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EventSeat from '@mui/icons-material/EventSeat';
+import Language from '@mui/icons-material/Language';
+import Facebook from '@mui/icons-material/Facebook';
+import Instagram from '@mui/icons-material/Instagram';
+import Twitter from '@mui/icons-material/Twitter';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneIcon from '@mui/icons-material/Phone';
+import Favorite from '@mui/icons-material/Favorite';
+import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
+import AddIcon from '@mui/icons-material/Add';
 import { useTranslation } from 'react-i18next';
 import type { Restaurant } from '~/types/restaurant';
-import type { listTokens } from '~/listTheme';
+import type { ListTokens } from '~/listTheme';
 import RestaurantThumb from '~/components/RestaurantThumb';
-import Stars from '~/components/Stars';
+import Bubbles from '~/components/Bubbles';
 
-type Tokens = (typeof listTokens)['light'];
+type Tokens = ListTokens;
 
 function reservationLabel(platform: string): string {
   if (platform === 'resy') return 'Resy';
@@ -191,7 +187,7 @@ export default function RestaurantDetailDialog({
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 'none' }}>
             {r.priceRange && (
-              <Box component="span" sx={{ color: t.cost, fontSize: 17, fontWeight: 600, letterSpacing: '.03em', fontFamily: "'DM Mono',monospace" }}>
+              <Box component="span" sx={{ color: t.cost, fontSize: 17, fontWeight: 600, letterSpacing: '.03em' }}>
                 {r.priceRange}
               </Box>
             )}
@@ -200,12 +196,12 @@ export default function RestaurantDetailDialog({
                 onClick={() => onToggleFavorite(r)}
                 aria-label={tr(r.favorite ? 'dashboard.unfavorite' : 'dashboard.favorite', { name: r.name })}
                 aria-pressed={r.favorite ?? false}
-                sx={{ color: r.favorite ? '#C0492B' : t.muted }}
+                sx={{ color: r.favorite ? t.error : t.muted }}
               >
                 {r.favorite ? <Favorite /> : <FavoriteBorder />}
               </IconButton>
             ) : r.favorite ? (
-              <Favorite role="img" aria-label={tr('dashboard.favorited')} sx={{ color: '#C0492B' }} />
+              <Favorite role="img" aria-label={tr('dashboard.favorited')} sx={{ color: t.error }} />
             ) : null}
           </Box>
         </Box>
@@ -213,7 +209,7 @@ export default function RestaurantDetailDialog({
         {/* Rating */}
         <Box sx={{ mt: '8px', minHeight: 20 }}>
           {rating > 0 ? (
-            <Stars value={r.rating ?? 0} tokens={t} size={17} />
+            <Bubbles value={r.rating ?? 0} tokens={t} size={15} gap={6} />
           ) : (
             <Box component="span" sx={{ color: t.notRated, fontSize: 13, fontStyle: 'italic' }}>
               {tr('detail.notRated')}
@@ -422,11 +418,10 @@ export default function RestaurantDetailDialog({
           </Box>
         </Box>
 
-        {/* Comment / notes */}
+        {/* Comment / notes — pull-quote treatment */}
         {r.comment && (
-          <Box sx={{ mt: '18px' }}>
-            <Box component="span" sx={sectionLabel}>{tr('form.notes')}</Box>
-            <Box sx={{ color: t.ink, fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{r.comment}</Box>
+          <Box sx={{ mt: '18px', padding: '15px 17px', background: t.beenBg, borderRadius: '18px', color: t.ink, fontSize: 14, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
+            “{r.comment}”
           </Box>
         )}
 

@@ -1,43 +1,37 @@
 import { useState, useEffect, useRef } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Grid,
-  MenuItem,
-  Rating,
-  Typography,
-  Box,
-  Checkbox,
-  FormControlLabel,
-  FormGroup,
-  CircularProgress,
-  IconButton,
-  ToggleButton,
-  ToggleButtonGroup,
-  Tabs,
-  Tab,
-  Collapse,
-  Divider,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
-import { alpha } from '@mui/material/styles';
-import {
-  CloudUpload,
-  Close,
-  Check,
-  BookmarkBorder,
-  Add,
-  DeleteOutline,
-  Favorite,
-  FavoriteBorder,
-  ExpandMore,
-  ExpandLess,
-} from '@mui/icons-material';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Grid from '@mui/material/Grid';
+import MenuItem from '@mui/material/MenuItem';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormGroup from '@mui/material/FormGroup';
+import CircularProgress from '@mui/material/CircularProgress';
+import IconButton from '@mui/material/IconButton';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Collapse from '@mui/material/Collapse';
+import Divider from '@mui/material/Divider';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme, alpha } from '@mui/material/styles';
+import CloudUpload from '@mui/icons-material/CloudUpload';
+import Close from '@mui/icons-material/Close';
+import Check from '@mui/icons-material/Check';
+import BookmarkBorder from '@mui/icons-material/BookmarkBorder';
+import Add from '@mui/icons-material/Add';
+import DeleteOutline from '@mui/icons-material/DeleteOutline';
+import Favorite from '@mui/icons-material/Favorite';
+import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import ExpandLess from '@mui/icons-material/ExpandLess';
 import { useTranslation } from 'react-i18next';
 import type {
   Restaurant,
@@ -52,11 +46,12 @@ import {
   placeTypes,
   menuTypes,
 } from '~/types/restaurant';
-import type { listTokens } from '~/listTheme';
+import type { ListTokens } from '~/listTheme';
 import PlaceSearch from '~/components/PlaceSearch';
 import NearbyAdds from '~/components/NearbyAdds';
+import { BubbleInput } from '~/components/Bubbles';
 
-type Tokens = (typeof listTokens)['light'];
+type Tokens = ListTokens;
 
 interface RestaurantFormDialogProps {
   open: boolean;
@@ -946,17 +941,14 @@ export default function RestaurantFormDialog({
 
           {/* Rating */}
           <Grid item xs={12}>
-            <Typography component="label" id="rating-label" sx={sectionLabelSx}>
+            <Typography component="label" sx={sectionLabelSx}>
               {t('form.rating')}
             </Typography>
-            <Rating
+            <BubbleInput
               value={formData.rating || 0}
-              onChange={(_, value) =>
-                setFormData({ ...formData, rating: value || 0 })
-              }
-              precision={0.5}
-              size="large"
-              aria-labelledby="rating-label"
+              onChange={(value) => setFormData({ ...formData, rating: value })}
+              tokens={tokens}
+              ariaLabel={t('form.rating')}
             />
           </Grid>
 

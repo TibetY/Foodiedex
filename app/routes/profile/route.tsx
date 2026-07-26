@@ -1,27 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { LoaderFunction } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
 import { useLoaderData, useNavigate } from '@remix-run/react';
 import { useTranslation } from 'react-i18next';
-import {
-  Box,
-  Container,
-  Typography,
-  TextField,
-  Button,
-  Avatar,
-  CircularProgress,
-  Snackbar,
-  Alert,
-  Divider,
-  ThemeProvider,
-} from '@mui/material';
-import { PhotoCamera, ArrowBack } from '@mui/icons-material';
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Avatar from '@mui/material/Avatar';
+import CircularProgress from '@mui/material/CircularProgress';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import PhotoCamera from '@mui/icons-material/PhotoCamera';
+import ArrowBack from '@mui/icons-material/ArrowBack';
 import { createSupabaseServerClient } from '~/supabase.server';
 import { getProfile } from '~/services/profiles.server';
 import { updateProfile, uploadAvatar } from '~/services/profiles.client';
 import { getSupabaseBrowserClient } from '~/supabase.client';
-import { makeListTheme, getStoredMode, type ListMode } from '~/listTheme';
+import { useKanpaiTheme, ACCENTS, accentSwatch, type AccentName } from '~/listTheme';
 import type { Profile } from '~/types/restaurant';
 import LanguageSwitcher from '~/components/LanguageSwitcher';
 
@@ -38,13 +35,31 @@ export const loader: LoaderFunction = async ({ request }) => {
   return json<LoaderData>({ userId: user.id, profile }, { headers });
 };
 
+/** Ruled section wrapper matching the Kanpai Account screen. */
+function Section({
+  eyebrow,
+  children,
+  tokens: t,
+}: {
+  eyebrow: string;
+  children: React.ReactNode;
+  tokens: ReturnType<typeof useKanpaiTheme>['tokens'];
+}) {
+  return (
+    <Box sx={{ py: 4, borderTop: `2px solid ${t.divider}` }}>
+      <Box sx={{ fontSize: 11.5, letterSpacing: '.1em', textTransform: 'uppercase', color: t.faint, mb: 2 }}>
+        {eyebrow}
+      </Box>
+      {children}
+    </Box>
+  );
+}
+
 export default function ProfilePage() {
   const { userId, profile } = useLoaderData<LoaderData>();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [mode, setMode] = useState<ListMode>('light');
-  useEffect(() => setMode(getStoredMode()), []);
-  const theme = makeListTheme(mode);
+  const { mode, accent, tokens: tk, setMode, setAccent } = useKanpaiTheme();
 
   const [displayName, setDisplayName] = useState(profile?.displayName ?? '');
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatarUrl ?? '');
@@ -115,65 +130,149 @@ export default function ProfilePage() {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <Box data-theme={mode} sx={{ minHeight: '100vh', bgcolor: 'background.default', fontFamily: "'DM Sans',sans-serif" }}>
-        <Container maxWidth="sm" sx={{ pt: { xs: 6, sm: 10 }, pb: 8 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3, gap: 2 }}>
+    <Box sx={{ minHeight: '100vh', background: tk.pageBg, color: tk.ink }}>
+      <Box
+        component="header"
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: { xs: '18px 18px', md: '20px 40px' },
+          borderBottom: `2px solid ${tk.divider}`,
+          background: tk.panelBg,
+          gap: 2,
+        }}
+      >
+        <Button startIcon={<ArrowBack />} onClick={() => navigate('/dashboard')} sx={{ color: tk.muted }}>
+          {t('profile.back')}
+        </Button>
+        <LanguageSwitcher />
+      </Box>
+
+      <Container maxWidth="sm" sx={{ pt: { xs: 5, sm: 7 }, pb: 10 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, pb: 4 }}>
+          <Avatar src={preview} alt={t('profile.photoAlt')} sx={{ width: 68, height: 68, fontSize: 26, fontWeight: 600 }}>
+            {(displayName?.[0] ?? '?').toUpperCase()}
+          </Avatar>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography sx={{ fontSize: 24, fontWeight: 600 }}>{displayName || t('profile.title')}</Typography>
             <Button
-              startIcon={<ArrowBack />}
-              onClick={() => navigate('/dashboard')}
-              sx={{ color: 'text.secondary' }}
+              variant="text"
+              component="label"
+              size="small"
+              startIcon={<PhotoCamera fontSize="small" />}
+              sx={{ px: 0, mt: '2px' }}
             >
-              {t('profile.back')}
-            </Button>
-            <LanguageSwitcher />
-          </Box>
-
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{ fontFamily: "'Instrument Serif',serif", fontWeight: 400, mb: 4 }}
-          >
-            {t('profile.title')}
-          </Typography>
-
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 4 }}>
-            <Avatar src={preview} alt={t('profile.photoAlt')} sx={{ width: 88, height: 88, fontSize: 32 }}>
-              {(displayName?.[0] ?? '?').toUpperCase()}
-            </Avatar>
-            <Button variant="outlined" component="label" startIcon={<PhotoCamera />}>
               {preview ? t('profile.changePhoto') : t('profile.uploadPhoto')}
               <input type="file" hidden accept="image/*" onChange={handleFile} aria-label={t('profile.uploadAvatar')} />
             </Button>
           </Box>
+        </Box>
 
+        <Section eyebrow={t('profile.displayName')} tokens={tk}>
           <TextField
             fullWidth
             label={t('profile.displayName')}
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            sx={{ mb: 3 }}
+            sx={{ mb: 2.5 }}
           />
-
-          <Button
-            variant="contained"
-            onClick={handleSave}
-            disabled={saving}
-            sx={{ minWidth: 140 }}
-          >
+          <Button variant="contained" onClick={handleSave} disabled={saving} sx={{ minWidth: 140 }}>
             {saving ? <CircularProgress size={22} color="inherit" /> : t('profile.save')}
           </Button>
+        </Section>
 
-          <Divider sx={{ my: 5 }} />
-
-          <Typography
-            variant="h6"
-            component="h2"
-            sx={{ fontWeight: 700, mb: 0.5 }}
+        <Section eyebrow={t('profile.appearanceTitle', 'Appearance')} tokens={tk}>
+          <Box sx={{ display: 'flex', gap: '10px', mb: '14px', flexWrap: 'wrap' }}>
+            {(Object.keys(ACCENTS) as AccentName[]).map((name) => {
+              const sw = accentSwatch(name, mode);
+              const active = accent === name;
+              return (
+                <Box
+                  key={name}
+                  component="button"
+                  type="button"
+                  onClick={() => setAccent(name)}
+                  aria-pressed={active}
+                  sx={{
+                    flex: '1 1 140px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    background: tk.cardBg,
+                    border: `${active ? 2 : 1}px solid ${active ? tk.accent : tk.border}`,
+                    borderRadius: '18px',
+                    padding: active ? '13px 15px' : '14px 16px',
+                    fontFamily: 'inherit',
+                    color: tk.ink,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', gap: '5px', mb: '11px' }}>
+                    <Box sx={{ width: 17, height: 17, borderRadius: '50%', background: sw.c1 }} />
+                    <Box sx={{ width: 17, height: 17, borderRadius: '50%', background: sw.c2 }} />
+                    <Box sx={{ width: 17, height: 17, borderRadius: '50%', background: sw.c3 }} />
+                  </Box>
+                  <Box sx={{ fontSize: 13.5, fontWeight: 600 }}>{sw.label}</Box>
+                  <Box sx={{ fontSize: 11, color: tk.muted, mt: '2px' }}>{sw.note}</Box>
+                </Box>
+              );
+            })}
+          </Box>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              padding: '13px 17px',
+              background: tk.cardBg,
+              border: `1px solid ${tk.border}`,
+              borderRadius: '18px',
+            }}
           >
-            {t('profile.security')}
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
+            <Box>
+              <Box sx={{ fontSize: 14, fontWeight: 600 }}>{t('profile.darkModeTitle', 'Dark mode')}</Box>
+              <Box sx={{ fontSize: 12, color: tk.muted }}>
+                {mode === 'dark'
+                  ? t('profile.darkModeOnNote', 'Cream on charcoal — easier at night')
+                  : t('profile.darkModeOffNote', 'Charcoal on cream, the daytime default')}
+              </Box>
+            </Box>
+            <Box sx={{ ml: 'auto', display: 'flex', gap: '4px', padding: '4px', background: tk.track, borderRadius: '999px', flex: 'none' }}>
+              <Box
+                component="button"
+                type="button"
+                onClick={() => setMode('light')}
+                aria-pressed={mode === 'light'}
+                sx={{
+                  border: 'none', cursor: 'pointer', fontWeight: mode === 'light' ? 600 : 400, fontSize: 12,
+                  padding: '7px 15px', borderRadius: '999px',
+                  background: mode === 'light' ? tk.cardBg : 'transparent',
+                  color: mode === 'light' ? tk.ink : tk.muted,
+                  boxShadow: mode === 'light' ? tk.shadow1 : 'none',
+                }}
+              >
+                {t('dashboard.themeLight')}
+              </Box>
+              <Box
+                component="button"
+                type="button"
+                onClick={() => setMode('dark')}
+                aria-pressed={mode === 'dark'}
+                sx={{
+                  border: 'none', cursor: 'pointer', fontWeight: mode === 'dark' ? 600 : 400, fontSize: 12,
+                  padding: '7px 15px', borderRadius: '999px',
+                  background: mode === 'dark' ? tk.cardBg : 'transparent',
+                  color: mode === 'dark' ? tk.ink : tk.muted,
+                  boxShadow: mode === 'dark' ? tk.shadow1 : 'none',
+                }}
+              >
+                {t('dashboard.themeDark')}
+              </Box>
+            </Box>
+          </Box>
+        </Section>
+
+        <Section eyebrow={t('profile.security')} tokens={tk}>
+          <Typography variant="body2" sx={{ color: tk.muted, mb: 2.5 }}>
             {t('profile.securityIntro')}
           </Typography>
 
@@ -220,26 +319,22 @@ export default function ProfilePage() {
               disabled={savingPassword || !newPassword || !confirmPassword}
               sx={{ minWidth: 160 }}
             >
-              {savingPassword ? (
-                <CircularProgress size={22} color="inherit" />
-              ) : (
-                t('profile.updatePassword')
-              )}
+              {savingPassword ? <CircularProgress size={22} color="inherit" /> : t('profile.updatePassword')}
             </Button>
           </Box>
-        </Container>
+        </Section>
+      </Container>
 
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={4000}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert severity={snackbar.severity} variant="filled" onClose={() => setSnackbar({ ...snackbar, open: false })}>
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </Box>
-    </ThemeProvider>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbar.severity} variant="filled" onClose={() => setSnackbar({ ...snackbar, open: false })}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 }

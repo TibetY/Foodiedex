@@ -3,15 +3,13 @@ import type { LoaderFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useNavigate, Link } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
-import {
-  Box,
-  Container,
-  Typography,
-  TextField,
-  Button,
-  Alert,
-  CircularProgress,
-} from "@mui/material";
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
 import { createSupabaseServerClient } from "~/supabase.server";
 import { getSupabaseBrowserClient } from "~/supabase.client";
 
