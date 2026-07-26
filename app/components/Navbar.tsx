@@ -55,11 +55,17 @@ export default function Navbar() {
       component="nav"
       aria-label={t("nav.main")}
       sx={{
+<<<<<<< HEAD
         background: (theme) => theme.palette.background.paper,
         backdropFilter: "blur(20px)",
         borderBottom: "1px solid",
         borderColor: "divider",
         boxShadow: "none",
+=======
+        background: "rgba(244, 241, 232, 0.82)",
+        backdropFilter: "blur(14px)",
+        borderBottom: "1px solid #E6E1D4",
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
       }}
     >
       <Toolbar
@@ -93,9 +99,14 @@ export default function Navbar() {
               PaperProps={{
                 sx: {
                   width: 280,
+<<<<<<< HEAD
                   background: (theme) => theme.palette.background.paper,
                   borderLeft: "1px solid",
                   borderColor: "divider",
+=======
+                  background: "#FAF8F2",
+                  borderLeft: "1px solid #E6E1D4",
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
                 },
               }}
             >
@@ -119,7 +130,11 @@ export default function Navbar() {
                         px: 3,
                         py: 1.5,
                         "&:hover": {
+<<<<<<< HEAD
                           backgroundColor: "action.hover",
+=======
+                          backgroundColor: "rgba(168, 68, 42, 0.08)",
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
                         },
                       }}
                     >
@@ -158,10 +173,14 @@ export default function Navbar() {
                   to={link.to}
                   sx={{
                     color: "text.secondary",
-                    fontWeight: 500,
+                    fontWeight: 600,
                     "&:hover": {
                       color: "text.primary",
+<<<<<<< HEAD
                       backgroundColor: "action.hover",
+=======
+                      backgroundColor: "rgba(31,30,26,0.05)",
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
                     },
                   }}
                 >

@@ -8,6 +8,7 @@ import {
   useNavigate,
   type ShouldRevalidateFunction,
 } from '@remix-run/react';
+<<<<<<< HEAD
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
@@ -34,6 +35,43 @@ import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
 import Close from '@mui/icons-material/Close';
 import Search from '@mui/icons-material/Search';
 import Insights from '@mui/icons-material/Insights';
+=======
+import {
+  Box,
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Snackbar,
+  Alert,
+  ThemeProvider,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Divider,
+} from '@mui/material';
+import {
+  Add,
+  Logout,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  PersonAddAlt1,
+  Person,
+  Favorite,
+  FavoriteBorder,
+  Close,
+  Search,
+  Insights,
+  DarkMode,
+  LightMode,
+  Translate,
+} from '@mui/icons-material';
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
 import { createSupabaseServerClient } from '~/supabase.server';
 import { getRestaurants } from '~/services/restaurants.server';
 import {
@@ -100,7 +138,12 @@ export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: leafletStylesHref },
 ];
 import { useTranslation } from 'react-i18next';
+<<<<<<< HEAD
 import { useKanpaiTheme, type ListMode } from '~/listTheme';
+=======
+import { listTokens, makeListTheme, getStoredMode, storeMode, roundedFont, type ListMode, modeFromCookieHeader } from '~/listTheme';
+import { cuisineEmoji } from '~/utils/cuisineEmoji';
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
 
 /**
  * Turn whatever was thrown into a human-readable message. Supabase/PostgREST
@@ -136,10 +179,13 @@ type LoaderData = {
   profile: Profile | null;
   views: ListView[];
   error: string | null;
+  /** Theme the request carries, so SSR paints the user's mode, not a guess. */
+  initialMode: ListMode;
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { supabase, headers } = createSupabaseServerClient(request);
+  const initialMode = modeFromCookieHeader(request.headers.get('Cookie'));
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -192,6 +238,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         profile,
         views,
         error: null,
+        initialMode,
       },
       { headers }
     );
@@ -209,6 +256,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         profile: null,
         views: [],
         error: describeError(error),
+        initialMode,
       },
       { headers }
     );
@@ -299,10 +347,31 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>(initialRestaurants);
+<<<<<<< HEAD
   const { mode, tokens: t, setMode } = useKanpaiTheme();
   // The Leaflet map is client-only; render it after mount.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+=======
+  const [mode, setMode] = useState<ListMode>(data.initialMode);
+  // The Leaflet map is client-only; render it after mount.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  // Reconcile with localStorage once, for visitors who set a theme before the
+  // cookie existed. storeMode then writes the cookie, so later loads are
+  // server-rendered in the right mode and never flip.
+  useEffect(() => {
+    const stored = getStoredMode();
+    if (stored !== data.initialMode) {
+      setMode(stored);
+      storeMode(stored);
+    }
+  }, [data.initialMode]);
+  const changeMode = (m: ListMode) => {
+    setMode(m);
+    storeMode(m);
+  };
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
   const [view, setView] = useState<ViewMode>('tile');
   // Map ↔ side-list hover sync (map view). The id is a restaurant's sync key
   // (`id ?? name`, matching RestaurantMap); refs let a pin-hover scroll its row
@@ -947,15 +1016,16 @@ export default function Dashboard() {
     background: filter === val ? t.pBg : 'transparent',
     color: filter === val ? t.pFg : t.pIdle,
   });
-  const themeBtn = (m: ListMode) => ({
-    background: mode === m ? t.accent : 'transparent',
-    color: mode === m ? t.accentText : t.faint,
-  });
 
   const segBtnStyle = {
     border: 'none',
     cursor: 'pointer',
+<<<<<<< HEAD
         fontSize: '13.5px',
+=======
+    fontFamily: roundedFont,
+    fontSize: '13.5px',
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
     fontWeight: 500,
     padding: '7px 18px',
     borderRadius: '999px',
@@ -964,7 +1034,12 @@ export default function Dashboard() {
   const filterBtnStyle = {
     border: `1px solid ${t.pillBorder}`,
     cursor: 'pointer',
+<<<<<<< HEAD
         fontSize: '13px',
+=======
+    fontFamily: roundedFont,
+    fontSize: '13px',
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
     fontWeight: 500,
     padding: '7px 15px',
     borderRadius: '999px',
@@ -1124,6 +1199,7 @@ export default function Dashboard() {
               )}
             </Box>
 
+<<<<<<< HEAD
             {/* language toggle */}
             <LanguageSwitcher />
 
@@ -1135,6 +1211,8 @@ export default function Dashboard() {
                 sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, ...themeBtn('dark') }}>☾</Box>
             </Box>
 
+=======
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
             {/* add */}
             {canEdit && (
               <Tooltip title={tr('dashboard.addPlace')}>
@@ -1150,7 +1228,12 @@ export default function Dashboard() {
                     cursor: 'pointer',
                     background: t.accent,
                     color: t.accentText,
+<<<<<<< HEAD
                                         fontWeight: 600,
+=======
+                    fontFamily: roundedFont,
+                    fontWeight: 700,
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
                     fontSize: '13.5px',
                     padding: '8px 16px',
                     borderRadius: '999px',
@@ -1160,13 +1243,6 @@ export default function Dashboard() {
                 </Box>
               </Tooltip>
             )}
-
-            {/* share — hidden on phones (the account menu carries it) */}
-            <Tooltip title={tr('dashboard.shareMembers')}>
-              <IconButton onClick={() => setShareOpen(true)} aria-label={tr('dashboard.shareMembersLabel')} sx={{ color: t.muted, display: { xs: 'none', sm: 'inline-flex' } }}>
-                <PersonAddAlt1 />
-              </IconButton>
-            </Tooltip>
 
             {/* avatar stack → account menu */}
             <Box
@@ -1208,6 +1284,25 @@ export default function Dashboard() {
                 <ListItemIcon><PersonAddAlt1 fontSize="small" sx={{ color: t.muted }} /></ListItemIcon>
                 <ListItemText>{tr('dashboard.shareMembers')}</ListItemText>
               </MenuItem>
+              <Divider sx={{ my: 0.5 }} />
+              {/* Appearance + language live here rather than in the toolbar —
+                  they're set-once preferences, not per-session actions. */}
+              <MenuItem onClick={() => changeMode(mode === 'light' ? 'dark' : 'light')}>
+                <ListItemIcon>
+                  {mode === 'light'
+                    ? <DarkMode fontSize="small" sx={{ color: t.muted }} />
+                    : <LightMode fontSize="small" sx={{ color: t.muted }} />}
+                </ListItemIcon>
+                <ListItemText>
+                  {tr(mode === 'light' ? 'dashboard.themeDark' : 'dashboard.themeLight')}
+                </ListItemText>
+              </MenuItem>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1 }}>
+                <Translate fontSize="small" sx={{ color: t.muted }} />
+                <Box sx={{ flex: 1, fontSize: 14 }}>{tr('language.label')}</Box>
+                <LanguageSwitcher />
+              </Box>
+              <Divider sx={{ my: 0.5 }} />
               <MenuItem onClick={() => { setMenuAnchor(null); handleLogout(); }}>
                 <ListItemIcon><Logout fontSize="small" sx={{ color: t.muted }} /></ListItemIcon>
                 <ListItemText>{tr('dashboard.signOut')}</ListItemText>
@@ -1388,6 +1483,9 @@ export default function Dashboard() {
                 background: t.cardBg,
               }}
             >
+              <Box aria-hidden sx={{ fontSize: 44, lineHeight: 1, mb: 1.5 }}>
+                {hasActiveFilters ? '🔍' : '🍽️'}
+              </Box>
               <Box sx={{ fontFamily: serif, fontSize: 30, mb: 1 }}>
                 {hasActiveFilters ? tr('dashboard.noMatchesTitle') : tr('dashboard.emptyTitle')}
               </Box>
@@ -1410,7 +1508,12 @@ export default function Dashboard() {
                     cursor: 'pointer',
                     background: t.accent,
                     color: t.accentText,
+<<<<<<< HEAD
                                         fontWeight: 600,
+=======
+                    fontFamily: roundedFont,
+                    fontWeight: 700,
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
                     fontSize: '14px',
                     padding: '10px 20px',
                     borderRadius: '999px',
@@ -1452,7 +1555,7 @@ export default function Dashboard() {
               {/* LIST */}
               {view === 'list' && (
                 <Box sx={{ padding: { xs: '16px 0 96px', sm: '24px 0 40px' } }}>
-                  <Box sx={{ border: `1px solid ${t.border}`, borderRadius: '14px', overflow: 'hidden' }}>
+                  <Box sx={{ border: `1px solid ${t.border}`, borderRadius: '16px', overflow: 'hidden' }}>
                     {sorted.map((r) => (
                       <Box
                         key={r.id}
@@ -1472,7 +1575,7 @@ export default function Dashboard() {
                           '&:last-of-type': { borderBottom: 'none' },
                         }}
                       >
-                        <Box sx={{ width: 46, height: 46, borderRadius: '11px', flex: 'none' }}>
+                        <Box sx={{ width: 46, height: 46, borderRadius: '14px', flex: 'none' }}>
                           <RestaurantThumb
                             image={r.image}
                             alt={r.name}
@@ -1480,7 +1583,8 @@ export default function Dashboard() {
                             serifFont={serif}
                             tokens={t}
                             initialFontSize={24}
-                            sx={{ width: '100%', height: '100%', borderRadius: '11px' }}
+                            cuisine={r.cuisine}
+                            sx={{ width: '100%', height: '100%', borderRadius: '14px' }}
                           />
                         </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -1710,7 +1814,7 @@ export default function Dashboard() {
                         onMouseLeave={() => setHoveredId((cur) => (cur === syncKey ? null : cur))}
                         sx={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderBottom: `1px solid ${t.borderSoft}`, cursor: 'pointer', background: hoveredId === syncKey ? t.searchBg : 'transparent', transition: 'background .12s', '&:hover': { filter: 'brightness(0.98)' } }}
                       >
-                        <Box sx={{ width: 34, height: 34, borderRadius: '9px', flex: 'none' }}>
+                        <Box sx={{ width: 34, height: 34, borderRadius: '12px', flex: 'none' }}>
                           <RestaurantThumb
                             image={r.image}
                             alt={r.name}
@@ -1718,12 +1822,16 @@ export default function Dashboard() {
                             serifFont={serif}
                             tokens={t}
                             initialFontSize={18}
-                            sx={{ width: '100%', height: '100%', borderRadius: '9px' }}
+                            cuisine={r.cuisine}
+                            sx={{ width: '100%', height: '100%', borderRadius: '12px' }}
                           />
                         </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Box sx={{ fontSize: 14, fontWeight: 500 }}>{r.name}</Box>
-                          <Box sx={{ color: t.muted, fontSize: 12 }}>{r.cuisine}</Box>
+                          <Box sx={{ color: t.muted, fontSize: 12 }}>
+                            <Box component="span" aria-hidden sx={{ mr: '4px' }}>{cuisineEmoji(r.cuisine)}</Box>
+                            {tr(`cuisines.${r.cuisine}`, r.cuisine)}
+                          </Box>
                         </Box>
                         <Box component="span" sx={{ color: t.cost, fontSize: 13, fontWeight: 600 }}>{r.costStr}</Box>
                       </Box>
@@ -1932,7 +2040,7 @@ export default function Dashboard() {
               width: '100%',
               background: t.snackBg,
               color: t.snackFg,
-              borderRadius: '12px',
+              borderRadius: '16px',
               '& .MuiAlert-icon': { color: t.snackFg },
               '& .MuiAlert-action': { color: t.snackFg, alignItems: 'center', pt: 0 },
             }}

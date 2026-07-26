@@ -8,9 +8,16 @@ import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
 import { useTranslation } from 'react-i18next';
 import type { Restaurant, RestaurantLocation } from '~/types/restaurant';
 import type { DecoratedRestaurant } from '~/utils/decorateRestaurant';
+<<<<<<< HEAD
 import type { ListTokens } from '~/listTheme';
 import RestaurantThumb from '~/components/RestaurantThumb';
 import Bubbles from '~/components/Bubbles';
+=======
+import { roundedFont, type listTokens } from '~/listTheme';
+import RestaurantThumb from '~/components/RestaurantThumb';
+import { cuisineEmoji } from '~/utils/cuisineEmoji';
+import Stars from '~/components/Stars';
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
 
 type Tokens = ListTokens;
 
@@ -108,6 +115,7 @@ export default function PlaceCard({
           initial={r.initial}
           serifFont={serifFont}
           tokens={t}
+          cuisine={r.cuisine}
           sx={{ height: '100%' }}
         />
         <Box
@@ -138,8 +146,8 @@ export default function PlaceCard({
             color: r.isBeen ? t.beenFg : t.wantFg,
             border: `1px solid ${r.isBeen ? t.beenFg : t.wantFg}33`,
             fontSize: '11.5px',
-            fontWeight: 600,
-            fontFamily: 'inherit',
+            fontWeight: 700,
+            fontFamily: roundedFont,
             padding: '4px 11px',
             borderRadius: '999px',
             backdropFilter: 'blur(4px)',
@@ -156,7 +164,12 @@ export default function PlaceCard({
               bottom: 10,
               right: 10,
               background: 'rgba(255,255,255,.9)',
+<<<<<<< HEAD
               color: '#2B2B2B',
+=======
+              color: '#1F1E1A',
+              fontFamily: "'DM Mono',monospace",
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
               fontSize: '11.5px',
               fontWeight: 600,
               padding: '3px 8px',
@@ -233,6 +246,7 @@ export default function PlaceCard({
 
         {/* meta row */}
         <Box sx={{ height: { xs: 16, sm: 18 }, mt: '3px', color: t.muted, fontSize: { xs: 12, sm: 13 }, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <Box component="span" aria-hidden sx={{ mr: '4px' }}>{cuisineEmoji(r.cuisine)}</Box>
           {metaParts.join(' · ')}
         </Box>
 
@@ -259,7 +273,7 @@ export default function PlaceCard({
           {r.rated ? (
             <Bubbles value={r.rating ?? 0} tokens={t} size={11} gap={5} />
           ) : (
-            <Box component="span" sx={{ color: t.notRated, fontSize: 13, fontStyle: 'italic' }}>
+            <Box component="span" sx={{ color: t.faint, fontSize: 13, fontStyle: 'italic' }}>
               {tr('dashboard.notRated')}
             </Box>
           )}
@@ -297,9 +311,14 @@ export function BookingPill({ locations, tokens: t }: { locations: RestaurantLoc
           background: t.accent,
           color: t.accentText,
           borderRadius: '999px',
+<<<<<<< HEAD
           padding: '6px 12px',
+=======
+          padding: '6px 13px',
+          fontFamily: roundedFont,
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
           fontSize: '12px',
-          fontWeight: 600,
+          fontWeight: 700,
           textDecoration: 'none',
           whiteSpace: 'nowrap',
           // Long platform names (FR "Réserver · OpenTable") must never widen a
@@ -350,10 +369,17 @@ export function CardAction({
         height: 28,
         background: solid ? tokens.searchBg : 'rgba(255,255,255,0.9)',
         border: `1px solid ${tokens.border}`,
+<<<<<<< HEAD
         color: danger ? tokens.error : tokens.chip,
         '&:hover': {
           background: solid ? tokens.pillBorder : '#fff',
           color: danger ? tokens.error : tokens.accent,
+=======
+        color: danger ? '#A5382C' : tokens.chip,
+        '&:hover': {
+          background: solid ? tokens.pillBorder : '#fff',
+          color: danger ? '#A5382C' : tokens.accent,
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
         },
       }}
     >

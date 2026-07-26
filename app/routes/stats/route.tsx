@@ -15,7 +15,19 @@ import { getProfile } from '~/services/profiles.server';
 import type { Restaurant } from '~/types/restaurant';
 import { computeFoodStats, type LabelCount } from '~/utils/foodStats';
 import { downloadShareCard, type ShareSize } from '~/utils/shareCard.client';
+<<<<<<< HEAD
 import { useKanpaiTheme, type ListTokens } from '~/listTheme';
+=======
+import {
+  listTokens,
+  makeListTheme,
+  getStoredMode,
+  storeMode,
+  type ListMode,
+  modeFromCookieHeader,
+} from '~/listTheme';
+import { cuisineEmoji } from '~/utils/cuisineEmoji';
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
 import LanguageSwitcher from '~/components/LanguageSwitcher';
 import type { RestaurantMapProps } from '~/components/RestaurantMap';
 
@@ -28,6 +40,8 @@ const RestaurantMap = lazy<React.ComponentType<RestaurantMapProps>>(() =>
 export const links: LinksFunction = () => [{ rel: 'stylesheet', href: leafletStylesHref }];
 
 type LoaderData = {
+  /** Theme the request carries, so SSR paints the user's mode. */
+  initialMode: ListMode;
   restaurants: Restaurant[];
   listId: string | null;
   listName: string;
@@ -62,18 +76,42 @@ export const loader: LoaderFunction = async ({ request }) => {
       listId: activeList?.id ?? null,
       listName: activeList?.name ?? 'My List',
       displayName: profile?.displayName ?? null,
+      initialMode: modeFromCookieHeader(request.headers.get('Cookie')),
     },
     { headers }
   );
 };
 
 export default function StatsPage() {
-  const { restaurants, listId, listName } = useLoaderData<LoaderData>();
+  const { restaurants, listId, listName, initialMode } = useLoaderData<LoaderData>();
   const { t: tr } = useTranslation();
 
+<<<<<<< HEAD
   const { mode, accent, tokens: t, setMode } = useKanpaiTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+=======
+  const [mode, setMode] = useState<ListMode>(initialMode);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  // Reconcile with localStorage for visitors who chose a theme before the
+  // cookie existed; storeMode then persists it so later loads never flip.
+  useEffect(() => {
+    const stored = getStoredMode();
+    if (stored !== initialMode) {
+      setMode(stored);
+      storeMode(stored);
+    }
+  }, [initialMode]);
+  const changeMode = (m: ListMode) => {
+    setMode(m);
+    storeMode(m);
+  };
+
+  const t = listTokens[mode];
+  const muiTheme = useMemo(() => makeListTheme(mode), [mode]);
+  const serif = "'Instrument Serif',serif";
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
 
   const stats = useMemo(() => computeFoodStats(restaurants), [restaurants]);
   const hasMap = useMemo(
@@ -151,7 +189,12 @@ export default function StatsPage() {
 
           {stats.total === 0 ? (
             <Box sx={{ mt: 4, py: { xs: 6, md: 10 }, textAlign: 'center', border: `1px solid ${t.border}`, borderRadius: '16px', background: t.cardBg }}>
+<<<<<<< HEAD
               <Box sx={{ fontWeight: 600, fontSize: 30, mb: 1 }}>{tr('stats.emptyTitle')}</Box>
+=======
+              <Box aria-hidden sx={{ fontSize: 44, lineHeight: 1, mb: 1.5 }}>📊</Box>
+              <Box sx={{ fontFamily: serif, fontSize: 30, mb: 1 }}>{tr('stats.emptyTitle')}</Box>
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
               <Box sx={{ color: t.muted, fontSize: 15, mb: 3 }}>{tr('stats.emptyBody')}</Box>
               <Button component={Link} to={backHref} variant="contained">{tr('stats.back')}</Button>
             </Box>
@@ -176,19 +219,34 @@ export default function StatsPage() {
 
               {/* stat tiles */}
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,1fr)', sm: 'repeat(3,1fr)', md: 'repeat(5,1fr)' }, gap: '12px', mt: 4 }}>
+<<<<<<< HEAD
                 <StatTile tokens={t} value={stats.beenCount} label={tr('stats.been')} />
                 <StatTile tokens={t} value={stats.wantCount} label={tr('stats.want')} />
                 <StatTile tokens={t} value={stats.favoriteCount} label={tr('stats.favorites')} />
                 <StatTile tokens={t} value={stats.averageRating ?? '—'} label={tr('stats.avgRating')} />
                 <StatTile tokens={t} value={stats.totalMichelinStars} label={tr('stats.michelin')} />
+=======
+                <StatTile tokens={t} serif={serif} value={stats.beenCount} label={tr('stats.been')} emoji="👟" />
+                <StatTile tokens={t} serif={serif} value={stats.wantCount} label={tr('stats.want')} emoji="💭" />
+                <StatTile tokens={t} serif={serif} value={stats.favoriteCount} label={tr('stats.favorites')} emoji="❤️" />
+                <StatTile tokens={t} serif={serif} value={stats.averageRating ?? '—'} label={tr('stats.avgRating')} emoji="⭐" />
+                <StatTile tokens={t} serif={serif} value={stats.totalMichelinStars} label={tr('stats.michelin')} emoji="🏅" />
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
               </Box>
 
               {/* breakdowns */}
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: { xs: 3, md: 4 }, mt: 5 }}>
+<<<<<<< HEAD
                 <BarSection tokens={t} title={tr('stats.topCuisines')} rows={stats.cuisines.slice(0, 6)} />
                 <BarSection tokens={t} title={tr('stats.cities')} rows={stats.cities.slice(0, 6)} emptyLabel={tr('stats.noCities')} />
                 <BarSection tokens={t} title={tr('stats.priceRange')} rows={stats.priceTiers} mono />
                 <MostVisited tokens={t} title={tr('stats.mostVisited')} rows={stats.topVisited} visitsLabel={(n) => tr('dashboard.visitsCount', { count: n })} emptyLabel={tr('stats.noVisits')} />
+=======
+                <BarSection tokens={t} serif={serif} title={tr('stats.topCuisines')} rows={stats.cuisines.slice(0, 6)} glyph={cuisineEmoji} />
+                <BarSection tokens={t} serif={serif} title={tr('stats.cities')} rows={stats.cities.slice(0, 6)} emptyLabel={tr('stats.noCities')} glyph={() => '📍'} />
+                <BarSection tokens={t} serif={serif} title={tr('stats.priceRange')} rows={stats.priceTiers} mono />
+                <MostVisited tokens={t} serif={serif} title={tr('stats.mostVisited')} rows={stats.topVisited} visitsLabel={(n) => tr('dashboard.visitsCount', { count: n })} emptyLabel={tr('stats.noVisits')} />
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
               </Box>
 
               {/* map */}
@@ -206,8 +264,13 @@ export default function StatsPage() {
               )}
 
               {/* share */}
+<<<<<<< HEAD
               <Box sx={{ mt: 5, padding: { xs: 3, md: 4 }, borderRadius: '18px', border: `1px solid ${t.border}`, background: t.cardBg }}>
                 <Box sx={{ fontWeight: 600, fontSize: { xs: 24, md: 30 }, color: t.ink }}>{tr('stats.shareTitle')}</Box>
+=======
+              <Box sx={{ mt: 5, padding: { xs: 3, md: 4 }, borderRadius: '22px', border: `1px solid ${t.border}`, background: t.cardBg }}>
+                <Box sx={{ fontFamily: serif, fontSize: { xs: 24, md: 30 }, color: t.ink }}>{tr('stats.shareTitle')}</Box>
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
                 <Box sx={{ color: t.muted, fontSize: 14.5, mt: 1, mb: 2.5, maxWidth: 520 }}>{tr('stats.shareBody')}</Box>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                   <Button onClick={() => share('square')} variant="contained" startIcon={<Download />}>{tr('stats.downloadSquare')}</Button>
@@ -231,10 +294,18 @@ function SectionTitle({ children, tokens: t }: { children: React.ReactNode; toke
   );
 }
 
+<<<<<<< HEAD
 function StatTile({ tokens: t, value, label }: { tokens: Tokens; value: number | string; label: string }) {
   return (
     <Box sx={{ padding: '16px 18px', borderRadius: '14px', border: `1px solid ${t.border}`, background: t.cardBg }}>
       <Box sx={{ fontWeight: 800, fontSize: 34, lineHeight: 1, color: t.ink }}>{value}</Box>
+=======
+function StatTile({ tokens: t, serif, value, label, emoji }: { tokens: Tokens; serif: string; value: number | string; label: string; emoji: string }) {
+  return (
+    <Box sx={{ padding: '16px 18px', borderRadius: '16px', border: `1px solid ${t.border}`, background: t.cardBg }}>
+      <Box aria-hidden sx={{ fontSize: 20, lineHeight: 1, mb: '8px' }}>{emoji}</Box>
+      <Box sx={{ fontFamily: serif, fontSize: 34, lineHeight: 1, color: t.ink }}>{value}</Box>
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
       <Box sx={{ color: t.muted, fontSize: 12.5, mt: '6px' }}>{label}</Box>
     </Box>
   );
@@ -246,12 +317,15 @@ function BarSection({
   rows,
   mono,
   emptyLabel,
+  glyph,
 }: {
   tokens: Tokens;
   title: string;
   rows: LabelCount[];
   mono?: boolean;
   emptyLabel?: string;
+  /** Optional food/place glyph rendered before each row label. */
+  glyph?: (label: string) => string;
 }) {
   const max = rows[0]?.count ?? 1;
   return (
@@ -263,7 +337,14 @@ function BarSection({
         ) : (
           rows.map((r) => (
             <Box key={r.label} sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+<<<<<<< HEAD
               <Box sx={{ width: 120, flex: 'none', fontWeight: mono ? 600 : 400, fontSize: mono ? 14 : 16, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+=======
+              <Box sx={{ width: 120, flex: 'none', fontFamily: mono ? "'DM Mono',monospace" : serif, fontSize: mono ? 14 : 16, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {glyph && (
+                  <Box component="span" aria-hidden sx={{ mr: '6px' }}>{glyph(r.label)}</Box>
+                )}
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
                 {r.label}
               </Box>
               <Box sx={{ flex: 1, height: 10, borderRadius: '999px', background: t.skeleton, overflow: 'hidden' }}>
@@ -300,8 +381,15 @@ function MostVisited({
         ) : (
           rows.map((r, i) => (
             <Box key={`${r.name}-${i}`} sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+<<<<<<< HEAD
               <Box sx={{ fontWeight: 600, fontSize: 18, color: t.accent, width: 22, flex: 'none' }}>{i + 1}</Box>
               <Box sx={{ flex: 1, fontWeight: 600, fontSize: 16, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</Box>
+=======
+              <Box aria-hidden sx={{ fontFamily: serif, fontSize: i < 3 ? 17 : 18, color: t.accent, width: 22, flex: 'none' }}>
+                {['🥇', '🥈', '🥉'][i] ?? i + 1}
+              </Box>
+              <Box sx={{ flex: 1, fontFamily: serif, fontSize: 16, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</Box>
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
               <Box sx={{ color: t.muted, fontSize: 12.5, flex: 'none' }}>{visitsLabel(r.visitCount)}</Box>
             </Box>
           ))

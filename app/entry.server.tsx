@@ -1,9 +1,14 @@
 /**
  * entry.server.tsx
  *
- * Wraps <RemixServer> in Emotion's CacheProvider (to extract critical CSS) and
- * in i18next's I18nextProvider (so SSR renders in the request's locale). Uses
- * renderToString (non-streaming) for simplicity.
+ * Renders twice on purpose. The first pass populates a request-scoped Emotion
+ * cache so the critical CSS can be extracted; the second pass renders that CSS
+ * through the React tree (EmotionStyleContext -> root.tsx) instead of splicing
+ * <style> tags into the HTML string. Injecting them by string replace left them
+ * outside React's tree, and a single hydration mismatch would delete them while
+ * Emotion's browser cache still believed the rules were inserted — leaving the
+ * page permanently unstyled. Also wraps i18next so SSR renders in the request's
+ * locale.
  */
 
 import { renderToString } from "react-dom/server";
@@ -16,6 +21,7 @@ import createEmotionCache from "~/createEmotionCache";
 import createEmotionServer from "@emotion/server/create-instance";
 import i18nextServer from "~/i18next.server";
 import { i18nConfig } from "~/i18n";
+import { EmotionStyleContext, type EmotionStyleChunk } from "~/emotionStyles";
 
 export default async function handleRequest(
   request: Request,
@@ -30,34 +36,36 @@ export default async function handleRequest(
   const lng = await i18nextServer.getLocale(request);
   await instance.use(initReactI18next).init({ ...i18nConfig, lng });
 
-  // Create an instance of Emotion cache
+  // Request-scoped Emotion cache. It must NOT be shared between requests, or
+  // the second request would consider every rule already inserted and emit
+  // nothing.
   const cache = createEmotionCache();
-  const { extractCriticalToChunks, constructStyleTagsFromChunks } =
-    createEmotionServer(cache);
+  const { extractCriticalToChunks } = createEmotionServer(cache);
 
-  const jsx = (
-    <I18nextProvider i18n={instance}>
-      <CacheProvider value={cache}>
-        <RemixServer context={remixContext} url={request.url} />
-      </CacheProvider>
-    </I18nextProvider>
+  const tree = (styles: EmotionStyleChunk[]) => (
+    <EmotionStyleContext.Provider value={styles}>
+      <I18nextProvider i18n={instance}>
+        <CacheProvider value={cache}>
+          <RemixServer context={remixContext} url={request.url} />
+        </CacheProvider>
+      </I18nextProvider>
+    </EmotionStyleContext.Provider>
   );
 
-  // Render the app to an HTML string
-  const html = renderToString(jsx);
+  // Pass 1 — populates the cache so there is something to extract.
+  const probe = renderToString(tree([]));
+  const chunks = extractCriticalToChunks(probe);
+  const styles: EmotionStyleChunk[] = chunks.styles.map((s) => ({
+    key: s.key,
+    ids: s.ids.join(" "),
+    css: s.css,
+  }));
 
-  // Extract Emotion critical CSS chunks from the rendered HTML
-  const emotionChunks = extractCriticalToChunks(html);
-  const emotionStyleTags = constructStyleTagsFromChunks(emotionChunks);
-
-  // Inject the Emotion style tags into the <head> of your HTML
-  const finalHtml = `<!DOCTYPE html>${html.replace(
-    "</head>",
-    `${emotionStyleTags}</head>`
-  )}`;
+  // Pass 2 — the markup we actually send, with the CSS rendered by React.
+  const html = renderToString(tree(styles));
 
   responseHeaders.set("Content-Type", "text/html");
-  return new Response(finalHtml, {
+  return new Response(`<!DOCTYPE html>${html}`, {
     status: responseStatusCode,
     headers: responseHeaders,
   });

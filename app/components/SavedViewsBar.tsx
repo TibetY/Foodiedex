@@ -8,7 +8,11 @@ import MoreVert from '@mui/icons-material/MoreVert';
 import Add from '@mui/icons-material/Add';
 import { useTranslation } from 'react-i18next';
 import type { ListView } from '~/types/restaurant';
+<<<<<<< HEAD
 import type { ListTokens } from '~/listTheme';
+=======
+import { roundedFont, type listTokens } from '~/listTheme';
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
 
 type Tokens = ListTokens;
 
@@ -71,6 +75,10 @@ export default function SavedViewsBar({
                 border: 'none',
                 background: 'transparent',
                 color: active ? t.pFg : t.chip,
+<<<<<<< HEAD
+=======
+                fontFamily: roundedFont,
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
                 fontSize: '13px',
                 fontWeight: 500,
                 padding: '7px 6px 7px 14px',
@@ -106,8 +114,12 @@ export default function SavedViewsBar({
             background: 'transparent',
             color: t.accent,
             borderRadius: '999px',
+<<<<<<< HEAD
+=======
+            fontFamily: roundedFont,
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
             fontSize: '13px',
-            fontWeight: 600,
+            fontWeight: 700,
             padding: '7px 14px',
             cursor: 'pointer',
           }}

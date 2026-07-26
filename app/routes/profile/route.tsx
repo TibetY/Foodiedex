@@ -18,11 +18,17 @@ import { createSupabaseServerClient } from '~/supabase.server';
 import { getProfile } from '~/services/profiles.server';
 import { updateProfile, uploadAvatar } from '~/services/profiles.client';
 import { getSupabaseBrowserClient } from '~/supabase.client';
+<<<<<<< HEAD
 import { useKanpaiTheme, ACCENTS, accentSwatch, type AccentName } from '~/listTheme';
+=======
+import { makeListTheme, getStoredMode, storeMode, type ListMode, modeFromCookieHeader } from '~/listTheme';
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
 import type { Profile } from '~/types/restaurant';
 import LanguageSwitcher from '~/components/LanguageSwitcher';
 
-type LoaderData = { userId: string; profile: Profile | null };
+type LoaderData = {
+  /** Theme the request carries, so SSR paints the user's mode. */
+  initialMode: ListMode; userId: string; profile: Profile | null };
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { supabase, headers } = createSupabaseServerClient(request);
@@ -32,7 +38,10 @@ export const loader: LoaderFunction = async ({ request }) => {
   if (!user) return redirect('/login');
 
   const profile = await getProfile(supabase, user.id);
-  return json<LoaderData>({ userId: user.id, profile }, { headers });
+  return json<LoaderData>(
+    { userId: user.id, profile, initialMode: modeFromCookieHeader(request.headers.get('Cookie')) },
+    { headers }
+  );
 };
 
 /** Ruled section wrapper matching the Kanpai Account screen. */
@@ -56,10 +65,24 @@ function Section({
 }
 
 export default function ProfilePage() {
-  const { userId, profile } = useLoaderData<LoaderData>();
+  const { userId, profile, initialMode } = useLoaderData<LoaderData>();
   const navigate = useNavigate();
   const { t } = useTranslation();
+<<<<<<< HEAD
   const { mode, accent, tokens: tk, setMode, setAccent } = useKanpaiTheme();
+=======
+  const [mode, setMode] = useState<ListMode>(initialMode);
+  // Reconcile with localStorage for visitors who chose a theme before the
+  // cookie existed; storeMode then persists it so later loads never flip.
+  useEffect(() => {
+    const stored = getStoredMode();
+    if (stored !== initialMode) {
+      setMode(stored);
+      storeMode(stored);
+    }
+  }, [initialMode]);
+  const theme = makeListTheme(mode);
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
 
   const [displayName, setDisplayName] = useState(profile?.displayName ?? '');
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatarUrl ?? '');

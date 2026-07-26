@@ -73,16 +73,16 @@ export default function ForgotPasswordPage() {
           maxWidth: 440,
           p: { xs: 3, sm: 5 },
           borderRadius: "24px",
-          background: "rgba(243, 234, 217, 0.05)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid rgba(243, 234, 217, 0.12)",
+          background: "#FFFFFF",
+          border: "1px solid #E6E1D4",
+          boxShadow: "0 22px 46px -28px rgba(28,26,20,.4)",
         }}
         className="animate-fade-in-up"
       >
         <Typography
           variant="h4"
           component="h1"
-          sx={{ fontWeight: 800, mb: 1, letterSpacing: "-0.02em" }}
+          sx={{ fontFamily: "'Instrument Serif', serif", fontWeight: 400, mb: 1, letterSpacing: "-0.01em" }}
         >
           {t("forgot.title")}
         </Typography>

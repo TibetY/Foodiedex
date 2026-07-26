@@ -31,6 +31,7 @@ interface LocatedPin {
 // Default view when nothing is geocoded yet (Ottawa — "Ottawa & beyond").
 const DEFAULT_CENTER: [number, number] = [45.4215, -75.6972];
 
+<<<<<<< HEAD
 /** Bubble rating for the popup — 5 small dots, filled up to the rounded value
  *  (leaflet popups are always on a light surface, so the outline is ink-based). */
 function bubblesHtml(value: number, accent: string): string {
@@ -40,6 +41,21 @@ function bubblesHtml(value: number, accent: string): string {
     return `<span style="display:inline-block;width:8px;height:8px;margin-right:4px;border-radius:50%;box-sizing:border-box;background:${filled ? accent : 'transparent'};border:${filled ? 'none' : '1.5px solid rgba(43,43,43,.25)'}"></span>`;
   }).join('');
   return `<span style="display:inline-flex;align-items:center;vertical-align:middle">${dots}</span>`;
+=======
+/** Half-star-aware rating for the popup: two ★★★★★ layers, the accent one clipped
+ *  to the rating fraction (leaflet popups are always on a light surface). */
+function starsHtml(value: number): string {
+  const pct = (Math.max(0, Math.min(5, value)) / 5) * 100;
+  // display:block on both layers keeps them origin-aligned (an inline base gets
+  // baseline-shifted by the popup's line-height while the overlay sits at top:0).
+  const base = 'display:block;letter-spacing:1px;line-height:1;white-space:nowrap;font-size:13px';
+  return (
+    `<span style="position:relative;display:inline-block;vertical-align:middle">` +
+    `<span style="${base};color:rgba(31,30,26,.25)">★★★★★</span>` +
+    `<span style="${base};position:absolute;left:0;top:0;width:${pct}%;overflow:hidden;color:#A8442A">★★★★★</span>` +
+    `</span>`
+  );
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
 }
 
 /** Escape user-supplied text before it goes into a Leaflet popup's innerHTML. */

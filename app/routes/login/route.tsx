@@ -107,11 +107,21 @@ export default function LoginPage() {
     <Box sx={{ minHeight: "100vh", display: "grid", gridTemplateColumns: { xs: "1fr", md: ".85fr 1fr" }, background: tk.pageBg }}>
       <Box
         sx={{
+<<<<<<< HEAD
           display: { xs: "none", md: "flex" },
           flexDirection: "column",
           background: tk.accent,
           color: tk.accentText,
           padding: "40px",
+=======
+          width: "100%",
+          maxWidth: 440,
+          p: { xs: 3, sm: 5 },
+          borderRadius: "24px",
+          background: "#FFFFFF",
+          border: "1px solid #E6E1D4",
+          boxShadow: "0 22px 46px -28px rgba(28,26,20,.4)",
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
         }}
       >
         <Box sx={{ mb: "auto" }}>
@@ -128,7 +138,11 @@ export default function LoginPage() {
         <Typography
           variant="h4"
           component="h1"
+<<<<<<< HEAD
           sx={{ fontWeight: 600, mb: 1, letterSpacing: "-0.02em", color: tk.ink }}
+=======
+          sx={{ fontFamily: "'Instrument Serif', serif", fontWeight: 400, mb: 1, letterSpacing: "-0.01em" }}
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
         >
           {t("login.title")}
         </Typography>

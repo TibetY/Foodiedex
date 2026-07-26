@@ -16,7 +16,19 @@ import RestaurantDetailDialog from '~/components/RestaurantDetailDialog';
 import Bubbles from '~/components/Bubbles';
 import PlaceCard, { BookingPill } from '~/components/PlaceCard';
 import LanguageSwitcher from '~/components/LanguageSwitcher';
+<<<<<<< HEAD
 import { useKanpaiTheme, type ListTokens } from '~/listTheme';
+=======
+import {
+  listTokens,
+  makeListTheme,
+  getStoredMode,
+  storeMode,
+  roundedFont,
+  type ListMode,
+  modeFromCookieHeader,
+} from '~/listTheme';
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
 import type { RestaurantMapProps } from '~/components/RestaurantMap';
 
 const RestaurantMap = lazy<React.ComponentType<RestaurantMapProps>>(() =>
@@ -30,6 +42,8 @@ export const links: LinksFunction = () => [
 ];
 
 type LoaderData = {
+  /** Theme the request carries, so SSR paints the user's mode. */
+  initialMode: ListMode;
   token: string;
   signedIn: boolean;
   shared: SharedList | null;
@@ -42,7 +56,15 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     data: { user },
   } = await supabase.auth.getUser();
   const shared = await getSharedList(supabase, token);
-  return json<LoaderData>({ token, signedIn: !!user, shared }, { headers });
+  return json<LoaderData>(
+    {
+      token,
+      signedIn: !!user,
+      shared,
+      initialMode: modeFromCookieHeader(request.headers.get('Cookie')),
+    },
+    { headers }
+  );
 };
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -80,12 +102,31 @@ type SortMode = 'recent' | 'rating' | 'name' | 'price';
 const SORT_MODES: SortMode[] = ['recent', 'rating', 'name', 'price'];
 
 export default function SharedListPage() {
-  const { token, signedIn, shared } = useLoaderData<LoaderData>();
+  const { token, signedIn, shared, initialMode } = useLoaderData<LoaderData>();
   const { t: tr } = useTranslation();
 
+<<<<<<< HEAD
   const { mode, tokens: t, setMode } = useKanpaiTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+=======
+  const [mode, setMode] = useState<ListMode>(initialMode);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  // Reconcile with localStorage for visitors who chose a theme before the
+  // cookie existed; storeMode then persists it so later loads never flip.
+  useEffect(() => {
+    const stored = getStoredMode();
+    if (stored !== initialMode) {
+      setMode(stored);
+      storeMode(stored);
+    }
+  }, [initialMode]);
+  const changeMode = (m: ListMode) => {
+    setMode(m);
+    storeMode(m);
+  };
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
 
   const [view, setView] = useState<ViewMode>('tile');
   const [filter, setFilter] = useState<FilterMode>('all');
@@ -147,7 +188,11 @@ export default function SharedListPage() {
     color: view === val ? t.segFg : t.segIdle,
     border: 'none',
     cursor: 'pointer',
+<<<<<<< HEAD
 
+=======
+    fontFamily: roundedFont,
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
     fontSize: '13.5px',
     fontWeight: 500,
     padding: '7px 18px',
@@ -158,7 +203,11 @@ export default function SharedListPage() {
     color: filter === val ? t.pFg : t.pIdle,
     border: `1px solid ${t.pillBorder}`,
     cursor: 'pointer',
+<<<<<<< HEAD
 
+=======
+    fontFamily: roundedFont,
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
     fontSize: '13px',
     fontWeight: 500,
     padding: '7px 15px',
@@ -182,7 +231,12 @@ export default function SharedListPage() {
             color: t.ink,
           }}
         >
+<<<<<<< HEAD
           <Box sx={{ fontWeight: 700, fontSize: 34 }}>{tr('shared.unavailableTitle')}</Box>
+=======
+          <Box aria-hidden sx={{ fontSize: 52, lineHeight: 1 }}>🍽️</Box>
+          <Box sx={{ fontFamily: serif, fontSize: 34 }}>{tr('shared.unavailableTitle')}</Box>
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
           <Box sx={{ color: t.muted, maxWidth: 420 }}>{tr('shared.unavailableBody')}</Box>
           <Button component={Link} to="/" variant="contained" sx={{ mt: 1 }}>
             {tr('errors.backHome')}
@@ -310,7 +364,11 @@ export default function SharedListPage() {
               aria-label={tr('dashboard.sort_recent')}
               sx={{
                 background: 'transparent', border: `1px solid ${t.pillBorder}`, borderRadius: '999px',
+<<<<<<< HEAD
                 padding: '7px 14px', color: t.chip, fontSize: '13px', cursor: 'pointer',
+=======
+                padding: '7px 14px', color: t.chip, fontFamily: roundedFont, fontWeight: 500, fontSize: '13px', cursor: 'pointer',
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
               }}
             >
               {SORT_MODES.map((m) => (
@@ -327,6 +385,7 @@ export default function SharedListPage() {
           {/* content */}
           {sorted.length === 0 ? (
             <Box sx={{ mt: '24px', mb: '40px', textAlign: 'center', py: { xs: 6, md: 10 }, px: 3, borderRadius: '16px', border: `1px solid ${t.border}`, background: t.cardBg }}>
+              <Box aria-hidden sx={{ fontSize: 44, lineHeight: 1, mb: 1.5 }}>🔍</Box>
               <Box sx={{ fontFamily: serif, fontSize: 30, mb: 1 }}>{tr('dashboard.noMatchesTitle')}</Box>
               <Box sx={{ color: t.muted, fontSize: 15 }}>{tr('dashboard.emptyTryFilter')}</Box>
             </Box>
@@ -343,8 +402,8 @@ export default function SharedListPage() {
                 {sorted.map((r) => (
                   <Box key={r.id} role="button" tabIndex={0} aria-label={r.name} onClick={() => openDetail(r)} onKeyDown={activateOnKey(() => openDetail(r))}
                     sx={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderBottom: `1px solid ${t.borderSoft}`, cursor: 'pointer', '&:hover': { filter: 'brightness(0.98)' } }}>
-                    <Box sx={{ width: 34, height: 34, borderRadius: '9px', flex: 'none' }}>
-                      <RestaurantThumb image={r.image} alt={r.name} initial={r.initial} serifFont={serif} tokens={t} initialFontSize={18} sx={{ width: '100%', height: '100%', borderRadius: '9px' }} />
+                    <Box sx={{ width: 34, height: 34, borderRadius: '12px', flex: 'none' }}>
+                      <RestaurantThumb image={r.image} alt={r.name} initial={r.initial} serifFont={serif} tokens={t} initialFontSize={18} cuisine={r.cuisine} sx={{ width: '100%', height: '100%', borderRadius: '12px' }} />
                     </Box>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box sx={{ fontSize: 14, fontWeight: 500 }}>{r.name}</Box>
@@ -357,12 +416,12 @@ export default function SharedListPage() {
             </Box>
           ) : view === 'list' ? (
             <Box sx={{ padding: '24px 0 40px' }}>
-              <Box sx={{ border: `1px solid ${t.border}`, borderRadius: '14px', overflow: 'hidden' }}>
+              <Box sx={{ border: `1px solid ${t.border}`, borderRadius: '16px', overflow: 'hidden' }}>
                 {sorted.map((r) => (
                   <Box key={r.id} onClick={() => openDetail(r)}
                     sx={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '13px 18px', borderBottom: `1px solid ${t.borderSoft}`, background: t.cardBg, cursor: 'pointer', '&:hover': { filter: 'brightness(0.98)' }, '&:last-of-type': { borderBottom: 'none' } }}>
-                    <Box sx={{ width: 46, height: 46, borderRadius: '11px', flex: 'none' }}>
-                      <RestaurantThumb image={r.image} alt={r.name} initial={r.initial} serifFont={serif} tokens={t} initialFontSize={24} sx={{ width: '100%', height: '100%', borderRadius: '11px' }} />
+                    <Box sx={{ width: 46, height: 46, borderRadius: '14px', flex: 'none' }}>
+                      <RestaurantThumb image={r.image} alt={r.name} initial={r.initial} serifFont={serif} tokens={t} initialFontSize={24} cuisine={r.cuisine} sx={{ width: '100%', height: '100%', borderRadius: '14px' }} />
                     </Box>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box component="button" type="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); openDetail(r); }}

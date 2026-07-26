@@ -8,7 +8,12 @@ import FilterList from '@mui/icons-material/FilterList';
 import ArrowUpward from '@mui/icons-material/ArrowUpward';
 import ArrowDownward from '@mui/icons-material/ArrowDownward';
 import { useTranslation } from 'react-i18next';
+<<<<<<< HEAD
 import type { ListTokens } from '~/listTheme';
+=======
+import { roundedFont, type listTokens } from '~/listTheme';
+import { cuisineEmoji, placeTypeEmoji, dietEmoji, menuTypeEmoji } from '~/utils/cuisineEmoji';
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
 
 type Tokens = ListTokens;
 type MultiSetter = (updater: string[] | ((prev: string[]) => string[])) => void;
@@ -79,8 +84,15 @@ export default function FilterSheet(props: FilterSheetProps) {
     borderRadius: '999px',
     padding: '6px 13px',
     fontSize: '13px',
+<<<<<<< HEAD
+=======
+    fontFamily: roundedFont,
+    fontWeight: 500,
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
     cursor: 'pointer',
     lineHeight: 1.4,
+    transition: 'transform .12s ease',
+    '&:active': { transform: 'scale(.96)' },
   });
 
   const content = (
@@ -139,6 +151,9 @@ export default function FilterSheet(props: FilterSheetProps) {
           </Box>
           {props.cuisineOptions.map((c) => (
             <Box component="button" key={c} type="button" onClick={() => props.setCuisineFilter(c)} sx={pillSx(props.cuisineFilter === c)}>
+              <Box component="span" aria-hidden sx={{ mr: '5px' }}>
+                {cuisineEmoji(c)}
+              </Box>
               {tr(`cuisines.${c}`, c)}
             </Box>
           ))}
@@ -164,6 +179,7 @@ export default function FilterSheet(props: FilterSheetProps) {
         <Section tokens={t} label={tr('dashboard.placeType')}>
           {props.placeOptions.map((p) => (
             <Box component="button" key={p} type="button" aria-pressed={props.placeFilter.includes(p)} onClick={() => props.setPlaceFilter((prev) => toggle(prev, p))} sx={pillSx(props.placeFilter.includes(p))}>
+              <Box component="span" aria-hidden sx={{ mr: '5px' }}>{placeTypeEmoji(p)}</Box>
               {tr(`placeTypes.${p}`, p)}
             </Box>
           ))}
@@ -175,6 +191,7 @@ export default function FilterSheet(props: FilterSheetProps) {
         <Section tokens={t} label={tr('dashboard.dietary')}>
           {props.dietOptions.map((d) => (
             <Box component="button" key={d} type="button" aria-pressed={props.dietFilter.includes(d)} onClick={() => props.setDietFilter((prev) => toggle(prev, d))} sx={pillSx(props.dietFilter.includes(d))}>
+              <Box component="span" aria-hidden sx={{ mr: '5px' }}>{dietEmoji(d)}</Box>
               {tr(`dietary.${d}`, d)}
             </Box>
           ))}
@@ -186,6 +203,7 @@ export default function FilterSheet(props: FilterSheetProps) {
         <Section tokens={t} label={tr('dashboard.menuType')}>
           {props.menuOptions.map((m) => (
             <Box component="button" key={m} type="button" aria-pressed={props.menuFilter.includes(m)} onClick={() => props.setMenuFilter((prev) => toggle(prev, m))} sx={pillSx(props.menuFilter.includes(m))}>
+              <Box component="span" aria-hidden sx={{ mr: '5px' }}>{menuTypeEmoji(m)}</Box>
               {tr(`menuTypes.${m}`, m)}
             </Box>
           ))}
@@ -207,7 +225,11 @@ export default function FilterSheet(props: FilterSheetProps) {
           component="button"
           type="button"
           onClick={() => setAnchor(null)}
+<<<<<<< HEAD
           sx={{ border: 'none', background: t.accent, color: t.accentText, fontWeight: 600, fontSize: '13.5px', padding: '8px 18px', borderRadius: '10px', cursor: 'pointer' }}
+=======
+          sx={{ border: 'none', background: t.accent, color: t.accentText, fontFamily: roundedFont, fontWeight: 700, fontSize: '13.5px', padding: '8px 20px', borderRadius: '999px', cursor: 'pointer', transition: 'transform .12s ease', '&:active': { transform: 'scale(.96)' } }}
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
         >
           {tr('filters.done')}
         </Box>
@@ -234,6 +256,10 @@ export default function FilterSheet(props: FilterSheetProps) {
           padding: '7px 15px',
           fontSize: '13px',
           fontWeight: 500,
+<<<<<<< HEAD
+=======
+          fontFamily: roundedFont,
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
           cursor: 'pointer',
         }}
       >
@@ -251,7 +277,7 @@ export default function FilterSheet(props: FilterSheetProps) {
           anchor="bottom"
           open={open}
           onClose={() => setAnchor(null)}
-          PaperProps={{ sx: { background: t.panelBg, borderRadius: '18px 18px 0 0', maxHeight: '82vh' } }}
+          PaperProps={{ sx: { background: t.panelBg, borderRadius: '22px 22px 0 0', maxHeight: '82vh' } }}
         >
           {content}
         </Drawer>
@@ -262,7 +288,7 @@ export default function FilterSheet(props: FilterSheetProps) {
           onClose={() => setAnchor(null)}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
           transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-          slotProps={{ paper: { sx: { mt: 1, background: t.panelBg, border: `1px solid ${t.border}`, borderRadius: '14px' } } }}
+          slotProps={{ paper: { sx: { mt: 1, background: t.panelBg, border: `1px solid ${t.border}`, borderRadius: '18px' } } }}
         >
           {content}
         </Popover>

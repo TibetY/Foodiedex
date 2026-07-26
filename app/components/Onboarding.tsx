@@ -6,7 +6,11 @@ import ErrorOutline from '@mui/icons-material/ErrorOutline';
 import Add from '@mui/icons-material/Add';
 import { useTranslation } from 'react-i18next';
 import type { PlaceCandidate } from '~/types/restaurant';
+<<<<<<< HEAD
 import type { ListTokens } from '~/listTheme';
+=======
+import { roundedFont, type listTokens } from '~/listTheme';
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
 import PlaceSearch from '~/components/PlaceSearch';
 import NearbyAdds from '~/components/NearbyAdds';
 import RestaurantThumb from '~/components/RestaurantThumb';
@@ -31,6 +35,8 @@ interface OnboardingProps {
 interface StarterPack {
   id: string;
   labelKey: string;
+  /** The pack's food glyph, shown on a tile tint like every other glyph. */
+  glyph: string;
   places: PlaceSeed[];
 }
 
@@ -38,6 +44,7 @@ const STARTER_PACKS: StarterPack[] = [
   {
     id: 'paris-wine',
     labelKey: 'onboarding.packParisWine',
+    glyph: '🍷',
     places: [
       { name: 'Septime', address: '80 Rue de Charonne, 75011 Paris, France' },
       { name: 'Clamato', address: '80 Rue de Charonne, 75011 Paris, France' },
@@ -47,6 +54,7 @@ const STARTER_PACKS: StarterPack[] = [
   {
     id: 'sf-classics',
     labelKey: 'onboarding.packSfClassics',
+    glyph: '🥖',
     places: [
       { name: 'Zuni Café', address: '1658 Market St, San Francisco, CA' },
       { name: 'Tartine Bakery', address: '600 Guerrero St, San Francisco, CA' },
@@ -56,6 +64,7 @@ const STARTER_PACKS: StarterPack[] = [
   {
     id: 'date-night',
     labelKey: 'onboarding.packDateNight',
+    glyph: '🍾',
     places: [
       { name: 'Le Bernardin', address: '155 West 51st St, New York, NY' },
       { name: 'Alinea', address: '1723 North Halsted St, Chicago, IL' },
@@ -128,7 +137,12 @@ export default function Onboarding({
       className="animate-fade-in-up"
       sx={{ maxWidth: 680, mx: 'auto', mt: { xs: 3, md: 6 }, mb: 6, px: 1, textAlign: 'center' }}
     >
+<<<<<<< HEAD
       <Box component="h2" sx={{ fontFamily: serifFont, fontWeight: 600, letterSpacing: '-.02em', fontSize: { xs: 30, md: 40 }, color: t.ink, m: 0, lineHeight: 1.1 }}>
+=======
+      <Box aria-hidden className="animate-bob" sx={{ fontSize: 46, lineHeight: 1, mb: 1.5 }}>🍱</Box>
+      <Box component="h2" sx={{ fontFamily: serifFont, fontWeight: 400, fontSize: { xs: 30, md: 40 }, color: t.ink, m: 0, lineHeight: 1.1 }}>
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
         {tr('onboarding.title')}
       </Box>
       <Box component="p" sx={{ color: t.muted, fontSize: 15.5, lineHeight: 1.6, mt: 1.5, mb: 3.5, maxWidth: 460, mx: 'auto' }}>
@@ -157,7 +171,7 @@ export default function Onboarding({
               key={c.key}
               sx={{
                 border: `1px solid ${t.border}`,
-                borderRadius: '14px',
+                borderRadius: '16px',
                 overflow: 'hidden',
                 background: t.cardBg,
                 transition: 'box-shadow .5s ease',
@@ -213,12 +227,30 @@ export default function Onboarding({
       </Box>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3,1fr)' }, gap: '12px', textAlign: 'left' }}>
-        {STARTER_PACKS.map((pack) => (
+        {STARTER_PACKS.map((pack, i) => (
           <Box
             key={pack.id}
-            sx={{ border: `1px solid ${t.border}`, borderRadius: '14px', background: t.cardBg, padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}
+            sx={{ border: `1px solid ${t.border}`, borderRadius: '22px', background: t.cardBg, boxShadow: t.bubbleShadow, padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}
           >
-            <Box sx={{ fontFamily: serifFont, fontSize: 18, color: t.ink }}>{tr(pack.labelKey)}</Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Box
+                aria-hidden
+                sx={{
+                  width: 40,
+                  height: 40,
+                  flex: 'none',
+                  borderRadius: '14px',
+                  background: [t.tileTint, t.tileTint2, t.tileTint3][i % 3],
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 20,
+                }}
+              >
+                {pack.glyph}
+              </Box>
+              <Box sx={{ fontFamily: serifFont, fontSize: 18, color: t.ink }}>{tr(pack.labelKey)}</Box>
+            </Box>
             <Box sx={{ color: t.muted, fontSize: 12.5, lineHeight: 1.5, flex: 1 }}>
               {pack.places.map((p) => p.name).join(' · ')}
             </Box>
@@ -233,13 +265,20 @@ export default function Onboarding({
                 justifyContent: 'center',
                 gap: '6px',
                 border: `1px solid ${t.pillBorder}`,
-                borderRadius: '10px',
+                borderRadius: '999px',
                 background: 'transparent',
                 color: busy ? t.faint : t.accent,
+<<<<<<< HEAD
                 fontWeight: 600,
+=======
+                fontFamily: roundedFont,
+                fontWeight: 700,
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
                 fontSize: '13.5px',
-                padding: '8px 12px',
+                padding: '8px 14px',
                 cursor: busy ? 'default' : 'pointer',
+                transition: 'transform .12s ease, background-color .15s ease',
+                '&:active': busy ? {} : { transform: 'scale(.97)' },
                 '&:hover': busy ? {} : { background: t.searchBg },
               }}
             >

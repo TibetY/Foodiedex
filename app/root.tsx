@@ -16,6 +16,7 @@ import {
   Link as RemixLink,
 } from "@remix-run/react";
 
+<<<<<<< HEAD
 import { CacheProvider } from "@emotion/react";
 import createEmotionCache from "./createEmotionCache";
 
@@ -25,6 +26,11 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { ThemeProvider } from '@mui/material/styles';
 import { makeListTheme, brandCssVars, KanpaiThemeProvider } from "./listTheme";
+=======
+import { useContext } from "react";
+import { ThemeProvider, CssBaseline, Box, Button, Typography } from "@mui/material";
+import theme from "./theme";
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
 
 import { json } from "@remix-run/node";
 import { useTranslation } from "react-i18next";
@@ -34,6 +40,11 @@ import { getServerSupabaseEnv, type PublicEnv } from "~/supabaseConfig";
 import i18nextServer from "~/i18next.server";
 import { resources, fallbackLng } from "~/i18n";
 import Navbar from "./components/Navbar";
+<<<<<<< HEAD
+=======
+import { brandCssVars } from "~/listTheme";
+import { EmotionStyleContext } from "~/emotionStyles";
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
 import tailwindHref from "~/tailwind.css?url";
 
 /** Error boundary only — the app shell itself uses KanpaiThemeProvider, but a
@@ -44,7 +55,7 @@ const errorTheme = makeListTheme('light', 'matcha');
 export const handle = { i18n: "common" };
 
 export const links: LinksFunction = () => [
-  // SVG favicon (evergreen browsers) — the same amber diamond mark used in the
+  // SVG favicon (evergreen browsers) — the same Marker pin used in the
   // dashboard/shared-list headers, so the tab icon matches the in-app brand.
   { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
   // Rasterized fallbacks: legacy browsers without SVG favicon support, and iOS
@@ -60,7 +71,11 @@ export const links: LinksFunction = () => [
   },
   {
     rel: "stylesheet",
+<<<<<<< HEAD
     href: "https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&display=swap",
+=======
+    href: "https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=Instrument+Serif:ital@0;1&family=Zen+Maru+Gothic:wght@400;500;700&display=swap",
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
   },
 ];
 
@@ -72,7 +87,11 @@ export const meta: MetaFunction = ({ data }) => {
     { title: m.title },
     { name: "description", content: m.description },
     { name: "viewport", content: "width=device-width,initial-scale=1" },
+<<<<<<< HEAD
     { name: "theme-color", content: "#F0EDE6" },
+=======
+    { name: "theme-color", content: "#F4F1E8" },
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
   ];
 };
 
@@ -87,26 +106,46 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function App() {
-  const clientSideEmotionCache = createEmotionCache();
   const { ENV, locale } = useLoaderData<{ ENV: PublicEnv; locale: string }>();
+  // Server-extracted critical CSS on the server; the same tags read back out of
+  // the document on the client (see entry.client), so the markup is identical
+  // and React owns these nodes instead of leaving them orphaned in <head>.
+  const emotionStyles = useContext(EmotionStyleContext);
   const { t, i18n } = useTranslation();
   // Keep the i18next client instance in sync with the server-detected locale.
   useChangeLanguage(locale);
 
   return (
+<<<<<<< HEAD
     <html lang={locale} dir={i18n.dir(locale)} data-theme="light" data-accent="matcha">
+=======
+    <html lang={locale} dir={i18n.dir(locale)} data-theme="light">
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
       <head>
         <Meta />
         <Links />
         {/* Brand design tokens as CSS custom properties (generated from the same
+<<<<<<< HEAD
             source as the MUI theme); KanpaiThemeProvider keeps the data-theme/
             data-accent attributes above in sync with the user's stored pick. */}
+=======
+            source as the MUI theme). Public pages inherit the light set; the
+            dashboard/profile override with data-theme on their own root. */}
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
         <style dangerouslySetInnerHTML={{ __html: brandCssVars() }} />
+        {emotionStyles.map((chunk) => (
+          <style
+            key={chunk.key + chunk.ids}
+            data-emotion={`${chunk.key} ${chunk.ids}`}
+            dangerouslySetInnerHTML={{ __html: chunk.css }}
+          />
+        ))}
       </head>
       <body>
         <a href="#main-content" className="skip-to-main">
           {t("a11y.skipToMain")}
         </a>
+<<<<<<< HEAD
         <CacheProvider value={clientSideEmotionCache}>
           <KanpaiThemeProvider>
             <CssBaseline />
@@ -116,6 +155,20 @@ export default function App() {
             </main>
           </KanpaiThemeProvider>
         </CacheProvider>
+=======
+        {/* The Emotion cache is provided by entry.client (browser) and
+            entry.server (per request) — NOT here. A provider at this level runs
+            in both environments and shadowed the server's request-scoped cache,
+            leaving extractCriticalToChunks with nothing to inline and shipping
+            an unstyled first paint. */}
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Navbar />
+          <main id="main-content">
+            <Outlet />
+          </main>
+        </ThemeProvider>
+>>>>>>> c2f54faee97a5a72a0cc26c02599436a0db58cf9
         <ScrollRestoration />
         <script
           dangerouslySetInnerHTML={{
@@ -165,7 +218,10 @@ export function ErrorBoundary() {
               px: 3,
             }}
           >
-            <Typography variant="h3" component="h1" sx={{ fontWeight: 800 }}>
+            <Box aria-hidden sx={{ fontSize: 52, lineHeight: 1 }}>
+              {isNotFound ? '🍽️' : '🍳'}
+            </Box>
+            <Typography variant="h3" component="h1">
               {title}
             </Typography>
             <Typography variant="body1" sx={{ color: "text.secondary", maxWidth: 440 }}>
