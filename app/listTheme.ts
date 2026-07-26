@@ -17,10 +17,16 @@ const ACCENT_STORAGE_KEY = 'thelist.accent';
 export const THEME_COOKIE_KEY = 'thelist_theme';
 export const ACCENT_COOKIE_KEY = 'thelist_accent';
 
-export function getStoredMode(): ListMode {
-  if (typeof window === 'undefined') return 'light';
+/** The saved mode, or null when the visitor has never chosen one. Callers that
+ *  want a value regardless should fall back to 'light'. */
+export function readStoredMode(): ListMode | null {
+  if (typeof window === 'undefined') return null;
   const v = window.localStorage.getItem(MODE_STORAGE_KEY);
-  return v === 'dark' || v === 'light' ? v : 'light';
+  return v === 'dark' || v === 'light' ? v : null;
+}
+
+export function getStoredMode(): ListMode {
+  return readStoredMode() ?? 'light';
 }
 
 /**
@@ -53,10 +59,15 @@ export function modeFromCookieHeader(cookieHeader: string | null): ListMode {
   return (m?.[1] as ListMode) ?? 'light';
 }
 
-export function getStoredAccent(): AccentName {
-  if (typeof window === 'undefined') return 'matcha';
+/** The saved accent, or null when the visitor has never chosen one. */
+export function readStoredAccent(): AccentName | null {
+  if (typeof window === 'undefined') return null;
   const v = window.localStorage.getItem(ACCENT_STORAGE_KEY);
-  return v === 'matcha' || v === 'sakura' || v === 'peach' ? v : 'matcha';
+  return v === 'matcha' || v === 'sakura' || v === 'peach' ? v : null;
+}
+
+export function getStoredAccent(): AccentName {
+  return readStoredAccent() ?? 'matcha';
 }
 
 export function storeAccent(accent: AccentName): void {
@@ -191,6 +202,7 @@ export interface ListTokens {
   ink: string;
   muted: string;
   faint: string;
+  /** Chip/pill FILL (the design's --chip). Quiet pill text is `muted`. */
   chip: string;
   border: string;
   borderSoft: string;
@@ -544,14 +556,20 @@ export function KanpaiThemeProvider({
   // Reconcile once with localStorage, for visitors who saved a preference
   // before the cookies existed. storeMode/storeAccent then write the cookie,
   // so later loads are server-rendered right and this effect becomes a no-op.
+  //
+  // Only an ACTUAL saved value may override the cookie the server rendered
+  // from: read*Stored* returns null when nothing was ever chosen, and treating
+  // that absence as "light/matcha" would clobber a real cookie preference on
+  // any browser whose localStorage is empty (a cleared site-data profile, a
+  // restored cookie jar) and flip the page back to the default after paint.
   useEffect(() => {
-    const storedMode = getStoredMode();
-    const storedAccent = getStoredAccent();
-    if (storedMode !== initialMode) {
+    const storedMode = readStoredMode();
+    const storedAccent = readStoredAccent();
+    if (storedMode && storedMode !== initialMode) {
       setModeState(storedMode);
       storeMode(storedMode);
     }
-    if (storedAccent !== initialAccent) {
+    if (storedAccent && storedAccent !== initialAccent) {
       setAccentState(storedAccent);
       storeAccent(storedAccent);
     }

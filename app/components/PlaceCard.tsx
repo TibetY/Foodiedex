@@ -72,19 +72,22 @@ export default function PlaceCard({
   const { t: tr } = useTranslation();
 
   // Tag pills, per the design: cuisine first, then place types; honours
-  // (Michelin/Bib) render as one accent-tinted pill at the end.
-  const tags: string[] = [tr(`cuisines.${r.cuisine}`, r.cuisine)];
-  for (const p of r.placeTypes ?? []) {
-    if (tags.length >= 3) break;
-    const label = tr(`placeTypes.${p}`, p);
-    if (!tags.includes(label)) tags.push(label);
-  }
+  // (Michelin/Bib) render as one accent-tinted pill at the end. The row is a
+  // single fixed-height line, so the budget is small — an honour takes one of
+  // the slots rather than overflowing past the card edge.
   const honour =
     (r.michelinStars ?? 0) > 0
       ? `${'★'.repeat(r.michelinStars ?? 0)} ${tr('dashboard.michelinChip')}`
       : r.bibGourmand
         ? tr('dashboard.bibGourmand')
         : null;
+  const tagBudget = honour ? 1 : 2;
+  const tags: string[] = [tr(`cuisines.${r.cuisine}`, r.cuisine)];
+  for (const p of r.placeTypes ?? []) {
+    if (tags.length >= tagBudget) break;
+    const label = tr(`placeTypes.${p}`, p);
+    if (!tags.includes(label)) tags.push(label);
+  }
   const footerParts: string[] = [];
   if (r.city) footerParts.push(r.city);
   if ((r.visitCount ?? 0) > 0) footerParts.push(tr('dashboard.visitsCount', { count: r.visitCount ?? 0 }));
@@ -249,13 +252,15 @@ export default function PlaceCard({
               key={tag}
               component="span"
               sx={{
-                flex: 'none',
+                minWidth: 0,
                 fontSize: '11px',
                 padding: '3px 10px',
                 borderRadius: '999px',
                 background: t.chip,
                 color: t.muted,
                 whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
             >
               {tag}
@@ -415,7 +420,7 @@ export function CardAction({
         height: 28,
         background: solid ? tokens.searchBg : 'rgba(255,255,255,0.9)',
         border: `1px solid ${tokens.border}`,
-        color: danger ? tokens.error : tokens.chip,
+        color: danger ? tokens.error : tokens.muted,
         '&:hover': {
           background: solid ? tokens.pillBorder : '#fff',
           color: danger ? tokens.error : tokens.accent,

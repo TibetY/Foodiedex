@@ -76,7 +76,7 @@ export default function FilterSheet(props: FilterSheetProps) {
   const pillSx = (selected: boolean) => ({
     border: `1px solid ${selected ? t.accent : t.pillBorder}`,
     background: selected ? t.pBg : 'transparent',
-    color: selected ? t.pFg : t.chip,
+    color: selected ? t.pFg : t.muted,
     borderRadius: '999px',
     padding: '6px 13px',
     fontSize: '13px',
@@ -238,7 +238,7 @@ export default function FilterSheet(props: FilterSheetProps) {
           gap: '7px',
           border: `1px solid ${activeCount ? t.accent : t.pillBorder}`,
           background: activeCount ? t.pBg : 'transparent',
-          color: activeCount ? t.pFg : t.chip,
+          color: activeCount ? t.pFg : t.muted,
           borderRadius: '999px',
           padding: '7px 15px',
           fontSize: '13px',

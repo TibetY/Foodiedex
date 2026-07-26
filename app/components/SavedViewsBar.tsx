@@ -70,7 +70,7 @@ export default function SavedViewsBar({
                 gap: '6px',
                 border: 'none',
                 background: 'transparent',
-                color: active ? t.pFg : t.chip,
+                color: active ? t.pFg : t.muted,
                 fontSize: '13px',
                 fontWeight: 500,
                 padding: '7px 6px 7px 14px',

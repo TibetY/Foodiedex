@@ -317,7 +317,7 @@ export default function SharedListPage() {
               aria-label={tr('dashboard.sort_recent')}
               sx={{
                 background: 'transparent', border: `1px solid ${t.pillBorder}`, borderRadius: '999px',
-                padding: '7px 14px', color: t.chip, fontSize: '13px', cursor: 'pointer',
+                padding: '7px 14px', color: t.muted, fontSize: '13px', cursor: 'pointer',
               }}
             >
               {SORT_MODES.map((m) => (

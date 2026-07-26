@@ -122,7 +122,7 @@ export default function RestaurantDetailDialog({
   const chipSx = {
     background: t.searchBg,
     border: `1px solid ${t.pillBorder}`,
-    color: t.chip,
+    color: t.muted,
     fontSize: 12.5,
   };
 
