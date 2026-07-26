@@ -103,7 +103,7 @@ export default function SharedListPage() {
 
   const serif = "'Archivo',sans-serif";
 
-  const decorated = useMemo(() => (shared?.restaurants ?? []).map(decorate), [shared]);
+  const decorated = useMemo(() => (shared?.restaurants ?? []).map((r) => decorate(r)), [shared]);
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();

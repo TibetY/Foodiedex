@@ -23,10 +23,10 @@ import Favorite from '@mui/icons-material/Favorite';
 import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
 import AddIcon from '@mui/icons-material/Add';
 import { useTranslation } from 'react-i18next';
-import type { Restaurant } from '~/types/restaurant';
+import type { Restaurant, RestaurantRating } from '~/types/restaurant';
 import type { ListTokens } from '~/listTheme';
 import RestaurantThumb from '~/components/RestaurantThumb';
-import Bubbles from '~/components/Bubbles';
+import Bubbles, { BubbleInput } from '~/components/Bubbles';
 import { cuisineEmoji, placeTypeEmoji, dietEmoji, menuTypeEmoji } from '~/utils/cuisineEmoji';
 
 type Tokens = ListTokens;
@@ -49,6 +49,12 @@ interface RestaurantDetailDialogProps {
   onDelete: (id: string) => void;
   onToggleFavorite?: (restaurant: Restaurant) => void;
   onAddVisit?: (restaurant: Restaurant) => void;
+  /** Everyone's verdicts on this spot ("what everyone said"). */
+  ratings?: RestaurantRating[];
+  /** Signed-in user, so their own row can be split out and made editable. */
+  currentUserId?: string;
+  /** Save the current user's own bubbles + note. Absent = read-only view. */
+  onRate?: (restaurant: Restaurant, rating: number, note: string) => Promise<void> | void;
 }
 
 export default function RestaurantDetailDialog({
@@ -62,6 +68,9 @@ export default function RestaurantDetailDialog({
   onDelete,
   onToggleFavorite,
   onAddVisit,
+  ratings = [],
+  currentUserId,
+  onRate,
 }: RestaurantDetailDialogProps) {
   const { t: tr } = useTranslation();
   const muiTheme = useTheme();
@@ -86,7 +95,17 @@ export default function RestaurantDetailDialog({
   const locations = r.locations ?? [];
   const safeIdx = locations.length ? Math.min(activeLoc, locations.length - 1) : 0;
   const loc = locations[safeIdx] ?? {};
-  const rating = Math.round(r.rating ?? 0);
+  // The headline score is the group's average once anyone has rated
+  // individually; the spot's own column stays the fallback for everything
+  // added before per-person ratings existed.
+  const groupAvg =
+    ratings.length > 0
+      ? ratings.reduce((sum, x) => sum + x.rating, 0) / ratings.length
+      : null;
+  const shownRating = groupAvg ?? r.rating ?? 0;
+  const rating = Math.round(shownRating);
+  const myRating = currentUserId ? ratings.find((x) => x.userId === currentUserId) : undefined;
+  const otherRatings = ratings.filter((x) => x.userId !== currentUserId);
   const initial = (r.name.replace(/^The /i, '')[0] || '?').toUpperCase();
   const isBeen = (r.status ?? 'want') === 'been';
 
@@ -208,10 +227,20 @@ export default function RestaurantDetailDialog({
           </Box>
         </Box>
 
-        {/* Rating */}
-        <Box sx={{ mt: '8px', minHeight: 20 }}>
+        {/* Rating — group average, with the agreement line from the design */}
+        <Box sx={{ mt: '8px', minHeight: 20, display: 'flex', alignItems: 'center', gap: '8px' }}>
           {rating > 0 ? (
-            <Bubbles value={r.rating ?? 0} tokens={t} size={15} gap={6} />
+            <>
+              <Bubbles value={shownRating} tokens={t} size={15} gap={6} />
+              <Box component="span" sx={{ color: t.faint, fontSize: 12.5 }}>
+                {ratings.length > 0
+                  ? tr('detail.ratingSummary', {
+                      rating: shownRating.toFixed(1),
+                      count: ratings.length,
+                    })
+                  : shownRating.toFixed(1)}
+              </Box>
+            </>
           ) : (
             <Box component="span" sx={{ color: t.faint, fontSize: 13, fontStyle: 'italic' }}>
               {tr('detail.notRated')}
@@ -259,6 +288,62 @@ export default function RestaurantDetailDialog({
                 sx={{ ...chipSx, background: t.pBg, color: t.pFg, fontWeight: 600 }}
               />
             )}
+          </Box>
+        )}
+
+        {/* What everyone said — each member's own bubbles and note, with the
+            signed-in user's row editable in place (design 1g). */}
+        {(otherRatings.length > 0 || onRate) && (
+          <Box sx={{ mt: '18px' }}>
+            <Box component="span" sx={sectionLabel}>{tr('detail.everyoneSaid')}</Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', mt: '10px' }}>
+              {onRate && currentUserId && (
+                <MyVerdict
+                  tokens={t}
+                  existing={myRating}
+                  onSave={(value, note) => onRate(r, value, note)}
+                />
+              )}
+              {otherRatings.map((x) => (
+                <Box key={x.id} sx={{ display: 'flex', gap: '13px' }}>
+                  <Box
+                    aria-hidden
+                    sx={{
+                      width: 34,
+                      height: 34,
+                      flex: 'none',
+                      borderRadius: '50%',
+                      background: t.avatar3,
+                      color: t.accent,
+                      display: 'grid',
+                      placeItems: 'center',
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {x.profile?.avatarUrl ? (
+                      <Box component="img" src={x.profile.avatarUrl} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      (x.profile?.displayName?.[0] ?? '?').toUpperCase()
+                    )}
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '9px', mb: '3px' }}>
+                      <Box component="span" sx={{ fontSize: 13.5, fontWeight: 600 }}>
+                        {x.profile?.displayName || tr('detail.someone')}
+                      </Box>
+                      <Bubbles value={x.rating} tokens={t} size={8} gap={3} />
+                    </Box>
+                    {x.note && (
+                      <Box component="p" sx={{ m: 0, fontSize: 13, lineHeight: 1.5, color: t.muted }}>
+                        {x.note}
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+              ))}
+            </Box>
           </Box>
         )}
 
@@ -456,5 +541,91 @@ export default function RestaurantDetailDialog({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * The signed-in user's own row in "what everyone said": their bubbles, always
+ * editable in place, plus an optional one-line note. Saves on change (bubbles)
+ * or on blur (note) so there's no separate submit button to hunt for.
+ */
+function MyVerdict({
+  tokens: t,
+  existing,
+  onSave,
+}: {
+  tokens: Tokens;
+  existing?: RestaurantRating;
+  onSave: (rating: number, note: string) => Promise<void> | void;
+}) {
+  const { t: tr } = useTranslation();
+  const [value, setValue] = useState(existing?.rating ?? 0);
+  const [note, setNote] = useState(existing?.note ?? '');
+
+  // Re-seed when the dialog is pointed at a different spot (or the saved row
+  // arrives after a revalidate) — otherwise the previous spot's verdict sticks.
+  useEffect(() => {
+    setValue(existing?.rating ?? 0);
+    setNote(existing?.note ?? '');
+  }, [existing?.id, existing?.rating, existing?.note]);
+
+  return (
+    <Box sx={{ display: 'flex', gap: '13px' }}>
+      <Box
+        aria-hidden
+        sx={{
+          width: 34,
+          height: 34,
+          flex: 'none',
+          borderRadius: '50%',
+          background: t.beenBg,
+          color: t.beenFg,
+          display: 'grid',
+          placeItems: 'center',
+          fontSize: 11.5,
+          fontWeight: 600,
+        }}
+      >
+        ★
+      </Box>
+      <Box sx={{ minWidth: 0, flex: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '9px', mb: '5px', flexWrap: 'wrap' }}>
+          <Box component="span" sx={{ fontSize: 13.5, fontWeight: 600 }}>{tr('detail.yourBubbles')}</Box>
+          <BubbleInput
+            value={value}
+            onChange={(next) => {
+              setValue(next);
+              void onSave(next, note);
+            }}
+            tokens={t}
+            size={16}
+            gap={6}
+            ariaLabel={tr('detail.yourBubbles')}
+          />
+        </Box>
+        <Box
+          component="input"
+          value={note}
+          placeholder={tr('detail.yourNotePlaceholder')}
+          aria-label={tr('detail.yourNote')}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNote(e.target.value)}
+          onBlur={() => {
+            if ((existing?.note ?? '') !== note && value > 0) void onSave(value, note);
+          }}
+          sx={{
+            width: '100%',
+            font: 'inherit',
+            fontSize: 13,
+            color: t.ink,
+            background: t.field,
+            border: `1px solid ${t.fieldBorder}`,
+            borderRadius: '12px',
+            padding: '8px 12px',
+            '&::placeholder': { color: t.faint },
+            '&:focus': { outline: 'none', borderColor: t.accent },
+          }}
+        />
+      </Box>
+    </Box>
   );
 }

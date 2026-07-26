@@ -52,7 +52,18 @@
     "rateDesc": "Your honest ratings and comments — no fake reviews, just your real experience.",
     "shareTitle": "Share Favorites",
     "shareDesc": "Email your curated restaurant list to friends who always ask where to eat.",
-    "footer": "Built with love for food lovers everywhere."
+    "footer": "Built with love for food lovers everywhere.",
+    "statPlaces": "9",
+    "statPlacesLabel": "places we've been",
+    "statWishlist": "6",
+    "statWishlistLabel": "still on the wishlist",
+    "statRating": "4.1",
+    "statRatingLabel": "average bubbles given",
+    "statFriends": "6",
+    "statFriendsLabel": "of us arguing about it",
+    "closingEyebrow": "Where we want to go next",
+    "closingTitle": "Every good meal, worth remembering.",
+    "closingCta": "Start your own list"
   },
   "login": {
     "title": "Welcome back",
@@ -65,7 +76,9 @@
     "emailNotConfirmed": "Please confirm your email first — open the confirmation link we sent you. Didn't get it?",
     "resendConfirmation": "Resend confirmation email",
     "confirmationResent": "Confirmation email sent — check your inbox (and spam).",
-    "resendFailed": "Couldn't resend the confirmation email. Please try again in a moment."
+    "resendFailed": "Couldn't resend the confirmation email. Please try again in a moment.",
+    "quote": "“We finally made it to the sake bar. Five bubbles, no notes.”",
+    "quoteAttribution": "— Nao, last Tuesday"
   },
   "forgot": {
     "title": "Reset your password",
@@ -100,7 +113,8 @@
     "submit": "Create Account",
     "passwordsNoMatch": "Passwords do not match",
     "checkEmail": "Account created! Check your email to confirm your address.",
-    "disclaimer": "By creating an account, you agree to keep your restaurant opinions honest and your taste buds adventurous."
+    "disclaimer": "By creating an account, you agree to keep your restaurant opinions honest and your taste buds adventurous.",
+    "quote": "“Two lists, six friends, one running argument about the ramen place.”"
   },
   "profile": {
     "back": "Back to dashboard",
@@ -122,7 +136,12 @@
     "passwordUpdated": "Password updated!",
     "passwordMismatch": "Passwords do not match",
     "passwordTooShort": "Password must be at least 6 characters",
-    "passwordUpdateFailed": "Failed to update password. Please try again."
+    "passwordUpdateFailed": "Failed to update password. Please try again.",
+    "appearanceTitle": "Appearance",
+    "appearanceHint": "Applies to every screen, just for you",
+    "darkModeTitle": "Dark mode",
+    "darkModeOnNote": "Cream on charcoal — easier at the bar",
+    "darkModeOffNote": "Charcoal on cream, the daytime default"
   },
   "dashboard": {
     "searchPlaceholder": "Search places…",
@@ -225,7 +244,16 @@
     "snackListRenamed": "List renamed!",
     "snackListDeleted": "List deleted.",
     "snackListUpdateFailed": "Failed to update the list.",
-    "loadError": "Couldn't load your lists: {{error}}. If this persists, confirm the database schema has been applied and the Supabase key is correct."
+    "loadError": "Couldn't load your lists: {{error}}. If this persists, confirm the database schema has been applied and the Supabase key is correct.",
+    "viewTable": "Table",
+    "tableColPlace": "Place",
+    "tableColCuisine": "Cuisine",
+    "tableColRating": "Rating",
+    "tableColCost": "Cost",
+    "tableColCity": "City",
+    "tableColStatus": "Status",
+    "ratingAvg": "{{rating}} avg",
+    "snackRatingFailed": "Couldn't save your rating. Please try again."
   },
   "lists": {
     "defaultName": "My List",
@@ -466,7 +494,14 @@
     "reservationsEmpty": "No booking details yet.",
     "hoursEmpty": "Opening hours aren't available yet.",
     "socialEmpty": "No links yet.",
-    "guidesEmpty": "Guide write-ups are coming soon."
+    "guidesEmpty": "Guide write-ups are coming soon.",
+    "everyoneSaid": "What everyone said",
+    "yourBubbles": "Your bubbles",
+    "yourNote": "Your note",
+    "yourNotePlaceholder": "Add a line about it…",
+    "someone": "Someone",
+    "ratingSummary_one": "{{rating}} · {{count}} of us rated it",
+    "ratingSummary_other": "{{rating}} · {{count}} of us rated it"
   },
   "share": {
     "title": "Share “{{name}}”",
@@ -528,5 +563,13 @@
   "map": {
     "cuisineUnknown": "Restaurant",
     "nearMe": "Center on my location"
+  },
+  "accents": {
+    "matcha": "Matcha",
+    "matchaNote": "soft matcha green",
+    "sakura": "Sakura",
+    "sakuraNote": "cherry blossom pink",
+    "peach": "Peach",
+    "peachNote": "pale peach"
   }
 }

@@ -205,3 +205,20 @@ export interface ShareLink {
   expiresAt?: string; // ISO timestamp, or undefined for "never expires"
   active: boolean;
 }
+
+/**
+ * One person's verdict on one spot. The design shows every member's own
+ * bubbles and note side by side ("what everyone said"), so ratings live in
+ * their own table rather than as a single column on the restaurant. The
+ * restaurant's own `rating` remains the fallback for spots nobody has rated
+ * individually.
+ */
+export interface RestaurantRating {
+  id: string;
+  restaurantId: string;
+  userId: string;
+  rating: number; // 0-5
+  note?: string;
+  profile?: Profile;
+  updatedAt?: string;
+}

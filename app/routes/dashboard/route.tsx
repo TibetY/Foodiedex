@@ -47,6 +47,7 @@ import {
 } from '~/services/lists.server';
 import { getProfile } from '~/services/profiles.server';
 import { getListViews } from '~/services/views.server';
+import { getListRatings } from '~/services/ratings.server';
 import type {
   Restaurant,
   RestaurantList,
@@ -55,6 +56,7 @@ import type {
   ShareLink,
   Profile,
   ListView,
+  RestaurantRating,
 } from '~/types/restaurant';
 import { decorate, type DecoratedRestaurant } from '~/utils/decorateRestaurant';
 import {
@@ -86,6 +88,7 @@ import {
 } from '~/services/restaurants.client';
 import { createList, updateList, deleteList } from '~/services/lists.client';
 import { createListView, renameListView, deleteListView } from '~/services/views.client';
+import { upsertMyRating } from '~/services/ratings.client';
 import { geocodeAddress } from '~/services/geocode.client';
 import type { RestaurantMapProps } from '~/components/RestaurantMap';
 
@@ -139,6 +142,8 @@ type LoaderData = {
   shareLink: ShareLink | null;
   profile: Profile | null;
   views: ListView[];
+  /** Everyone's per-person verdicts, keyed by restaurant id. */
+  ratings: Record<string, RestaurantRating[]>;
   error: string | null;
 };
 
@@ -173,10 +178,15 @@ export const loader: LoaderFunction = async ({ request }) => {
     let inviteLink: InviteLink | null = null;
     let shareLink: ShareLink | null = null;
     let views: ListView[] = [];
+    let ratings: Record<string, RestaurantRating[]> = {};
     if (activeList) {
       restaurants = await getRestaurants(supabase, activeList.id);
       members = await getListMembers(supabase, activeList.id);
       views = await getListViews(supabase, activeList.id, user.id);
+      ratings = await getListRatings(
+        supabase,
+        restaurants.map((r) => r.id).filter((id): id is string => !!id)
+      );
       if (activeList.role === 'owner') {
         inviteLink = await getInviteLink(supabase, activeList.id);
         shareLink = await getShareLink(supabase, activeList.id);
@@ -195,6 +205,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         shareLink,
         profile,
         views,
+        ratings,
         error: null,
       },
       { headers }
@@ -212,6 +223,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         shareLink: null,
         profile: null,
         views: [],
+        ratings: {},
         error: describeError(error),
       },
       { headers }
@@ -295,6 +307,7 @@ export default function Dashboard() {
     shareLink,
     profile,
     views,
+    ratings,
     error,
   } = data;
   const revalidator = useRevalidator();
@@ -488,7 +501,10 @@ export default function Dashboard() {
   const canEdit = role === 'owner' || role === 'editor';
   const canManage = role === 'owner';
 
-  const decorated = useMemo(() => restaurants.map(decorate), [restaurants]);
+  const decorated = useMemo(
+    () => restaurants.map((r) => decorate(r, r.id ? ratings[r.id] : undefined)),
+    [restaurants, ratings]
+  );
 
   // Distinct cuisine / cost values present in this list, for the filter menus.
   const cuisineOptions = useMemo(
@@ -774,6 +790,22 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error updating visit count:', error);
       setSnackbar({ open: true, message: tr('dashboard.snackStatusFailed'), severity: 'error' });
+    }
+  };
+
+  /**
+   * Save the signed-in user's own bubbles + note on a spot. Every member can
+   * rate — including viewers — because a verdict is participation, not an edit
+   * to the shared record (the RLS policies draw the same line).
+   */
+  const handleRate = async (r: Restaurant, rating: number, note: string) => {
+    if (!r.id) return;
+    try {
+      await upsertMyRating(r.id, userId, rating, note);
+      revalidator.revalidate();
+    } catch (error) {
+      console.error('Error saving rating:', error);
+      setSnackbar({ open: true, message: tr('dashboard.snackRatingFailed'), severity: 'error' });
     }
   };
 
@@ -1924,6 +1956,9 @@ export default function Dashboard() {
           onDelete={(id) => { setDetailOpen(false); handleDeleteClick(id); }}
           onToggleFavorite={handleToggleFavorite}
           onAddVisit={handleAddVisit}
+          ratings={selectedRestaurant?.id ? ratings[selectedRestaurant.id] ?? [] : []}
+          currentUserId={userId}
+          onRate={handleRate}
         />
         <RestaurantFormDialog
           open={formOpen}
