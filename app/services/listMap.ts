@@ -3,6 +3,7 @@ import type {
   ListMember,
   Profile,
   RestaurantList,
+  RestaurantRating,
   ShareLink,
 } from '~/types/restaurant';
 
@@ -71,5 +72,27 @@ export function rowToShareLink(row: ShareLinkRow): ShareLink {
     listId: row.list_id,
     expiresAt: row.expires_at ?? undefined,
     active: row.active,
+  };
+}
+
+export interface RestaurantRatingRow {
+  id: string;
+  restaurant_id: string;
+  user_id: string;
+  rating: number;
+  note: string | null;
+  updated_at?: string | null;
+  profiles?: ProfileRow | null;
+}
+
+export function rowToRestaurantRating(row: RestaurantRatingRow): RestaurantRating {
+  return {
+    id: row.id,
+    restaurantId: row.restaurant_id,
+    userId: row.user_id,
+    rating: row.rating,
+    note: row.note ?? undefined,
+    profile: row.profiles ? rowToProfile(row.profiles) : undefined,
+    updatedAt: row.updated_at ?? undefined,
   };
 }

@@ -1,11 +1,16 @@
 import { useState } from 'react';
-import { Box, Menu, MenuItem } from '@mui/material';
-import { Bookmark, BookmarkBorder, MoreVert, Add } from '@mui/icons-material';
+import Box from '@mui/material/Box';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Bookmark from '@mui/icons-material/Bookmark';
+import BookmarkBorder from '@mui/icons-material/BookmarkBorder';
+import MoreVert from '@mui/icons-material/MoreVert';
+import Add from '@mui/icons-material/Add';
 import { useTranslation } from 'react-i18next';
 import type { ListView } from '~/types/restaurant';
-import { roundedFont, type listTokens } from '~/listTheme';
+import type { ListTokens } from '~/listTheme';
 
-type Tokens = (typeof listTokens)['light'];
+type Tokens = ListTokens;
 
 interface SavedViewsBarProps {
   tokens: Tokens;
@@ -65,8 +70,7 @@ export default function SavedViewsBar({
                 gap: '6px',
                 border: 'none',
                 background: 'transparent',
-                color: active ? t.pFg : t.chip,
-                fontFamily: roundedFont,
+                color: active ? t.pFg : t.muted,
                 fontSize: '13px',
                 fontWeight: 500,
                 padding: '7px 6px 7px 14px',
@@ -102,7 +106,6 @@ export default function SavedViewsBar({
             background: 'transparent',
             color: t.accent,
             borderRadius: '999px',
-            fontFamily: roundedFont,
             fontSize: '13px',
             fontWeight: 700,
             padding: '7px 14px',

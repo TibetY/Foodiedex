@@ -52,7 +52,18 @@
     "rateDesc": "Vos notes et commentaires honnêtes — pas de faux avis, juste votre expérience réelle.",
     "shareTitle": "Partagez vos favoris",
     "shareDesc": "Envoyez votre liste de restaurants par courriel aux amis qui demandent toujours où manger.",
-    "footer": "Conçu avec amour pour les passionnés de cuisine du monde entier."
+    "footer": "Conçu avec amour pour les passionnés de cuisine du monde entier.",
+    "statPlaces": "9",
+    "statPlacesLabel": "adresses visitées",
+    "statWishlist": "6",
+    "statWishlistLabel": "encore sur la liste",
+    "statRating": "4.1",
+    "statRatingLabel": "bulles données en moyenne",
+    "statFriends": "6",
+    "statFriendsLabel": "à en débattre",
+    "closingEyebrow": "Où nous voulons aller ensuite",
+    "closingTitle": "La prochaine est déjà sur la liste.",
+    "closingCta": "Commencez votre liste"
   },
   "login": {
     "title": "Bon retour",
@@ -65,7 +76,9 @@
     "emailNotConfirmed": "Veuillez d'abord confirmer votre courriel — ouvrez le lien de confirmation que nous vous avons envoyé. Vous ne l'avez pas reçu ?",
     "resendConfirmation": "Renvoyer le courriel de confirmation",
     "confirmationResent": "Courriel de confirmation envoyé — vérifiez votre boîte de réception (et les indésirables).",
-    "resendFailed": "Impossible de renvoyer le courriel de confirmation. Réessayez dans un instant."
+    "resendFailed": "Impossible de renvoyer le courriel de confirmation. Réessayez dans un instant.",
+    "quote": "« On a enfin testé le bar à saké. Cinq bulles, rien à redire. »",
+    "quoteAttribution": "— Nao, mardi dernier"
   },
   "forgot": {
     "title": "Réinitialiser votre mot de passe",
@@ -100,7 +113,8 @@
     "submit": "Créer un compte",
     "passwordsNoMatch": "Les mots de passe ne correspondent pas",
     "checkEmail": "Compte créé ! Vérifiez votre courriel pour confirmer votre adresse.",
-    "disclaimer": "En créant un compte, vous vous engagez à garder vos avis sincères et vos papilles aventureuses."
+    "disclaimer": "En créant un compte, vous vous engagez à garder vos avis sincères et vos papilles aventureuses.",
+    "quote": "« Deux listes, six amis, un débat sans fin sur le resto de ramen. »"
   },
   "profile": {
     "back": "Retour au tableau de bord",
@@ -122,7 +136,12 @@
     "passwordUpdated": "Mot de passe mis à jour !",
     "passwordMismatch": "Les mots de passe ne correspondent pas",
     "passwordTooShort": "Le mot de passe doit comporter au moins 6 caractères",
-    "passwordUpdateFailed": "Échec de la mise à jour du mot de passe. Veuillez réessayer."
+    "passwordUpdateFailed": "Échec de la mise à jour du mot de passe. Veuillez réessayer.",
+    "appearanceTitle": "Apparence",
+    "appearanceHint": "S'applique à tous les écrans, rien que pour vous",
+    "darkModeTitle": "Mode sombre",
+    "darkModeOnNote": "Crème sur charbon — plus doux le soir",
+    "darkModeOffNote": "Charbon sur crème, le réglage de jour"
   },
   "dashboard": {
     "searchPlaceholder": "Rechercher des lieux…",
@@ -225,7 +244,16 @@
     "snackListRenamed": "Liste renommée !",
     "snackListDeleted": "Liste supprimée.",
     "snackListUpdateFailed": "Échec de la mise à jour de la liste.",
-    "loadError": "Impossible de charger vos listes : {{error}}. Si le problème persiste, vérifiez que le schéma de base de données a été appliqué et que la clé Supabase est correcte."
+    "loadError": "Impossible de charger vos listes : {{error}}. Si le problème persiste, vérifiez que le schéma de base de données a été appliqué et que la clé Supabase est correcte.",
+    "viewTable": "Tableau",
+    "tableColPlace": "Adresse",
+    "tableColCuisine": "Cuisine",
+    "tableColRating": "Note",
+    "tableColCost": "Prix",
+    "tableColCity": "Ville",
+    "tableColStatus": "Statut",
+    "ratingAvg": "{{rating}} en moyenne",
+    "snackRatingFailed": "Impossible d'enregistrer votre note. Réessayez."
   },
   "lists": {
     "defaultName": "Ma liste",
@@ -466,7 +494,14 @@
     "reservationsEmpty": "Aucune information de réservation pour l'instant.",
     "hoursEmpty": "Les horaires ne sont pas encore disponibles.",
     "socialEmpty": "Aucun lien pour l'instant.",
-    "guidesEmpty": "Les critiques des guides arrivent bientôt."
+    "guidesEmpty": "Les critiques des guides arrivent bientôt.",
+    "everyoneSaid": "Ce que tout le monde en a dit",
+    "yourBubbles": "Vos bulles",
+    "yourNote": "Votre note",
+    "yourNotePlaceholder": "Ajoutez un mot à son sujet…",
+    "someone": "Quelqu'un",
+    "ratingSummary_one": "{{rating}} · {{count}} d’entre nous l’a notée",
+    "ratingSummary_other": "{{rating}} · {{count}} d’entre nous l’ont notée"
   },
   "share": {
     "title": "Partager « {{name}} »",
@@ -501,7 +536,9 @@
     "cancel": "Annuler",
     "done": "Terminé",
     "somethingWrong": "Une erreur s'est produite",
-    "couldNotCopy": "Impossible de copier le lien"
+    "couldNotCopy": "Impossible de copier le lien",
+    "editorNote": "Peut ajouter des adresses et les noter",
+    "viewerNote": "Peut voir la liste et les notes, sans rien ajouter"
   },
   "shared": {
     "byline": "Une liste de {{name}}",
@@ -528,5 +565,13 @@
   "map": {
     "cuisineUnknown": "Restaurant",
     "nearMe": "Centrer sur ma position"
+  },
+  "accents": {
+    "matcha": "Matcha",
+    "matchaNote": "vert matcha doux",
+    "sakura": "Sakura",
+    "sakuraNote": "rose fleur de cerisier",
+    "peach": "Pêche",
+    "peachNote": "pêche pâle"
   }
 }

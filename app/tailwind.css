@@ -2,13 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base surface follows the brand tokens injected by brandCssVars() (root.tsx),
-   so the page ground is always the live theme — washi paper on the public
-   pages, sumi night when the app subtree flips data-theme="dark". */
+/* Custom properties — fallback values only; brandCssVars() (listTheme.ts)
+   drives the live --bg/--accent/etc. everywhere the app actually renders. */
+:root {
+  --color-bg: #F0EDE6;
+  --color-surface: #FFFFFF;
+  --color-accent: #5B6E48;
+  --color-accent-hover: #8FA477;
+  --color-text: #2B2B2B;
+  --color-text-secondary: rgba(43,43,43,.6);
+}
+
 html,
 body {
-  background-color: var(--bg, #F4F1E8);
-  color: var(--ink, #1F1E1A);
+  background-color: var(--bg, var(--color-bg));
+  color: var(--ink, var(--color-text));
   color-scheme: light;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -27,9 +35,9 @@ body {
   left: 16px;
   z-index: 9999;
   padding: 12px 24px;
-  background: var(--accent, #A8442A);
-  color: var(--accent-text, #fff);
-  border-radius: 0 0 16px 16px;
+  background: var(--accent, #5B6E48);
+  color: white;
+  border-radius: 0 0 12px 12px;
   font-weight: 600;
   text-decoration: none;
   transform: translateY(-150%);
@@ -78,6 +86,15 @@ body {
 @keyframes bob2 {
   0%, 100% { transform: translateY(-3px) rotate(-1.5deg); }
   50% { transform: translateY(2px) rotate(1deg); }
+}
+
+/* Skeleton shimmer — a slow highlight sweep across loading placeholders
+   (SkeletonCard). The gradient itself is set per-component from the theme
+   tokens; this only drives the background-position sweep. Reduced-motion
+   users get the flat skeleton tone (see the global media query below). */
+@keyframes kanpai-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
 }
 
 .animate-fade-in-up {
@@ -136,7 +153,7 @@ body {
 /* Focus visible styles for WCAG. Uses the live brand accent (injected by
    brandCssVars) so it follows the theme, not the legacy template orange. */
 *:focus-visible {
-  outline: 2px solid var(--accent, #A8442A);
+  outline: 2px solid var(--accent, #5B6E48);
   outline-offset: 2px;
 }
 

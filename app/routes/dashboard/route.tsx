@@ -6,43 +6,36 @@ import {
   useRevalidator,
   useSearchParams,
   useNavigate,
+  useNavigation,
   type ShouldRevalidateFunction,
 } from '@remix-run/react';
-import {
-  Box,
-  IconButton,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  Snackbar,
-  Alert,
-  ThemeProvider,
-  Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Divider,
-} from '@mui/material';
-import {
-  Add,
-  Logout,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  PersonAddAlt1,
-  Person,
-  Favorite,
-  FavoriteBorder,
-  Close,
-  Search,
-  Insights,
-  DarkMode,
-  LightMode,
-  Translate,
-} from '@mui/icons-material';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import Tooltip from '@mui/material/Tooltip';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Divider from '@mui/material/Divider';
+import Add from '@mui/icons-material/Add';
+import Logout from '@mui/icons-material/Logout';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import PersonAddAlt1 from '@mui/icons-material/PersonAddAlt1';
+import Person from '@mui/icons-material/Person';
+import Favorite from '@mui/icons-material/Favorite';
+import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
+import Close from '@mui/icons-material/Close';
+import Search from '@mui/icons-material/Search';
+import Insights from '@mui/icons-material/Insights';
 import { createSupabaseServerClient } from '~/supabase.server';
 import { getRestaurants } from '~/services/restaurants.server';
 import {
@@ -54,6 +47,7 @@ import {
 } from '~/services/lists.server';
 import { getProfile } from '~/services/profiles.server';
 import { getListViews } from '~/services/views.server';
+import { getListRatings } from '~/services/ratings.server';
 import type {
   Restaurant,
   RestaurantList,
@@ -62,6 +56,7 @@ import type {
   ShareLink,
   Profile,
   ListView,
+  RestaurantRating,
 } from '~/types/restaurant';
 import { decorate, type DecoratedRestaurant } from '~/utils/decorateRestaurant';
 import {
@@ -78,8 +73,9 @@ import ShareListDialog from '~/components/ShareListDialog';
 import Onboarding from '~/components/Onboarding';
 import FilterSheet from '~/components/FilterSheet';
 import SavedViewsBar from '~/components/SavedViewsBar';
-import Stars from '~/components/Stars';
+import Bubbles from '~/components/Bubbles';
 import PlaceCard, { BookingPill, CardAction } from '~/components/PlaceCard';
+import SkeletonCard, { SkeletonListRow } from '~/components/SkeletonCard';
 import LanguageSwitcher from '~/components/LanguageSwitcher';
 import { uploadRestaurantImage } from '~/services/storage.client';
 import {
@@ -92,6 +88,7 @@ import {
 } from '~/services/restaurants.client';
 import { createList, updateList, deleteList } from '~/services/lists.client';
 import { createListView, renameListView, deleteListView } from '~/services/views.client';
+import { upsertMyRating } from '~/services/ratings.client';
 import { geocodeAddress } from '~/services/geocode.client';
 import type { RestaurantMapProps } from '~/components/RestaurantMap';
 
@@ -109,7 +106,7 @@ export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: leafletStylesHref },
 ];
 import { useTranslation } from 'react-i18next';
-import { listTokens, makeListTheme, getStoredMode, storeMode, roundedFont, type ListMode, modeFromCookieHeader } from '~/listTheme';
+import { useKanpaiTheme, type ListMode } from '~/listTheme';
 import { cuisineEmoji } from '~/utils/cuisineEmoji';
 
 /**
@@ -145,14 +142,13 @@ type LoaderData = {
   shareLink: ShareLink | null;
   profile: Profile | null;
   views: ListView[];
+  /** Everyone's per-person verdicts, keyed by restaurant id. */
+  ratings: Record<string, RestaurantRating[]>;
   error: string | null;
-  /** Theme the request carries, so SSR paints the user's mode, not a guess. */
-  initialMode: ListMode;
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
   const { supabase, headers } = createSupabaseServerClient(request);
-  const initialMode = modeFromCookieHeader(request.headers.get('Cookie'));
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -182,10 +178,15 @@ export const loader: LoaderFunction = async ({ request }) => {
     let inviteLink: InviteLink | null = null;
     let shareLink: ShareLink | null = null;
     let views: ListView[] = [];
+    let ratings: Record<string, RestaurantRating[]> = {};
     if (activeList) {
       restaurants = await getRestaurants(supabase, activeList.id);
       members = await getListMembers(supabase, activeList.id);
       views = await getListViews(supabase, activeList.id, user.id);
+      ratings = await getListRatings(
+        supabase,
+        restaurants.map((r) => r.id).filter((id): id is string => !!id)
+      );
       if (activeList.role === 'owner') {
         inviteLink = await getInviteLink(supabase, activeList.id);
         shareLink = await getShareLink(supabase, activeList.id);
@@ -204,8 +205,8 @@ export const loader: LoaderFunction = async ({ request }) => {
         shareLink,
         profile,
         views,
+        ratings,
         error: null,
-        initialMode,
       },
       { headers }
     );
@@ -222,8 +223,8 @@ export const loader: LoaderFunction = async ({ request }) => {
         shareLink: null,
         profile: null,
         views: [],
+        ratings: {},
         error: describeError(error),
-        initialMode,
       },
       { headers }
     );
@@ -268,7 +269,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
   return defaultShouldRevalidate;
 };
 
-type ViewMode = 'tile' | 'list' | 'map';
+type ViewMode = 'tile' | 'list' | 'table' | 'map';
 type FilterMode = 'all' | 'been' | 'want';
 type SortMode = 'recent' | 'rating' | 'name' | 'price' | 'visits' | 'favorite';
 const SORT_MODES: SortMode[] = ['recent', 'rating', 'name', 'price', 'visits', 'favorite'];
@@ -306,33 +307,29 @@ export default function Dashboard() {
     shareLink,
     profile,
     views,
+    ratings,
     error,
   } = data;
   const revalidator = useRevalidator();
+  const navigation = useNavigation();
   const { t: tr } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>(initialRestaurants);
-  const [mode, setMode] = useState<ListMode>(data.initialMode);
+  const { mode, tokens: t, setMode } = useKanpaiTheme();
   // The Leaflet map is client-only; render it after mount.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  // Reconcile with localStorage once, for visitors who set a theme before the
-  // cookie existed. storeMode then writes the cookie, so later loads are
-  // server-rendered in the right mode and never flip.
-  useEffect(() => {
-    const stored = getStoredMode();
-    if (stored !== data.initialMode) {
-      setMode(stored);
-      storeMode(stored);
-    }
-  }, [data.initialMode]);
-  const changeMode = (m: ListMode) => {
-    setMode(m);
-    storeMode(m);
-  };
   const [view, setView] = useState<ViewMode>('tile');
+  // Switching lists re-runs the loader while the OLD list's rows are still on
+  // screen — show shimmering placeholders for that window. Filter-only URL
+  // changes are skipped by shouldRevalidate and never flash skeletons.
+  const pendingListId =
+    navigation.state === 'loading' && navigation.location?.pathname === '/dashboard'
+      ? new URLSearchParams(navigation.location.search).get('list')
+      : undefined;
+  const listLoading = pendingListId !== undefined && pendingListId !== searchParams.get('list');
   // Map ↔ side-list hover sync (map view). The id is a restaurant's sync key
   // (`id ?? name`, matching RestaurantMap); refs let a pin-hover scroll its row
   // into view.
@@ -500,14 +497,14 @@ export default function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const t = listTokens[mode];
-  const muiTheme = useMemo(() => makeListTheme(mode), [mode]);
-
   const role = activeList?.role ?? 'viewer';
   const canEdit = role === 'owner' || role === 'editor';
   const canManage = role === 'owner';
 
-  const decorated = useMemo(() => restaurants.map(decorate), [restaurants]);
+  const decorated = useMemo(
+    () => restaurants.map((r) => decorate(r, r.id ? ratings[r.id] : undefined)),
+    [restaurants, ratings]
+  );
 
   // Distinct cuisine / cost values present in this list, for the filter menus.
   const cuisineOptions = useMemo(
@@ -796,6 +793,22 @@ export default function Dashboard() {
     }
   };
 
+  /**
+   * Save the signed-in user's own bubbles + note on a spot. Every member can
+   * rate — including viewers — because a verdict is participation, not an edit
+   * to the shared record (the RLS policies draw the same line).
+   */
+  const handleRate = async (r: Restaurant, rating: number, note: string) => {
+    if (!r.id) return;
+    try {
+      await upsertMyRating(r.id, userId, rating, note);
+      revalidator.revalidate();
+    } catch (error) {
+      console.error('Error saving rating:', error);
+      setSnackbar({ open: true, message: tr('dashboard.snackRatingFailed'), severity: 'error' });
+    }
+  };
+
   const handleDeleteClick = (id: string) => {
     const restaurant = restaurants.find((r) => r.id === id);
     if (restaurant) {
@@ -975,15 +988,15 @@ export default function Dashboard() {
     background: view === val ? t.segBg : 'transparent',
     color: view === val ? t.segFg : t.segIdle,
   });
-  const pill = (val: FilterMode) => ({
-    background: filter === val ? t.pBg : 'transparent',
-    color: filter === val ? t.pFg : t.pIdle,
+  const themeBtn = (val: ListMode) => ({
+    background: mode === val ? t.cardBg : 'transparent',
+    color: mode === val ? t.ink : t.segIdle,
+    boxShadow: mode === val ? t.shadow1 : 'none',
   });
 
   const segBtnStyle = {
     border: 'none',
     cursor: 'pointer',
-    fontFamily: roundedFont,
     fontSize: '13.5px',
     fontWeight: 500,
     padding: '7px 18px',
@@ -993,14 +1006,13 @@ export default function Dashboard() {
   const filterBtnStyle = {
     border: `1px solid ${t.pillBorder}`,
     cursor: 'pointer',
-    fontFamily: roundedFont,
     fontSize: '13px',
     fontWeight: 500,
     padding: '7px 15px',
     borderRadius: '999px',
   } as const;
 
-  const serif = "'Instrument Serif',serif";
+  const serif = "'Archivo',sans-serif";
 
   const renderAvatar = (m: ListMember, idx: number) => {
     const name = m.profile?.displayName?.trim();
@@ -1034,20 +1046,17 @@ export default function Dashboard() {
   };
 
   return (
-    <ThemeProvider theme={muiTheme}>
       <Box
-        data-theme={mode}
         sx={{
           minHeight: '100dvh',
           display: 'flex',
           flexDirection: 'column',
           background: t.pageBg,
           color: t.ink,
-          fontFamily: "'DM Sans',sans-serif",
           transition: 'background .25s',
           '& *::-webkit-scrollbar': { width: 10, height: 10 },
           '& *::-webkit-scrollbar-thumb': {
-            background: 'rgba(120,110,95,.3)',
+            background: t.skeleton,
             borderRadius: 8,
           },
         }}
@@ -1138,8 +1147,7 @@ export default function Dashboard() {
                   outline: 'none',
                   background: 'transparent',
                   color: t.ink,
-                  fontFamily: "'DM Sans',sans-serif",
-                  fontSize: '13.5px',
+                                    fontSize: '13.5px',
                   width: '100%',
                   '::placeholder': { color: t.faint },
                 }}
@@ -1158,6 +1166,17 @@ export default function Dashboard() {
               )}
             </Box>
 
+            {/* language toggle */}
+            <LanguageSwitcher />
+
+            {/* theme toggle */}
+            <Box sx={{ display: 'flex', background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px', padding: '3px' }}>
+              <Box component="button" onClick={() => setMode('light')} title={tr('dashboard.themeLight')} aria-label={tr('dashboard.themeLight')}
+                sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, ...themeBtn('light') }}>☀</Box>
+              <Box component="button" onClick={() => setMode('dark')} title={tr('dashboard.themeDark')} aria-label={tr('dashboard.themeDark')}
+                sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, ...themeBtn('dark') }}>☾</Box>
+            </Box>
+
             {/* add */}
             {canEdit && (
               <Tooltip title={tr('dashboard.addPlace')}>
@@ -1173,8 +1192,7 @@ export default function Dashboard() {
                     cursor: 'pointer',
                     background: t.accent,
                     color: t.accentText,
-                    fontFamily: roundedFont,
-                    fontWeight: 700,
+                                        fontWeight: 600,
                     fontSize: '13.5px',
                     padding: '8px 16px',
                     borderRadius: '999px',
@@ -1226,24 +1244,6 @@ export default function Dashboard() {
                 <ListItemText>{tr('dashboard.shareMembers')}</ListItemText>
               </MenuItem>
               <Divider sx={{ my: 0.5 }} />
-              {/* Appearance + language live here rather than in the toolbar —
-                  they're set-once preferences, not per-session actions. */}
-              <MenuItem onClick={() => changeMode(mode === 'light' ? 'dark' : 'light')}>
-                <ListItemIcon>
-                  {mode === 'light'
-                    ? <DarkMode fontSize="small" sx={{ color: t.muted }} />
-                    : <LightMode fontSize="small" sx={{ color: t.muted }} />}
-                </ListItemIcon>
-                <ListItemText>
-                  {tr(mode === 'light' ? 'dashboard.themeDark' : 'dashboard.themeLight')}
-                </ListItemText>
-              </MenuItem>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1 }}>
-                <Translate fontSize="small" sx={{ color: t.muted }} />
-                <Box sx={{ flex: 1, fontSize: 14 }}>{tr('language.label')}</Box>
-                <LanguageSwitcher />
-              </Box>
-              <Divider sx={{ my: 0.5 }} />
               <MenuItem onClick={() => { setMenuAnchor(null); handleLogout(); }}>
                 <ListItemIcon><Logout fontSize="small" sx={{ color: t.muted }} /></ListItemIcon>
                 <ListItemText>{tr('dashboard.signOut')}</ListItemText>
@@ -1279,6 +1279,7 @@ export default function Dashboard() {
             <Box role="group" aria-label={tr('dashboard.viewLabel')} sx={{ display: 'flex', background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px', padding: '4px' }}>
               <Box component="button" aria-pressed={view === 'tile'} onClick={() => setView('tile')} sx={{ ...segBtnStyle, ...seg('tile') }}>{tr('dashboard.viewTile')}</Box>
               <Box component="button" aria-pressed={view === 'list'} onClick={() => setView('list')} sx={{ ...segBtnStyle, ...seg('list') }}>{tr('dashboard.viewList')}</Box>
+              <Box component="button" aria-pressed={view === 'table'} onClick={() => setView('table')} sx={{ ...segBtnStyle, ...seg('table') }}>{tr('dashboard.viewTable', 'Table')}</Box>
               <Box component="button" aria-pressed={view === 'map'} onClick={() => setView('map')} sx={{ ...segBtnStyle, ...seg('map') }}>{tr('dashboard.viewMap')}</Box>
             </Box>
           </Box>
@@ -1311,8 +1312,7 @@ export default function Dashboard() {
                 outline: 'none',
                 background: 'transparent',
                 color: t.ink,
-                fontFamily: "'DM Sans',sans-serif",
-                // ≥16px so iOS doesn't auto-zoom (and stay zoomed) on focus.
+                                // ≥16px so iOS doesn't auto-zoom (and stay zoomed) on focus.
                 fontSize: '16px',
                 width: '100%',
                 '::placeholder': { color: t.faint },
@@ -1349,12 +1349,90 @@ export default function Dashboard() {
               active filter to clear (e.g. carried over from another list). */}
           {(total > 0 || hasActiveFilters) && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px', mt: { xs: '12px', sm: '22px' }, flexWrap: 'wrap' }}>
-            <Box role="group" aria-label={tr('dashboard.filterStatusLabel')} sx={{ display: 'contents' }}>
-              <Box component="button" aria-pressed={filter === 'all'} onClick={() => setFilter('all')} sx={{ ...filterBtnStyle, ...pill('all') }}>{tr('dashboard.filterAll')}</Box>
-              <Box component="button" aria-pressed={filter === 'been'} onClick={() => setFilter('been')} sx={{ ...filterBtnStyle, ...pill('been') }}>{tr('dashboard.filterBeen')}</Box>
-              <Box component="button" aria-pressed={filter === 'want'} onClick={() => setFilter('want')} sx={{ ...filterBtnStyle, ...pill('want') }}>{tr('dashboard.filterWant')}</Box>
+            {/* been / want — the prototype's segmented track */}
+            <Box role="group" aria-label={tr('dashboard.filterStatusLabel')} sx={{ display: 'flex', gap: '4px', padding: '4px', background: t.track, borderRadius: '999px' }}>
+              {(['all', 'been', 'want'] as FilterMode[]).map((f) => (
+                <Box
+                  key={f}
+                  component="button"
+                  aria-pressed={filter === f}
+                  onClick={() => setFilter(f)}
+                  sx={{
+                    border: 0,
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: filter === f ? 600 : 400,
+                    padding: '7px 15px',
+                    borderRadius: '999px',
+                    background: filter === f ? t.cardBg : 'transparent',
+                    color: filter === f ? t.ink : t.muted,
+                    boxShadow: filter === f ? t.shadow1 : 'none',
+                  }}
+                >
+                  {tr(f === 'all' ? 'dashboard.filterAll' : f === 'been' ? 'dashboard.filterBeen' : 'dashboard.filterWant')}
+                </Box>
+              ))}
             </Box>
-            <Box sx={{ width: '1px', height: 22, background: t.divider, mx: '4px' }} />
+            {/* tag (cuisine) chips — visible on wider screens, per the design's
+                toolbar; the sheet remains the compact path on phones. */}
+            {cuisineOptions.length > 0 && (
+              <Box role="group" aria-label={tr('dashboard.cuisine')} sx={{ display: { xs: 'none', md: 'flex' }, gap: '7px', flexWrap: 'wrap' }}>
+                {['', ...cuisineOptions.slice(0, 5)].map((c) => {
+                  const on = cuisineFilter === c;
+                  return (
+                    <Box
+                      key={c || 'all'}
+                      component="button"
+                      aria-pressed={on}
+                      onClick={() => setCuisineFilter(c)}
+                      sx={{
+                        border: on ? '1px solid transparent' : `1px solid ${t.hair}`,
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: on ? 600 : 400,
+                        padding: '6px 14px',
+                        borderRadius: '999px',
+                        background: on ? t.pBg : t.cardBg,
+                        color: on ? t.pFg : t.muted,
+                      }}
+                    >
+                      {c ? `${cuisineEmoji(c)} ${tr(`cuisines.${c}`, c)}` : tr('dashboard.filterAll')}
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+            {costOptions.length > 0 && <Box sx={{ width: '1px', height: 20, background: t.hair, display: { xs: 'none', md: 'block' } }} />}
+            {/* cost chips */}
+            {costOptions.length > 0 && (
+              <Box role="group" aria-label={tr('dashboard.cost')} sx={{ display: { xs: 'none', md: 'flex' }, gap: '7px' }}>
+                {['', ...costOptions].map((c) => {
+                  const on = costFilter === c;
+                  return (
+                    <Box
+                      key={c || 'all'}
+                      component="button"
+                      aria-pressed={on}
+                      onClick={() => setCostFilter(c)}
+                      sx={{
+                        border: on ? '1px solid transparent' : `1px solid ${t.hair}`,
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: on ? 600 : 400,
+                        letterSpacing: '.04em',
+                        padding: '6px 13px',
+                        borderRadius: '999px',
+                        background: on ? t.pBg : t.cardBg,
+                        color: on ? t.pFg : t.muted,
+                      }}
+                    >
+                      {c || tr('dashboard.filterAll')}
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+            <Box sx={{ width: '1px', height: 22, background: t.divider, mx: '4px', display: { xs: 'none', sm: 'block' } }} />
             <FilterSheet
               tokens={t}
               cuisineOptions={cuisineOptions}
@@ -1394,12 +1472,36 @@ export default function Dashboard() {
                 {tr('dashboard.clearFilters')}
               </Box>
             )}
-            <Box sx={{ ml: 'auto', fontSize: 13, color: t.faint }}>{tr('dashboard.showing', { count: filtered.length })}</Box>
+            {/* sort — the design's visible select, right-aligned */}
+            <Box component="label" sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: '9px', fontSize: 12.5, color: t.faint }}>
+              {tr('dashboard.sortLabel')}
+              <Box
+                component="select"
+                value={sort}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSort(e.target.value as SortMode)}
+                sx={{
+                  font: 'inherit',
+                  fontSize: '12.5px',
+                  color: t.ink,
+                  background: t.cardBg,
+                  border: `1px solid ${t.hair}`,
+                  borderRadius: '999px',
+                  padding: '7px 14px',
+                  cursor: 'pointer',
+                  appearance: 'none',
+                }}
+              >
+                {SORT_MODES.map((m) => (
+                  <option key={m} value={m}>{tr(`dashboard.sort_${m}`)}</option>
+                ))}
+              </Box>
+            </Box>
+            <Box sx={{ fontSize: 13, color: t.faint, display: { xs: 'none', sm: 'block' } }}>{tr('dashboard.showing', { count: filtered.length })}</Box>
           </Box>
           )}
 
           {/* empty state */}
-          {filtered.length === 0 ? (
+          {filtered.length === 0 && !listLoading ? (
             // A brand-new, editable list gets the first-run onboarding; the plain
             // empty card is kept for filtered-empty and view-only cases.
             total === 0 && !hasActiveFilters && canEdit && activeList ? (
@@ -1449,8 +1551,7 @@ export default function Dashboard() {
                     cursor: 'pointer',
                     background: t.accent,
                     color: t.accentText,
-                    fontFamily: roundedFont,
-                    fontWeight: 700,
+                                        fontWeight: 600,
                     fontSize: '14px',
                     padding: '10px 20px',
                     borderRadius: '999px',
@@ -1471,7 +1572,9 @@ export default function Dashboard() {
                   {/* Two-up on phones — 87 places at one giant card per screen
                       is unbrowsable; the compact card keeps the same slots. */}
                   <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(auto-fill, minmax(160px, 1fr))', sm: 'repeat(auto-fill, minmax(240px, 1fr))' }, gap: { xs: '12px', sm: '20px' } }}>
-                    {sorted.map((r) => (
+                    {listLoading
+                      ? Array.from({ length: 8 }, (_, i) => <SkeletonCard key={i} tokens={t} />)
+                      : sorted.map((r) => (
                       <PlaceCard
                         key={r.id}
                         r={r}
@@ -1493,7 +1596,8 @@ export default function Dashboard() {
               {view === 'list' && (
                 <Box sx={{ padding: { xs: '16px 0 96px', sm: '24px 0 40px' } }}>
                   <Box sx={{ border: `1px solid ${t.border}`, borderRadius: '16px', overflow: 'hidden' }}>
-                    {sorted.map((r) => (
+                    {listLoading && Array.from({ length: 6 }, (_, i) => <SkeletonListRow key={i} tokens={t} />)}
+                    {!listLoading && sorted.map((r) => (
                       <Box
                         key={r.id}
                         onClick={() => handleViewRestaurant(r)}
@@ -1585,9 +1689,9 @@ export default function Dashboard() {
                         <Box sx={{ display: { xs: 'none', md: 'flex' }, flex: 'none' }}>
                           <BookingPill locations={r.locations ?? []} tokens={t} />
                         </Box>
-                        <Box sx={{ width: 90, color: t.cost, fontSize: 14, fontWeight: 600, fontFamily: "'DM Mono',monospace", display: { xs: 'none', sm: 'block' } }}>{r.costStr}</Box>
+                        <Box sx={{ width: 90, color: t.cost, fontSize: 14, fontWeight: 600, display: { xs: 'none', sm: 'block' } }}>{r.costStr}</Box>
                         <Box sx={{ width: 110, display: { xs: 'none', sm: 'block' } }}>
-                          {r.rated ? <Stars value={r.rating ?? 0} tokens={t} size={14} letterSpacing="1px" /> : null}
+                          {r.rated ? <Bubbles value={r.rating ?? 0} tokens={t} size={12} gap={5} /> : null}
                         </Box>
                         {canEdit ? (
                           <IconButton
@@ -1636,6 +1740,67 @@ export default function Dashboard() {
                         )}
                       </Box>
                     ))}
+                  </Box>
+                </Box>
+              )}
+
+              {/* TABLE — dense index for when the list gets long */}
+              {view === 'table' && (
+                <Box sx={{ padding: { xs: '16px 0 96px', sm: '24px 0 40px' }, overflowX: 'auto' }}>
+                  <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+                    <Box component="thead">
+                      <Box component="tr">
+                        {[
+                          '', tr('dashboard.tableColPlace', 'Place'), tr('dashboard.tableColCuisine', 'Cuisine'),
+                          tr('dashboard.tableColRating', 'Rating'), tr('dashboard.tableColCost', 'Cost'),
+                          tr('dashboard.tableColCity', 'City'), tr('dashboard.tableColStatus', 'Status'),
+                        ].map((h) => (
+                          <Box
+                            key={h}
+                            component="th"
+                            sx={{ textAlign: 'left', fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: t.faint, padding: '10px 12px', borderBottom: `2px solid ${t.divider}` }}
+                          >
+                            {h}
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                    <Box component="tbody">
+                      {listLoading &&
+                        Array.from({ length: 7 }, (_, i) => (
+                          <Box component="tr" key={i} aria-hidden>
+                            <Box component="td" colSpan={8} sx={{ padding: 0, borderBottom: `1px solid ${t.borderSoft}` }}>
+                              <SkeletonListRow tokens={t} />
+                            </Box>
+                          </Box>
+                        ))}
+                      {!listLoading && sorted.map((r) => (
+                        <Box
+                          component="tr"
+                          key={r.id}
+                          onClick={() => handleViewRestaurant(r)}
+                          sx={{ cursor: 'pointer', '&:hover': { background: t.rowHover } }}
+                        >
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, width: 44 }}>
+                            <Box sx={{ width: 32, height: 32, borderRadius: '11px', overflow: 'hidden' }}>
+                              <RestaurantThumb image={r.image} alt={r.name} initial={r.initial} serifFont={serif} tokens={t} initialFontSize={13} sx={{ width: '100%', height: '100%' }} />
+                            </Box>
+                          </Box>
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, fontWeight: 600 }}>{r.name}</Box>
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, color: t.muted, fontSize: 12.5 }}>{r.cuisine}</Box>
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}` }}>
+                            {r.rated ? <Bubbles value={r.rating ?? 0} tokens={t} size={9} gap={4} /> : <Box component="span" sx={{ color: t.notRated, fontSize: 12, fontStyle: 'italic' }}>{tr('dashboard.notRated')}</Box>}
+                          </Box>
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, color: t.cost, fontWeight: 600 }}>{r.costStr}</Box>
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, color: t.muted }}>{r.city ?? '—'}</Box>
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}` }}>
+                            <Box component="span" sx={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: '999px', background: r.isBeen ? t.beenBg : t.wantBg, color: r.isBeen ? t.beenFg : t.wantFg }}>
+                              {r.isBeen ? tr('dashboard.statusBeen') : tr('dashboard.statusWant')}
+                            </Box>
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
                   </Box>
                 </Box>
               )}
@@ -1717,7 +1882,7 @@ export default function Dashboard() {
                             {tr(`cuisines.${r.cuisine}`, r.cuisine)}
                           </Box>
                         </Box>
-                        <Box component="span" sx={{ color: t.cost, fontSize: 13, fontWeight: 600, fontFamily: "'DM Mono',monospace" }}>{r.costStr}</Box>
+                        <Box component="span" sx={{ color: t.cost, fontSize: 13, fontWeight: 600 }}>{r.costStr}</Box>
                       </Box>
                       );
                     })}
@@ -1791,6 +1956,9 @@ export default function Dashboard() {
           onDelete={(id) => { setDetailOpen(false); handleDeleteClick(id); }}
           onToggleFavorite={handleToggleFavorite}
           onAddVisit={handleAddVisit}
+          ratings={selectedRestaurant?.id ? ratings[selectedRestaurant.id] ?? [] : []}
+          currentUserId={userId}
+          onRate={handleRate}
         />
         <RestaurantFormDialog
           open={formOpen}
@@ -1933,6 +2101,5 @@ export default function Dashboard() {
           </Alert>
         </Snackbar>
       </Box>
-    </ThemeProvider>
   );
 }

@@ -1,11 +1,17 @@
 import { useState } from 'react';
-import { Box, Popover, Drawer, useMediaQuery, useTheme } from '@mui/material';
-import { FilterList, ArrowUpward, ArrowDownward } from '@mui/icons-material';
+import Box from '@mui/material/Box';
+import Popover from '@mui/material/Popover';
+import Drawer from '@mui/material/Drawer';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
+import FilterList from '@mui/icons-material/FilterList';
+import ArrowUpward from '@mui/icons-material/ArrowUpward';
+import ArrowDownward from '@mui/icons-material/ArrowDownward';
 import { useTranslation } from 'react-i18next';
-import { roundedFont, type listTokens } from '~/listTheme';
+import type { ListTokens } from '~/listTheme';
 import { cuisineEmoji, placeTypeEmoji, dietEmoji, menuTypeEmoji } from '~/utils/cuisineEmoji';
 
-type Tokens = (typeof listTokens)['light'];
+type Tokens = ListTokens;
 type MultiSetter = (updater: string[] | ((prev: string[]) => string[])) => void;
 
 interface FilterSheetProps {
@@ -70,12 +76,10 @@ export default function FilterSheet(props: FilterSheetProps) {
   const pillSx = (selected: boolean) => ({
     border: `1px solid ${selected ? t.accent : t.pillBorder}`,
     background: selected ? t.pBg : 'transparent',
-    color: selected ? t.pFg : t.chip,
+    color: selected ? t.pFg : t.muted,
     borderRadius: '999px',
     padding: '6px 13px',
     fontSize: '13px',
-    fontFamily: roundedFont,
-    fontWeight: 500,
     cursor: 'pointer',
     lineHeight: 1.4,
     transition: 'transform .12s ease',
@@ -123,7 +127,7 @@ export default function FilterSheet(props: FilterSheetProps) {
             {tr('dashboard.anyCost')}
           </Box>
           {props.costOptions.map((c) => (
-            <Box component="button" key={c} type="button" onClick={() => props.setCostFilter(c)} sx={{ ...pillSx(props.costFilter === c), fontFamily: "'DM Mono',monospace" }}>
+            <Box component="button" key={c} type="button" onClick={() => props.setCostFilter(c)} sx={{ ...pillSx(props.costFilter === c), fontWeight: 600 }}>
               {c}
             </Box>
           ))}
@@ -204,7 +208,7 @@ export default function FilterSheet(props: FilterSheetProps) {
           type="button"
           onClick={props.onClear}
           disabled={activeCount === 0}
-          sx={{ border: 'none', background: 'transparent', color: activeCount === 0 ? t.faint : t.muted, fontFamily: "'DM Sans',sans-serif", fontSize: '13.5px', cursor: activeCount === 0 ? 'default' : 'pointer' }}
+          sx={{ border: 'none', background: 'transparent', color: activeCount === 0 ? t.faint : t.muted, fontSize: '13.5px', cursor: activeCount === 0 ? 'default' : 'pointer' }}
         >
           {tr('dashboard.clearFilters')}
         </Box>
@@ -212,7 +216,7 @@ export default function FilterSheet(props: FilterSheetProps) {
           component="button"
           type="button"
           onClick={() => setAnchor(null)}
-          sx={{ border: 'none', background: t.accent, color: t.accentText, fontFamily: roundedFont, fontWeight: 700, fontSize: '13.5px', padding: '8px 20px', borderRadius: '999px', cursor: 'pointer', transition: 'transform .12s ease', '&:active': { transform: 'scale(.96)' } }}
+          sx={{ border: 'none', background: t.accent, color: t.accentText, fontWeight: 600, fontSize: '13.5px', padding: '8px 18px', borderRadius: '999px', cursor: 'pointer', transition: 'transform .12s ease', '&:active': { transform: 'scale(.96)' } }}
         >
           {tr('filters.done')}
         </Box>
@@ -234,12 +238,11 @@ export default function FilterSheet(props: FilterSheetProps) {
           gap: '7px',
           border: `1px solid ${activeCount ? t.accent : t.pillBorder}`,
           background: activeCount ? t.pBg : 'transparent',
-          color: activeCount ? t.pFg : t.chip,
+          color: activeCount ? t.pFg : t.muted,
           borderRadius: '999px',
           padding: '7px 15px',
           fontSize: '13px',
           fontWeight: 500,
-          fontFamily: roundedFont,
           cursor: 'pointer',
         }}
       >

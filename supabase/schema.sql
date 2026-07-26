@@ -639,3 +639,76 @@ create policy "update own views" on public.list_views
   with check (user_id = auth.uid() and private.is_list_member(list_id));
 create policy "delete own views" on public.list_views
   for delete using (user_id = auth.uid());
+
+-- ============================================================
+-- Per-person ratings ("what everyone said")
+-- ============================================================
+-- The design shows each member's own bubbles and note on a spot, not just one
+-- aggregate score. restaurants.rating stays as-is (the legacy single score and
+-- the fallback for spots nobody has rated individually yet); this table holds
+-- one row per (restaurant, member).
+--
+-- Idempotent, like the rest of this file: safe to re-run on a live database.
+
+create table if not exists public.restaurant_ratings (
+  id            uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references public.restaurants(id) on delete cascade,
+  user_id       uuid not null references auth.users(id) on delete cascade,
+  rating        smallint not null check (rating between 0 and 5),
+  note          text,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  -- One verdict per person per place; re-rating upserts onto this key.
+  unique (restaurant_id, user_id)
+);
+
+create index if not exists restaurant_ratings_restaurant_id_idx
+  on public.restaurant_ratings (restaurant_id);
+create index if not exists restaurant_ratings_user_id_idx
+  on public.restaurant_ratings (user_id);
+
+-- updated_at maintenance, matching the other tables' trigger.
+drop trigger if exists restaurant_ratings_set_updated_at on public.restaurant_ratings;
+create trigger restaurant_ratings_set_updated_at
+  before update on public.restaurant_ratings
+  for each row execute function public.set_updated_at();
+
+-- ============================================================
+-- RLS
+-- ============================================================
+-- Visibility follows the restaurant's list: if you can read the spot, you can
+-- read everyone's verdicts on it. Writing is always your own row only — an
+-- editor cannot rate on someone else's behalf, and a viewer CAN rate (rating
+-- is participation, not editing the shared record).
+
+alter table public.restaurant_ratings enable row level security;
+
+-- SECURITY DEFINER so the policy can look through restaurants → list_members
+-- without recursing through the restaurants policies.
+create or replace function private.can_see_restaurant(_restaurant_id uuid)
+returns boolean language sql security definer stable set search_path = public as $$
+  select exists (
+    select 1
+    from public.restaurants r
+    join public.list_members m on m.list_id = r.list_id
+    where r.id = _restaurant_id and m.user_id = auth.uid()
+  );
+$$;
+
+grant execute on function private.can_see_restaurant(uuid) to anon, authenticated;
+
+drop policy if exists "read co-member ratings" on public.restaurant_ratings;
+drop policy if exists "insert own rating" on public.restaurant_ratings;
+drop policy if exists "update own rating" on public.restaurant_ratings;
+drop policy if exists "delete own rating" on public.restaurant_ratings;
+
+create policy "read co-member ratings" on public.restaurant_ratings
+  for select using (private.can_see_restaurant(restaurant_id));
+create policy "insert own rating" on public.restaurant_ratings
+  for insert with check (
+    user_id = auth.uid() and private.can_see_restaurant(restaurant_id)
+  );
+create policy "update own rating" on public.restaurant_ratings
+  for update using (user_id = auth.uid());
+create policy "delete own rating" on public.restaurant_ratings
+  for delete using (user_id = auth.uid());

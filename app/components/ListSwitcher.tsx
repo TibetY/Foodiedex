@@ -1,22 +1,18 @@
 import { useState } from 'react';
-import {
-  Box,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  Divider,
-  Chip,
-  IconButton,
-} from '@mui/material';
-import {
-  KeyboardArrowDown,
-  Add,
-  Check,
-  People,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-} from '@mui/icons-material';
+import Box from '@mui/material/Box';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Divider from '@mui/material/Divider';
+import Chip from '@mui/material/Chip';
+import IconButton from '@mui/material/IconButton';
+import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
+import Add from '@mui/icons-material/Add';
+import Check from '@mui/icons-material/Check';
+import People from '@mui/icons-material/People';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useTranslation } from 'react-i18next';
 import type { RestaurantList } from '~/types/restaurant';
 
@@ -64,7 +60,8 @@ export default function ListSwitcher({
           color: 'inherit',
           fontFamily: serifFont,
           fontSize: { xs: 34, md: 44 },
-          fontWeight: 400,
+          fontWeight: 600,
+          letterSpacing: '-.02em',
           lineHeight: 1.05,
           textAlign: 'left',
         }}

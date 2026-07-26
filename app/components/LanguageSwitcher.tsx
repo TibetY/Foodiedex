@@ -1,6 +1,6 @@
 import { Form, useLocation } from '@remix-run/react';
-import { Box, useTheme } from '@mui/material';
-import { alpha } from '@mui/material/styles';
+import Box from '@mui/material/Box';
+import { useTheme, alpha } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
 import { supportedLngs } from '~/i18n';
 

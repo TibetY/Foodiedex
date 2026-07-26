@@ -1,21 +1,20 @@
 import { useState } from "react";
 import { useLocation, useRouteLoaderData, Link } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
-import {
-  AppBar,
-  Toolbar,
-  Box,
-  Button,
-  IconButton,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
-import { Menu as MenuIcon, Close as CloseIcon } from "@mui/icons-material";
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Drawer from '@mui/material/Drawer';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
 import Logo from "./Logo";
 import LanguageSwitcher from "./LanguageSwitcher";
 
@@ -28,9 +27,15 @@ export default function Navbar() {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Hide navbar on the dashboard and the public share view (both have their own
-  // header).
-  if (location.pathname === "/dashboard" || location.pathname.startsWith("/s/")) {
+  // Hide navbar on every screen that ships its own full Kanpai header/back-bar.
+  const hasOwnHeader =
+    location.pathname === "/dashboard" ||
+    location.pathname.startsWith("/s/") ||
+    location.pathname === "/" ||
+    location.pathname === "/login" ||
+    location.pathname === "/signup" ||
+    location.pathname === "/profile";
+  if (hasOwnHeader) {
     return null;
   }
 
@@ -50,9 +55,11 @@ export default function Navbar() {
       component="nav"
       aria-label={t("nav.main")}
       sx={{
-        background: "rgba(244, 241, 232, 0.82)",
-        backdropFilter: "blur(14px)",
-        borderBottom: "1px solid #E6E1D4",
+        background: (theme) => theme.palette.background.paper,
+        backdropFilter: "blur(20px)",
+        borderBottom: "1px solid",
+        borderColor: "divider",
+        boxShadow: "none",
       }}
     >
       <Toolbar
@@ -86,8 +93,9 @@ export default function Navbar() {
               PaperProps={{
                 sx: {
                   width: 280,
-                  background: "#FAF8F2",
-                  borderLeft: "1px solid #E6E1D4",
+                  background: (theme) => theme.palette.background.paper,
+                  borderLeft: "1px solid",
+                  borderColor: "divider",
                 },
               }}
             >
@@ -111,7 +119,7 @@ export default function Navbar() {
                         px: 3,
                         py: 1.5,
                         "&:hover": {
-                          backgroundColor: "rgba(168, 68, 42, 0.08)",
+                          backgroundColor: "action.hover",
                         },
                       }}
                     >
@@ -153,7 +161,7 @@ export default function Navbar() {
                     fontWeight: 600,
                     "&:hover": {
                       color: "text.primary",
-                      backgroundColor: "rgba(31,30,26,0.05)",
+                      backgroundColor: "action.hover",
                     },
                   }}
                 >

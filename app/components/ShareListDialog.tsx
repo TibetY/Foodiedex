@@ -1,23 +1,25 @@
 import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  MenuItem,
-  Typography,
-  Box,
-  IconButton,
-  Avatar,
-  Select,
-  Chip,
-  Alert,
-  CircularProgress,
-  TextField,
-  InputAdornment,
-} from '@mui/material';
-import { Close, Delete, ContentCopy, Link as LinkIcon, Public } from '@mui/icons-material';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import MenuItem from '@mui/material/MenuItem';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
+import Avatar from '@mui/material/Avatar';
+import Select from '@mui/material/Select';
+import Chip from '@mui/material/Chip';
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
+import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
+import Close from '@mui/icons-material/Close';
+import Delete from '@mui/icons-material/Delete';
+import ContentCopy from '@mui/icons-material/ContentCopy';
+import LinkIcon from '@mui/icons-material/Link';
+import Public from '@mui/icons-material/Public';
 import { useTranslation } from 'react-i18next';
 import type {
   InviteLink,
@@ -213,51 +215,35 @@ export default function ShareListDialog({
                   }}
                   aria-label={t('share.inviteLink')}
                 />
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, flexWrap: 'wrap' }}>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    {t('share.joinsAsLong')}
-                  </Typography>
-                  <Select
-                    size="small"
-                    value={inviteLink.role}
-                    disabled={busy}
-                    onChange={(e) =>
-                      run(() =>
-                        updateInviteLinkRole(
-                          inviteLink.id,
-                          e.target.value as Exclude<ListRole, 'owner'>
-                        )
-                      )
-                    }
-                    aria-label={t('share.changeRoleLabel')}
-                  >
-                    <MenuItem value="editor">{t('roles.editor')}</MenuItem>
-                    <MenuItem value="viewer">{t('roles.viewer')}</MenuItem>
-                  </Select>
-                  <Button
-                    size="small"
-                    disabled={busy}
-                    onClick={() => run(() => revokeInviteLink(inviteLink.id))}
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    {t('share.revoke')}
-                  </Button>
-                </Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 1.5, mb: 1 }}>
+                  {t('share.joinsAsLong')}
+                </Typography>
+                <RoleOptions
+                  value={inviteLink.role}
+                  disabled={busy}
+                  onChange={(next) => run(() => updateInviteLinkRole(inviteLink.id, next))}
+                  groupLabel={t('share.changeRoleLabel')}
+                />
+                <Button
+                  size="small"
+                  disabled={busy}
+                  onClick={() => run(() => revokeInviteLink(inviteLink.id))}
+                  sx={{ color: 'text.secondary', mt: 1 }}
+                >
+                  {t('share.revoke')}
+                </Button>
               </>
             ) : (
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              <Box>
+                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
                   {t('share.joinsAs')}
                 </Typography>
-                <Select
-                  size="small"
+                <RoleOptions
                   value={role}
-                  onChange={(e) => setRole(e.target.value as Exclude<ListRole, 'owner'>)}
-                  aria-label={t('share.inviteRole')}
-                >
-                  <MenuItem value="editor">{t('roles.editor')}</MenuItem>
-                  <MenuItem value="viewer">{t('roles.viewer')}</MenuItem>
-                </Select>
+                  onChange={setRole}
+                  groupLabel={t('share.inviteRole')}
+                />
+                <Box sx={{ mt: 1.5 }}>
                 <Button
                   variant="contained"
                   startIcon={<LinkIcon />}
@@ -268,6 +254,7 @@ export default function ShareListDialog({
                 >
                   {t('share.createLink')}
                 </Button>
+                </Box>
               </Box>
             )}
           </Box>
@@ -438,5 +425,85 @@ export default function ShareListDialog({
         <Button onClick={onClose}>{t('share.done')}</Button>
       </DialogActions>
     </Dialog>
+  );
+}
+
+/**
+ * Who the link lets in — the design's bordered option cards rather than a
+ * dropdown, so the difference between "can add & rate" and "can look" is
+ * readable at a glance. Radio semantics (one <fieldset>-style group, one
+ * checked option) come from role="radio" + aria-checked on each card.
+ */
+function RoleOptions({
+  value,
+  onChange,
+  disabled,
+  groupLabel,
+}: {
+  value: Exclude<ListRole, 'owner'>;
+  onChange: (role: Exclude<ListRole, 'owner'>) => void;
+  disabled?: boolean;
+  groupLabel: string;
+}) {
+  const { t } = useTranslation();
+  const options: { role: Exclude<ListRole, 'owner'>; title: string; note: string }[] = [
+    { role: 'editor', title: t('roles.editor'), note: t('share.editorNote') },
+    { role: 'viewer', title: t('roles.viewer'), note: t('share.viewerNote') },
+  ];
+
+  return (
+    <Box role="radiogroup" aria-label={groupLabel} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      {options.map((o) => {
+        const selected = value === o.role;
+        return (
+          <Box
+            key={o.role}
+            component="button"
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            disabled={disabled}
+            onClick={() => onChange(o.role)}
+            sx={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 1.5,
+              textAlign: 'left',
+              width: '100%',
+              font: 'inherit',
+              cursor: disabled ? 'default' : 'pointer',
+              padding: selected ? '13px 16px' : '14px 17px',
+              borderRadius: '18px',
+              backgroundColor: (theme) => theme.palette.background.paper,
+              border: (theme) =>
+                selected
+                  ? `2px solid ${theme.palette.primary.main}`
+                  : `1px solid ${theme.palette.divider}`,
+              opacity: disabled ? 0.6 : 1,
+            }}
+          >
+            <Box
+              aria-hidden
+              sx={{
+                width: 18,
+                height: 18,
+                flex: 'none',
+                mt: '1px',
+                borderRadius: '50%',
+                boxSizing: 'border-box',
+                background: (theme) => (selected ? theme.palette.primary.main : 'transparent'),
+                boxShadow: (theme) =>
+                  selected ? `inset 0 0 0 4px ${theme.palette.background.paper}` : 'none',
+                border: (theme) => (selected ? 'none' : `1.5px solid ${theme.palette.text.disabled}`),
+              }}
+            />
+            <Box>
+              <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{o.title}</Typography>
+              <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>{o.note}</Typography>
+            </Box>
+          </Box>
+        );
+      })}
+    </Box>
   );
 }
