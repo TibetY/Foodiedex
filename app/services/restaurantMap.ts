@@ -14,7 +14,8 @@ export interface RestaurantRow {
   image: string | null;
   url: string | null;
   social_media: SocialMediaLinks | null;
-  rating: number | null;
+  /** numeric(2,1) — half steps; may arrive as a string, so coerce on read. */
+  rating: number | string | null;
   price_range: string | null;
   comment: string | null;
   cuisine_type: string | null;
@@ -88,7 +89,7 @@ export function rowToRestaurant(row: RestaurantRow): Restaurant {
     image: row.image ?? undefined,
     url: row.url ?? undefined,
     socialMedia: row.social_media ?? undefined,
-    rating: row.rating ?? undefined,
+    rating: row.rating == null ? undefined : Number(row.rating),
     priceRange: row.price_range ?? undefined,
     comment: row.comment ?? undefined,
     cuisineType: row.cuisine_type ?? undefined,

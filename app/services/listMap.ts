@@ -79,7 +79,8 @@ export interface RestaurantRatingRow {
   id: string;
   restaurant_id: string;
   user_id: string;
-  rating: number;
+  /** numeric(2,1) — half steps; may arrive as a string, so coerce on read. */
+  rating: number | string;
   note: string | null;
   updated_at?: string | null;
   profiles?: ProfileRow | null;
@@ -90,7 +91,7 @@ export function rowToRestaurantRating(row: RestaurantRatingRow): RestaurantRatin
     id: row.id,
     restaurantId: row.restaurant_id,
     userId: row.user_id,
-    rating: row.rating,
+    rating: Number(row.rating),
     note: row.note ?? undefined,
     profile: row.profiles ? rowToProfile(row.profiles) : undefined,
     updatedAt: row.updated_at ?? undefined,

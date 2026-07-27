@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -82,6 +84,8 @@ export default function ShareListDialog({
   onLeave,
 }: ShareListDialogProps) {
   const { t } = useTranslation();
+  const muiTheme = useTheme();
+  const fullScreen = useMediaQuery(muiTheme.breakpoints.down('sm'));
   const [role, setRole] = useState<Exclude<ListRole, 'owner'>>('editor');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -159,6 +163,9 @@ export default function ShareListDialog({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
+      // Full-screen on phones, matching the detail and add-spot dialogs — the
+      // member rows and link fields were wrapping inside a floating card.
+      fullScreen={fullScreen}
       aria-labelledby="share-dialog-title"
     >
       <DialogTitle

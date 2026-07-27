@@ -218,7 +218,7 @@ export default function PlaceCard({
             <Box
               component="span"
               aria-label={tr('dashboard.cost') + ' ' + costOn}
-              sx={{ flex: 'none', fontSize: { xs: 11.5, sm: 12.5 }, letterSpacing: '.06em', color: t.notRated }}
+              sx={{ flex: 'none', display: { xs: 'none', sm: 'block' }, fontSize: 12.5, letterSpacing: '.06em', color: t.notRated }}
             >
               <Box component="span" sx={{ color: t.muted, fontWeight: 600 }}>{costOn}</Box>
               <Box component="span" aria-hidden>{costOff}</Box>
@@ -247,12 +247,26 @@ export default function PlaceCard({
         {/* tag pills row */}
         <Box sx={{ height: { xs: 20, sm: 22 }, mt: '5px', display: 'flex', gap: '6px', overflow: 'hidden', alignItems: 'center' }}>
           <Box component="span" aria-hidden sx={{ fontSize: { xs: 11, sm: 12 }, flex: 'none' }}>{cuisineEmoji(r.cuisine)}</Box>
-          {tags.map((tag) => (
+          {costOn && (
+            <Box
+              component="span"
+              aria-label={tr('dashboard.cost') + ' ' + costOn}
+              sx={{ flex: 'none', display: { xs: 'block', sm: 'none' }, fontSize: 11.5, letterSpacing: '.06em', color: t.notRated }}
+            >
+              <Box component="span" sx={{ color: t.muted, fontWeight: 600 }}>{costOn}</Box>
+              <Box component="span" aria-hidden>{costOff}</Box>
+            </Box>
+          )}
+          {tags.map((tag, i) => (
             <Box
               key={tag}
               component="span"
               sx={{
                 minWidth: 0,
+                // On a 2-up phone grid the row also carries the cost, so only
+                // the first chip fits whole — and an honour pill (the rarer
+                // signal) takes the slot outright.
+                display: honour || i > 0 ? { xs: 'none', sm: 'block' } : 'block',
                 fontSize: '11px',
                 padding: '3px 10px',
                 borderRadius: '999px',
@@ -335,7 +349,10 @@ export default function PlaceCard({
               </Box>
             </>
           )}
-          <Box sx={{ ml: 'auto', flex: 'none', display: 'flex', alignItems: 'center' }}>
+          {/* Booking is hidden on phones: at 2-up the pill ate the whole
+              footer, clipping the place to a single letter. Tapping through to
+              the detail dialog is one step and carries every branch's booking. */}
+          <Box sx={{ ml: 'auto', flex: 'none', display: { xs: 'none', sm: 'flex' }, alignItems: 'center' }}>
             <BookingPill locations={r.locations ?? []} tokens={t} />
           </Box>
         </Box>
