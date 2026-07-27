@@ -670,7 +670,12 @@ create policy "delete own views" on public.list_views
 create table if not exists public.restaurant_ratings (
   id            uuid primary key default gen_random_uuid(),
   restaurant_id uuid not null references public.restaurants(id) on delete cascade,
-  user_id       uuid not null references auth.users(id) on delete cascade,
+  -- References profiles (not auth.users directly) so PostgREST can see the
+  -- relationship and embed profiles(...) in a ratings select — auth.users
+  -- sits outside the API schema, so an FK to it is invisible to the
+  -- PostgREST schema cache. profiles.id always exists for a real user (the
+  -- handle_new_user trigger inserts it), so this is a drop-in equivalent.
+  user_id       uuid not null references public.profiles(id) on delete cascade,
   rating        numeric(2,1) not null check (rating between 0 and 5 and rating * 2 = floor(rating * 2)),
   note          text,
   created_at    timestamptz not null default now(),
@@ -678,6 +683,13 @@ create table if not exists public.restaurant_ratings (
   -- One verdict per person per place; re-rating upserts onto this key.
   unique (restaurant_id, user_id)
 );
+
+-- Re-point user_id at profiles on databases where this table was already
+-- created against auth.users directly (see comment above).
+alter table public.restaurant_ratings drop constraint if exists restaurant_ratings_user_id_fkey;
+alter table public.restaurant_ratings
+  add constraint restaurant_ratings_user_id_fkey
+  foreign key (user_id) references public.profiles(id) on delete cascade;
 
 do $$
 begin
@@ -743,3 +755,7 @@ create policy "update own rating" on public.restaurant_ratings
   for update using (user_id = auth.uid());
 create policy "delete own rating" on public.restaurant_ratings
   for delete using (user_id = auth.uid());
+
+-- Force PostgREST to pick up the schema changes above (new FK, columns, RPCs)
+-- immediately rather than waiting for its next periodic reload.
+notify pgrst, 'reload schema';
