@@ -154,6 +154,23 @@ update public.restaurants
 -- Carry any legacy owner value into added_by, then retire user_id usage.
 update public.restaurants set added_by = user_id where added_by is null;
 
+-- Half-bubble ratings: both rating columns predate half steps and were
+-- smallint, which rejects 3.5. Widening is lossless for existing whole-number
+-- rows. Idempotent — re-running finds the column already numeric.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'restaurants'
+      and column_name = 'rating' and data_type = 'smallint'
+  ) then
+    alter table public.restaurants drop constraint if exists restaurants_rating_check;
+    alter table public.restaurants alter column rating type numeric(2,1);
+    alter table public.restaurants add constraint restaurants_rating_check
+      check (rating between 0 and 5 and rating * 2 = floor(rating * 2));
+  end if;
+end $$;
+
 create index if not exists restaurants_list_id_idx    on public.restaurants (list_id);
 create index if not exists restaurants_created_at_idx on public.restaurants (created_at desc);
 
@@ -654,13 +671,27 @@ create table if not exists public.restaurant_ratings (
   id            uuid primary key default gen_random_uuid(),
   restaurant_id uuid not null references public.restaurants(id) on delete cascade,
   user_id       uuid not null references auth.users(id) on delete cascade,
-  rating        smallint not null check (rating between 0 and 5),
+  rating        numeric(2,1) not null check (rating between 0 and 5 and rating * 2 = floor(rating * 2)),
   note          text,
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now(),
   -- One verdict per person per place; re-rating upserts onto this key.
   unique (restaurant_id, user_id)
 );
+
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'restaurant_ratings'
+      and column_name = 'rating' and data_type = 'smallint'
+  ) then
+    alter table public.restaurant_ratings drop constraint if exists restaurant_ratings_rating_check;
+    alter table public.restaurant_ratings alter column rating type numeric(2,1);
+    alter table public.restaurant_ratings add constraint restaurant_ratings_rating_check
+      check (rating between 0 and 5 and rating * 2 = floor(rating * 2));
+  end if;
+end $$;
 
 create index if not exists restaurant_ratings_restaurant_id_idx
   on public.restaurant_ratings (restaurant_id);
