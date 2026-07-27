@@ -3,6 +3,7 @@ import type { LoaderFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useNavigate, Link } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { useKanpaiTheme } from "~/listTheme";
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
@@ -30,6 +31,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export default function ResetPasswordPage() {
   const { t } = useTranslation();
+  const { tokens: tk } = useKanpaiTheme();
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -70,6 +72,7 @@ export default function ResetPasswordPage() {
         justifyContent: "center",
         px: { xs: 3, sm: 4 },
         pt: 8,
+        background: tk.pageBg,
       }}
     >
       <Box
@@ -78,20 +81,20 @@ export default function ResetPasswordPage() {
           maxWidth: 440,
           p: { xs: 3, sm: 5 },
           borderRadius: "24px",
-          background: "#FFFFFF",
-          border: "1px solid #E6E1D4",
-          boxShadow: "0 22px 46px -28px rgba(28,26,20,.4)",
+          background: tk.cardBg,
+          border: `1px solid ${tk.border}`,
+          boxShadow: tk.cardShadow,
         }}
         className="animate-fade-in-up"
       >
         <Typography
           variant="h4"
           component="h1"
-          sx={{ fontFamily: "'Instrument Serif', serif", fontWeight: 400, mb: 1, letterSpacing: "-0.01em" }}
+          sx={{ fontWeight: 600, mb: 1, letterSpacing: "-0.02em", color: tk.ink }}
         >
           {t("reset.title")}
         </Typography>
-        <Typography variant="body1" sx={{ color: "text.secondary", mb: 4 }}>
+        <Typography variant="body1" sx={{ color: tk.muted, mb: 4 }}>
           {t("reset.intro")}
         </Typography>
 

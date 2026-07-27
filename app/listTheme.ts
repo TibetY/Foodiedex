@@ -134,6 +134,7 @@ const MODE_BASE: Record<
     canvas: string;
     rule: string;
     hair: string;
+    control: string;
     chip: string;
     track: string;
     rowHover: string;
@@ -145,14 +146,23 @@ const MODE_BASE: Record<
   light: {
     onAcc: '#FDFBF7',
     ink: '#2B2B2B',
-    ink60: 'rgba(43,43,43,.6)',
-    ink45: 'rgba(43,43,43,.45)',
-    ink25: 'rgba(43,43,43,.25)',
+    // The ink ramp is held to WCAG AA against the DARKEST surface text sits on
+    // (canvas), not just against white — see contrast.test.ts, which fails the
+    // build if any of these slip. The design's original .6/.45/.25 measured
+    // 3.7 / 2.5 / 1.6:1, which is what an automated audit reports on every one
+    // of the hundreds of elements these two tokens colour.
+    ink60: 'rgba(43,43,43,.8)',
+    ink45: 'rgba(43,43,43,.68)',
+    // Carries the empty bubble and other component boundaries: 3:1 (1.4.11).
+    ink25: 'rgba(43,43,43,.56)',
     paper: '#FDFBF7',
     card: '#FFFFFF',
     canvas: '#F0EDE6',
     rule: 'rgba(43,43,43,.14)',
     hair: 'rgba(43,43,43,.08)',
+    // Input outlines are a component boundary, so they need 3:1 — the
+    // decorative `hair` they used to share is a quarter of that.
+    control: 'rgba(43,43,43,.55)',
     chip: '#F4F1EA',
     track: '#F2EFE9',
     rowHover: '#FAF7F1',
@@ -163,14 +173,15 @@ const MODE_BASE: Record<
   dark: {
     onAcc: '#1B1A18',
     ink: '#F0EDE6',
-    ink60: 'rgba(240,237,230,.62)',
-    ink45: 'rgba(240,237,230,.45)',
-    ink25: 'rgba(240,237,230,.22)',
+    ink60: 'rgba(240,237,230,.72)',
+    ink45: 'rgba(240,237,230,.6)',
+    ink25: 'rgba(240,237,230,.42)',
     paper: '#201F1D',
     card: '#292724',
     canvas: '#171614',
     rule: 'rgba(240,237,230,.16)',
     hair: 'rgba(240,237,230,.09)',
+    control: 'rgba(240,237,230,.45)',
     chip: '#302E2A',
     track: '#302E2A',
     rowHover: '#262421',
@@ -185,7 +196,7 @@ const MODE_BASE: Record<
  *  static --sakura/--peach root vars, which never change with the picker. */
 const DECORATIVE = {
   sakura: {
-    light: { bg: '#F3C9C9', fg: '#9B4F4F' },
+    light: { bg: '#F3C9C9', fg: '#8A4040' },
     dark: { bg: '#46312F', fg: '#EEB9B9' },
   },
   peach: {
@@ -286,19 +297,19 @@ export function getListTokens(mode: ListMode, accent: AccentName): ListTokens {
     chip: b.chip,
     border: b.hair,
     borderSoft: b.hair,
-    borderStrong: b.rule,
+    borderStrong: b.control,
     divider: b.rule,
     pillBorder: b.hair,
     hair: b.hair,
     track: b.track,
     field: b.card,
-    fieldBorder: b.hair,
+    fieldBorder: b.control,
     searchBg: b.track,
     accent: a.deep,
     accentHover: a.acc,
     accentText: b.onAcc,
     secondary: a.acc,
-    success: mode === 'light' ? '#4C7A4F' : '#8FBF86',
+    success: mode === 'light' ? '#3F6B43' : '#8FBF86',
     error: mode === 'light' ? '#B3453A' : '#E0857A',
     cost: b.ink60,
     rating: a.deep,
@@ -448,6 +459,20 @@ export function makeListTheme(mode: ListMode, accent: AccentName): Theme {
     shape: { borderRadius: 16 },
     spacing: 4,
     components: {
+      // MUI's ButtonBase resets `outline: 0`, which beats the global
+      // *:focus-visible rule in tailwind.css — so every Button, IconButton,
+      // Tab and MenuItem had NO visible keyboard focus indicator (WCAG 2.4.7).
+      // Restoring it here keeps the ring on the same accent as everything else.
+      MuiButtonBase: {
+        styleOverrides: {
+          root: {
+            '&.Mui-focusVisible': {
+              outline: `2px solid ${t.accent}`,
+              outlineOffset: '2px',
+            },
+          },
+        },
+      },
       MuiButton: {
         styleOverrides: {
           root: ({ ownerState }) => ({

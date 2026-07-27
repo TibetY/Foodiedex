@@ -36,7 +36,9 @@ body {
   z-index: 9999;
   padding: 12px 24px;
   background: var(--accent, #5B6E48);
-  color: white;
+  /* The accent flips light in dark mode, so a hardcoded white label sat at
+     1.7:1 — the on-accent token is the one that tracks it. */
+  color: var(--accent-text, #FDFBF7);
   border-radius: 0 0 12px 12px;
   font-weight: 600;
   text-decoration: none;

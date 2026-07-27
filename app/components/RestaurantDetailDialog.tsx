@@ -317,7 +317,7 @@ export default function RestaurantDetailDialog({
                       flex: 'none',
                       borderRadius: '50%',
                       background: t.avatar3,
-                      color: t.accent,
+                      color: t.ink,
                       display: 'grid',
                       placeItems: 'center',
                       fontSize: 11.5,

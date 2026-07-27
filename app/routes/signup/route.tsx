@@ -104,7 +104,7 @@ export default function SignUpPage() {
         }}
       >
         <Box sx={{ mb: "auto" }}>
-          <Logo />
+          <Logo onAccent />
         </Box>
         <Typography sx={{ fontSize: 26, fontWeight: 600, lineHeight: 1.3, mb: 1.5, maxWidth: '20ch' }}>
           {t("signup.quote", "“Two lists, six friends, one running argument about the ramen place.”")}

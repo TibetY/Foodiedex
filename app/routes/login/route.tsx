@@ -115,7 +115,7 @@ export default function LoginPage() {
         }}
       >
         <Box sx={{ mb: "auto" }}>
-          <Logo />
+          <Logo onAccent />
         </Box>
         <Typography sx={{ fontSize: 26, fontWeight: 600, lineHeight: 1.3, mb: 1.5, maxWidth: '20ch' }}>
           {t("login.quote", "“Finally made it to the place on the list. Five bubbles, no notes.”")}
