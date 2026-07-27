@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import { createSupabaseServerClient } from "~/supabase.server";
 import { safeRedirect } from "~/utils/safeRedirect";
 import { getSiteUrl } from "~/utils/siteUrl.server";
-import i18nextServer from "~/i18next.server";
+import { getFixedT } from "~/i18n.server";
 import GoogleButton from "~/components/GoogleButton";
 import Logo from "~/components/Logo";
 import { useKanpaiTheme } from "~/listTheme";
@@ -62,7 +62,7 @@ export const action: ActionFunction = async ({ request }) => {
   const next = safeRedirect(formData.get("next"));
 
   const { supabase, headers } = createSupabaseServerClient(request);
-  const t = await i18nextServer.getFixedT(request);
+  const t = await getFixedT();
 
   // Re-send the confirmation email for an unconfirmed account.
   if (intent === "resend") {

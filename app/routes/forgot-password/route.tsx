@@ -11,7 +11,7 @@ import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import { createSupabaseServerClient } from "~/supabase.server";
 import { getSiteUrl } from "~/utils/siteUrl.server";
-import i18nextServer from "~/i18next.server";
+import { getFixedT } from "~/i18n.server";
 
 type ActionData = {
   error?: string;
@@ -43,7 +43,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   if (error) {
     console.error("Password reset request error:", error.message);
-    const t = await i18nextServer.getFixedT(request);
+    const t = await getFixedT();
     return json<ActionData>({ error: t("forgot.error") }, { headers });
   }
 

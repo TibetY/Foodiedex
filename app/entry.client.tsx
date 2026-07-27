@@ -1,7 +1,7 @@
 /* eslint-disable import/no-named-as-default-member -- i18next's default export legitimately exposes `.use()` */
 /**
- * Client entry. Initializes i18next (reading the language from the <html lang>
- * the server rendered) before hydrating, so the client tree matches the server.
+ * Client entry. Initializes i18next before hydrating so the client tree
+ * matches the server. The app is English-only — no detection.
  */
 
 import { RemixBrowser } from "@remix-run/react";
@@ -10,7 +10,6 @@ import { hydrateRoot } from "react-dom/client";
 import { CacheProvider } from "@emotion/react";
 import i18next from "i18next";
 import { I18nextProvider, initReactI18next } from "react-i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
 import createEmotionCache from "~/createEmotionCache";
 import { EmotionStyleContext, type EmotionStyleChunk } from "~/emotionStyles";
 import { i18nConfig } from "~/i18n";
@@ -42,17 +41,7 @@ const serverStyles = readServerStyles();
 const emotionCache = createEmotionCache();
 
 async function hydrate() {
-  await i18next
-    .use(initReactI18next)
-    .use(LanguageDetector)
-    .init({
-      ...i18nConfig,
-      detection: {
-        // The server already chose the language and set <html lang>; trust it.
-        order: ["htmlTag"],
-        caches: [],
-      },
-    });
+  await i18next.use(initReactI18next).init(i18nConfig);
 
   startTransition(() => {
     hydrateRoot(

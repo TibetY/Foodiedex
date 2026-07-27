@@ -378,6 +378,11 @@ export function BookingPill({ locations, tokens: t }: { locations: RestaurantLoc
         target="_blank"
         rel="noopener noreferrer"
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
+        aria-label={
+          reservationLabel(booking.reservationPlatform || '')
+            ? tr('dashboard.reserveOn', { platform: reservationLabel(booking.reservationPlatform || '') })
+            : undefined
+        }
         sx={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -397,7 +402,7 @@ export function BookingPill({ locations, tokens: t }: { locations: RestaurantLoc
           '&:hover': { filter: 'brightness(1.05)' },
         }}
       >
-        {tr('dashboard.bookOn', { platform: reservationLabel(booking.reservationPlatform || '') })}
+        {tr('dashboard.book')}
       </Box>
     );
   }

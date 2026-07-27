@@ -19,8 +19,7 @@ import { createInstance } from "i18next";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import createEmotionCache from "~/createEmotionCache";
 import createEmotionServer from "@emotion/server/create-instance";
-import i18nextServer from "~/i18next.server";
-import { i18nConfig } from "~/i18n";
+import { i18nConfig, fallbackLng } from "~/i18n";
 import { EmotionStyleContext, type EmotionStyleChunk } from "~/emotionStyles";
 
 export default async function handleRequest(
@@ -31,10 +30,10 @@ export default async function handleRequest(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   loadContext: AppLoadContext
 ) {
-  // Create a request-scoped i18next instance in the detected locale.
+  // Request-scoped i18next instance. English-only, so there is nothing to
+  // detect — the language is fixed.
   const instance = createInstance();
-  const lng = await i18nextServer.getLocale(request);
-  await instance.use(initReactI18next).init({ ...i18nConfig, lng });
+  await instance.use(initReactI18next).init({ ...i18nConfig, lng: fallbackLng });
 
   // Request-scoped Emotion cache. It must NOT be shared between requests, or
   // the second request would consider every rule already inserted and emit

@@ -20,11 +20,6 @@
     "login": "Login",
     "signup": "Sign Up"
   },
-  "language": {
-    "label": "Language",
-    "en": "English",
-    "fr": "Français"
-  },
   "auth": {
     "continueWithGoogle": "Continue with Google",
     "or": "or",
@@ -193,7 +188,6 @@
     "deleteX": "Delete {{name}}",
     "loadingMap": "Loading map…",
     "reserveOn": "Reserve on {{platform}}",
-    "bookOn": "Book · {{platform}}",
     "walkinBadge": "Walk-ins welcome",
     "bibGourmand": "Bib Gourmand",
     "michelinChip": "Michelin",
@@ -253,7 +247,8 @@
     "tableColCity": "City",
     "tableColStatus": "Status",
     "ratingAvg": "{{rating}} avg",
-    "snackRatingFailed": "Couldn't save your rating. Please try again."
+    "snackRatingFailed": "Couldn't save your rating. Please try again.",
+    "book": "Book"
   },
   "lists": {
     "defaultName": "My List",
