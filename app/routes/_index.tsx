@@ -55,15 +55,23 @@ export default function Index() {
   return (
     <Box sx={{ minHeight: "100vh", background: tk.pageBg, color: tk.ink }}>
       {/* header */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 4, padding: { xs: "18px 20px", md: "20px 44px" }, borderBottom: `2px solid ${tk.divider}` }}>
-        <Box sx={{ mr: "auto" }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1.5, md: 4 }, padding: { xs: "14px 16px", md: "20px 44px" }, borderBottom: `2px solid ${tk.divider}` }}>
+        <Box sx={{ mr: "auto", minWidth: 0 }}>
           <Logo />
         </Box>
         <Box component={Link} to="/login" sx={{ fontSize: 14, textDecoration: "none", color: tk.ink, display: { xs: "none", sm: "block" } }}>
           {t("nav.login")}
         </Box>
-        <Button component={Link} to="/signup" variant="contained" sx={{ borderRadius: "999px" }}>
-          {t("landing.ctaPrimary")}
+        {/* Short label on phones: the full "Start your list — free" wrapped to
+            four lines inside the pill at 320px. */}
+        <Button
+          component={Link}
+          to="/signup"
+          variant="contained"
+          sx={{ borderRadius: "999px", flex: "none", whiteSpace: "nowrap", px: { xs: 2, sm: 2.5 }, minHeight: { xs: 40, sm: 44 } }}
+        >
+          <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>{t("landing.ctaPrimary")}</Box>
+          <Box component="span" sx={{ display: { xs: "inline", sm: "none" } }}>{t("landing.getStarted")}</Box>
         </Button>
       </Box>
 
@@ -73,7 +81,7 @@ export default function Index() {
           display: "grid",
           gridTemplateColumns: { xs: "1fr", md: "1.05fr .95fr" },
           gap: { xs: 5, md: 7 },
-          padding: { xs: "44px 20px", md: "64px 44px" },
+          padding: { xs: "36px 16px", md: "64px 44px" },
           alignItems: "center",
         }}
       >
@@ -97,7 +105,7 @@ export default function Index() {
           </Box>
           <Typography
             component="h1"
-            sx={{ fontSize: { xs: 40, sm: 56 }, lineHeight: 1.05, fontWeight: 600, letterSpacing: "-.03em", mb: "18px", maxWidth: "16ch" }}
+            sx={{ fontSize: { xs: 34, sm: 56 }, lineHeight: 1.05, fontWeight: 600, letterSpacing: "-.03em", mb: "18px", maxWidth: "16ch", overflowWrap: "break-word" }}
           >
             {t("landing.titleLine1")}{" "}
             <Box component="span" sx={{ color: tk.accent }}>

@@ -999,7 +999,8 @@ export default function Dashboard() {
     cursor: 'pointer',
     fontSize: '13.5px',
     fontWeight: 500,
-    padding: '7px 18px',
+    // Roomier on touch, where 34px was under the comfortable minimum.
+    padding: { xs: '10px 16px', sm: '7px 18px' },
     borderRadius: '999px',
   } as const;
 
@@ -1008,7 +1009,7 @@ export default function Dashboard() {
     cursor: 'pointer',
     fontSize: '13px',
     fontWeight: 500,
-    padding: '7px 15px',
+    padding: { xs: '10px 15px', sm: '7px 15px' },
     borderRadius: '999px',
   } as const;
 
@@ -1362,7 +1363,7 @@ export default function Dashboard() {
                     cursor: 'pointer',
                     fontSize: '13px',
                     fontWeight: filter === f ? 600 : 400,
-                    padding: '7px 15px',
+                    padding: { xs: '10px 15px', sm: '7px 15px' },
                     borderRadius: '999px',
                     background: filter === f ? t.cardBg : 'transparent',
                     color: filter === f ? t.ink : t.muted,
@@ -1486,7 +1487,7 @@ export default function Dashboard() {
                   background: t.cardBg,
                   border: `1px solid ${t.hair}`,
                   borderRadius: '999px',
-                  padding: '7px 14px',
+                  padding: { xs: '10px 14px', sm: '7px 14px' },
                   cursor: 'pointer',
                   appearance: 'none',
                 }}

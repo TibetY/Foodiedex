@@ -53,11 +53,26 @@ interface BubbleInputProps {
 
 /** Clickable bubble picker for rating input — whole-bubble precision.
  *  Clicking the bubble that already sets the current value clears one step
- *  back, so the control can be dialed all the way down to "not rated". */
+ *  back, so the control can be dialed all the way down to "not rated".
+ *
+ *  The dots are drawn at the design's size and spacing, but each button's hit
+ *  area is grown with transparent padding: the full row height (40px) plus
+ *  half the gap on each side, so neighbouring targets meet without overlapping
+ *  and the visible rhythm is untouched. Rating a spot on a phone was otherwise
+ *  a 16–22px target.
+ */
 export function BubbleInput({ value, onChange, tokens: t, size = 22, gap = 9, max = 5, ariaLabel }: BubbleInputProps) {
   const rounded = Math.round(Math.max(0, Math.min(max, value || 0)));
+  const padX = Math.round(gap / 2);
+  const padY = Math.max(0, Math.round((40 - size) / 2));
   return (
-    <Box role="group" aria-label={ariaLabel} sx={{ display: 'inline-flex', alignItems: 'center', gap: `${gap}px` }}>
+    <Box
+      role="group"
+      aria-label={ariaLabel}
+      // Negative margins keep the row's outer box where the layout expects it,
+      // so the padded targets don't shift surrounding content.
+      sx={{ display: 'inline-flex', alignItems: 'center', mx: `${-padX}px`, my: `${-padY}px` }}
+    >
       {Array.from({ length: max }, (_, i) => {
         const n = i + 1;
         const filled = n <= rounded;
@@ -70,18 +85,28 @@ export function BubbleInput({ value, onChange, tokens: t, size = 22, gap = 9, ma
             aria-label={`${n}`}
             aria-pressed={filled}
             sx={{
-              width: size,
-              height: size,
               flex: 'none',
-              p: 0,
+              px: `${padX}px`,
+              py: `${padY}px`,
               m: 0,
+              border: 0,
+              background: 'transparent',
               cursor: 'pointer',
-              borderRadius: '50%',
-              boxSizing: 'border-box',
-              background: filled ? t.rating : 'transparent',
-              border: filled ? 'none' : `1.5px solid ${t.notRated}`,
-              transition: 'transform .1s ease',
-              '&:hover': { transform: 'scale(1.12)' },
+              display: 'grid',
+              placeItems: 'center',
+              // The dot itself: the design's size, centred in the touch target.
+              '&::before': {
+                content: '""',
+                display: 'block',
+                width: size,
+                height: size,
+                borderRadius: '50%',
+                boxSizing: 'border-box',
+                background: filled ? t.rating : 'transparent',
+                border: filled ? 'none' : `1.5px solid ${t.notRated}`,
+                transition: 'transform .1s ease',
+              },
+              '&:hover::before': { transform: 'scale(1.12)' },
             }}
           />
         );

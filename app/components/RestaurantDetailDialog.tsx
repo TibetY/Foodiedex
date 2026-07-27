@@ -262,7 +262,10 @@ export default function RestaurantDetailDialog({
               sx={{
                 color: t.accent,
                 border: `1px solid ${t.pillBorder}`,
-                p: '3px',
+                // Comfortable touch target; the ring itself stays small.
+                width: 34,
+                height: 34,
+                p: 0,
                 '&:hover': { borderColor: t.accent, background: 'transparent' },
               }}
             >
@@ -397,6 +400,7 @@ export default function RestaurantDetailDialog({
             onChange={(_, v: 'reservations' | 'hours' | 'instagram' | 'guides') => setTab(v)}
             variant="scrollable"
             scrollButtons="auto"
+            allowScrollButtonsMobile
             aria-label={tr('detail.tabsLabel')}
             sx={{ borderBottom: `1px solid ${t.border}`, minHeight: 40, '& .MuiTabs-indicator': { backgroundColor: t.accent } }}
           >
