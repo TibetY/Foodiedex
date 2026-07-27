@@ -16,6 +16,7 @@ import RestaurantDetailDialog from '~/components/RestaurantDetailDialog';
 import Bubbles from '~/components/Bubbles';
 import PlaceCard, { BookingPill } from '~/components/PlaceCard';
 import LanguageSwitcher from '~/components/LanguageSwitcher';
+import { LogoMark } from '~/components/Logo';
 import { useKanpaiTheme, type ListTokens } from '~/listTheme';
 import type { RestaurantMapProps } from '~/components/RestaurantMap';
 
@@ -222,22 +223,7 @@ export default function SharedListPage() {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
-            <Box
-              aria-hidden
-              sx={{
-                width: 27,
-                height: 27,
-                background: t.accent,
-                borderRadius: '50% 50% 50% 3px',
-                transform: 'rotate(45deg)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flex: 'none',
-              }}
-            >
-              <Box sx={{ width: 9, height: 9, background: t.panelBg, borderRadius: '50%', transform: 'rotate(-45deg)' }} />
-            </Box>
+            <LogoMark size={27} />
             <Box component={Link} to="/" sx={{ fontFamily: serif, fontSize: { xs: 20, sm: 26 }, letterSpacing: '.01em', color: t.ink, textDecoration: 'none', whiteSpace: 'nowrap' }}>
               {tr('brand')}
             </Box>

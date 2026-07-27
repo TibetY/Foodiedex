@@ -96,20 +96,26 @@ export async function renderShareCard(
 
   let y = margin;
 
-  // wordmark: diamond + brand
-  const chip = Math.round(w * 0.03);
-  ctx.save();
-  ctx.translate(margin + chip / 2, y + chip / 2);
-  ctx.rotate(Math.PI / 4);
-  ctx.fillStyle = t.accent;
-  roundRect(ctx, -chip / 2, -chip / 2, chip, chip, chip * 0.28);
-  ctx.fill();
-  ctx.restore();
+  // wordmark: the three-dot mark + brand. Same geometry as <LogoMark>, in
+  // canvas terms — ratios measured against the mark's 26px design box.
+  const chip = Math.round(w * 0.038);
+  const k = chip / 26;
+  const circle = (left: number, top: number, size: number, fill: string) => {
+    const r = (size * k) / 2;
+    ctx.beginPath();
+    ctx.arc(margin + left * k + r, y + top * k + r, r, 0, Math.PI * 2);
+    ctx.fillStyle = fill;
+    ctx.fill();
+  };
+  circle(0, 3, 17, t.accent);
+  circle(9, 0, 12, t.wantBg);
+  circle(13, 12, 8, t.avatar2);
+
   ctx.fillStyle = t.ink;
   ctx.font = `800 ${Math.round(w * 0.042)}px ${SANS}`;
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
-  ctx.fillText(opts.brand, margin + chip * 1.6, y + chip / 2);
+  ctx.fillText(opts.brand, margin + chip * 1.25, y + chip * 0.4);
 
   // eyebrow: list name
   y += Math.round(w * 0.12);

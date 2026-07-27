@@ -77,6 +77,7 @@ import Bubbles from '~/components/Bubbles';
 import PlaceCard, { BookingPill, CardAction } from '~/components/PlaceCard';
 import SkeletonCard, { SkeletonListRow } from '~/components/SkeletonCard';
 import LanguageSwitcher from '~/components/LanguageSwitcher';
+import { LogoMark } from '~/components/Logo';
 import { uploadRestaurantImage } from '~/services/storage.client';
 import {
   createRestaurant,
@@ -1095,22 +1096,7 @@ export default function Dashboard() {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: '8px', sm: '11px' }, minWidth: 0 }}>
-            <Box
-              aria-hidden
-              sx={{
-                width: { xs: 22, sm: 27 },
-                height: { xs: 22, sm: 27 },
-                background: t.accent,
-                borderRadius: '50% 50% 50% 3px',
-                transform: 'rotate(45deg)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flex: 'none',
-              }}
-            >
-              <Box sx={{ width: { xs: 7, sm: 9 }, height: { xs: 7, sm: 9 }, background: t.panelBg, borderRadius: '50%', transform: 'rotate(-45deg)' }} />
-            </Box>
+            <LogoMark size={{ xs: 22, sm: 27 }} />
             {/* nowrap: the wordmark must never break into two lines on phones */}
             <Box component="span" sx={{ fontFamily: serif, fontSize: { xs: 20, sm: 26 }, letterSpacing: '.01em', whiteSpace: 'nowrap' }}>
               {tr('brand')}
@@ -1909,7 +1895,7 @@ export default function Dashboard() {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '9px', color: t.muted, fontSize: 13 }}>
-            <Box aria-hidden sx={{ width: 16, height: 16, background: t.accent, borderRadius: '50% 50% 50% 2px', transform: 'rotate(45deg)' }} />
+            <LogoMark size={16} />
             <Box component="span" sx={{ fontFamily: serif, fontSize: 16, color: t.ink }}>{tr('brand')}</Box>
             <Box component="span" sx={{ ml: '6px' }}>{tr('dashboard.footerTagline')}</Box>
           </Box>

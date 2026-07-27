@@ -3,20 +3,54 @@ import Typography from '@mui/material/Typography';
 import { useTranslation } from "react-i18next";
 import { useKanpaiTheme } from "~/listTheme";
 
-/** Three overlapping dots — accent, and the fixed decorative sakura/peach pair
- *  — echoing the Kanpai mark, followed by the brand wordmark. */
+/** A size that may differ per breakpoint, as MUI's sx accepts. */
+type MarkSize = number | { xs: number; sm: number };
+
+/** Scale one of the mark's ratios (measured against a 26px box) to the
+ *  requested size, preserving a responsive shape if one was given. */
+function at(size: MarkSize, ratio: number): number | { xs: number; sm: number } {
+  const scale = (n: number) => Math.round(n * ratio * 100) / 100;
+  return typeof size === 'number'
+    ? scale(size)
+    : { xs: scale(size.xs), sm: scale(size.sm) };
+}
+
+/**
+ * The Kanpai mark on its own: three overlapping dots — the live accent, plus
+ * the fixed decorative sakura/peach pair. The single source of the geometry,
+ * used by the wordmark lockup below and by the app/share headers, so the mark
+ * can never drift between surfaces. `public/favicon.svg` mirrors the same
+ * arrangement (with stronger dot colours, which is what stays legible at 16px).
+ */
+export function LogoMark({ size = 26 }: { size?: MarkSize }) {
+  const { tokens } = useKanpaiTheme();
+  const dot = (leftR: number, topR: number, sizeR: number, background: string) => ({
+    position: 'absolute' as const,
+    left: at(size, leftR),
+    top: at(size, topR),
+    width: at(size, sizeR),
+    height: at(size, sizeR),
+    borderRadius: '50%',
+    background,
+  });
+
+  return (
+    <Box aria-hidden sx={{ position: 'relative', width: size, height: size, flex: 'none' }}>
+      <Box sx={dot(0, 3 / 26, 17 / 26, tokens.accent)} />
+      <Box sx={dot(9 / 26, 0, 12 / 26, tokens.wantBg)} />
+      <Box sx={dot(13 / 26, 12 / 26, 8 / 26, tokens.avatar2)} />
+    </Box>
+  );
+}
+
+/** The mark followed by the brand wordmark. */
 export default function Logo() {
   const { t } = useTranslation();
-  const { tokens } = useKanpaiTheme();
   const brand = t("brand");
 
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: "11px", userSelect: "none" }}>
-      <Box sx={{ position: "relative", width: 26, height: 26, flex: "none" }}>
-        <Box sx={{ position: "absolute", left: 0, top: 3, width: 17, height: 17, borderRadius: "50%", background: tokens.accent }} />
-        <Box sx={{ position: "absolute", left: 9, top: 0, width: 12, height: 12, borderRadius: "50%", background: tokens.wantBg }} />
-        <Box sx={{ position: "absolute", left: 13, top: 12, width: 8, height: 8, borderRadius: "50%", background: tokens.avatar2 }} />
-      </Box>
+      <LogoMark />
       <Typography
         variant="h5"
         component="span"
