@@ -76,7 +76,6 @@ import SavedViewsBar from '~/components/SavedViewsBar';
 import Bubbles from '~/components/Bubbles';
 import PlaceCard, { BookingPill, CardAction } from '~/components/PlaceCard';
 import SkeletonCard, { SkeletonListRow } from '~/components/SkeletonCard';
-import LanguageSwitcher from '~/components/LanguageSwitcher';
 import { LogoMark } from '~/components/Logo';
 import { uploadRestaurantImage } from '~/services/storage.client';
 import {
@@ -1153,8 +1152,6 @@ export default function Dashboard() {
               )}
             </Box>
 
-            {/* language toggle */}
-            <LanguageSwitcher />
 
             {/* theme toggle */}
             <Box sx={{ display: 'flex', background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px', padding: '3px' }}>

@@ -34,10 +34,8 @@ import {
 
 import { json } from "@remix-run/node";
 import { useTranslation } from "react-i18next";
-import { useChangeLanguage } from "remix-i18next/react";
 import { createSupabaseServerClient } from "~/supabase.server";
 import { getServerSupabaseEnv, type PublicEnv } from "~/supabaseConfig";
-import i18nextServer from "~/i18next.server";
 import { resources, fallbackLng } from "~/i18n";
 import Navbar from "./components/Navbar";
 import { EmotionStyleContext } from "~/emotionStyles";
@@ -47,8 +45,6 @@ import tailwindHref from "~/tailwind.css?url";
  *  thrown loader/render error replaces the whole document before that ever
  *  mounts, so the boundary needs its own static fallback theme. */
 const errorTheme = makeListTheme('light', 'matcha');
-
-export const handle = { i18n: "common" };
 
 export const links: LinksFunction = () => [
   // SVG favicon (evergreen browsers) — the same Marker pin used in the
@@ -71,9 +67,8 @@ export const links: LinksFunction = () => [
   },
 ];
 
-export const meta: MetaFunction = ({ data }) => {
-  const locale = (data as { locale?: string } | undefined)?.locale ?? fallbackLng;
-  const m = (resources[locale as keyof typeof resources] ?? resources[fallbackLng]).common.meta;
+export const meta: MetaFunction = () => {
+  const m = resources[fallbackLng].common.meta;
   return [
     { charset: "utf-8" },
     { title: m.title },
@@ -89,19 +84,17 @@ export const loader: LoaderFunction = async ({ request }) => {
     data: { user },
   } = await supabase.auth.getUser();
   const ENV = getServerSupabaseEnv();
-  const locale = await i18nextServer.getLocale(request);
   // Theme preference rides cookies so the server paints the user's own look on
   // the very first byte — no light/matcha flash before hydration.
   const cookieHeader = request.headers.get("Cookie");
   const mode = modeFromCookieHeader(cookieHeader);
   const accent = accentFromCookieHeader(cookieHeader);
-  return json({ isLoggedIn: !!user, ENV, locale, mode, accent });
+  return json({ isLoggedIn: !!user, ENV, mode, accent });
 };
 
 export default function App() {
-  const { ENV, locale, mode, accent } = useLoaderData<{
+  const { ENV, mode, accent } = useLoaderData<{
     ENV: PublicEnv;
-    locale: string;
     mode: ListMode;
     accent: AccentName;
   }>();
@@ -109,12 +102,10 @@ export default function App() {
   // the document on the client (see entry.client), so the markup is identical
   // and React owns these nodes instead of leaving them orphaned in <head>.
   const emotionStyles = useContext(EmotionStyleContext);
-  const { t, i18n } = useTranslation();
-  // Keep the i18next client instance in sync with the server-detected locale.
-  useChangeLanguage(locale);
+  const { t } = useTranslation();
 
   return (
-    <html lang={locale} dir={i18n.dir(locale)} data-theme={mode} data-accent={accent}>
+    <html lang={fallbackLng} data-theme={mode} data-accent={accent}>
       <head>
         <Meta />
         <Links />

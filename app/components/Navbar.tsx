@@ -16,7 +16,6 @@ import { useTheme } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import Logo from "./Logo";
-import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function Navbar() {
   const location = useLocation();
@@ -77,7 +76,6 @@ export default function Navbar() {
 
         {isMobile ? (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <LanguageSwitcher />
             <IconButton
               color="inherit"
               onClick={() => setDrawerOpen(true)}
@@ -138,7 +136,6 @@ export default function Navbar() {
           </Box>
         ) : (
           <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-            <LanguageSwitcher />
             {navLinks.map((link) =>
               link.to === "/signup" ? (
                 <Button

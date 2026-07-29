@@ -761,7 +761,7 @@ export default function RestaurantFormDialog({
   const SectionHeading = ({ children }: { children: React.ReactNode }) => (
     <Grid item xs={12}>
       <Divider sx={{ mb: 1.5 }} />
-      <Typography variant="subtitle2" sx={{ ...sectionHeadingSx, mb: 1 }}>
+      <Typography variant="subtitle2" component="h3" sx={{ ...sectionHeadingSx, mb: 1 }}>
         {children}
       </Typography>
     </Grid>

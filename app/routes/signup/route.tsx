@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { createSupabaseServerClient } from "~/supabase.server";
 import { safeRedirect } from "~/utils/safeRedirect";
 import { getSiteUrl } from "~/utils/siteUrl.server";
-import i18nextServer from "~/i18next.server";
+import { getFixedT } from "~/i18n.server";
 import GoogleButton from "~/components/GoogleButton";
 import Logo from "~/components/Logo";
 import { useKanpaiTheme } from "~/listTheme";
@@ -47,7 +47,7 @@ export const action: ActionFunction = async ({ request }) => {
   const password = formData.get("password") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
   const next = safeRedirect(formData.get("next"));
-  const t = await i18nextServer.getFixedT(request);
+  const t = await getFixedT();
 
   if (password !== confirmPassword) {
     return json<ActionData>({ error: t("signup.passwordsNoMatch") });
@@ -104,7 +104,7 @@ export default function SignUpPage() {
         }}
       >
         <Box sx={{ mb: "auto" }}>
-          <Logo />
+          <Logo onAccent />
         </Box>
         <Typography sx={{ fontSize: 26, fontWeight: 600, lineHeight: 1.3, mb: 1.5, maxWidth: '20ch' }}>
           {t("signup.quote", "“Two lists, six friends, one running argument about the ramen place.”")}

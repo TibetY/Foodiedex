@@ -16,7 +16,6 @@ import type { Restaurant } from '~/types/restaurant';
 import { computeFoodStats, type LabelCount } from '~/utils/foodStats';
 import { downloadShareCard, type ShareSize } from '~/utils/shareCard.client';
 import { useKanpaiTheme, type ListTokens } from '~/listTheme';
-import LanguageSwitcher from '~/components/LanguageSwitcher';
 import type { RestaurantMapProps } from '~/components/RestaurantMap';
 
 const RestaurantMap = lazy<React.ComponentType<RestaurantMapProps>>(() =>
@@ -135,7 +134,6 @@ export default function StatsPage() {
             <ArrowBack sx={{ fontSize: 18 }} /> {tr('stats.back')}
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <LanguageSwitcher />
             <Box sx={{ display: 'flex', background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px', padding: '3px' }}>
               <Box component="button" onClick={() => setMode('light')} aria-label={tr('dashboard.themeLight')} aria-pressed={mode === 'light'}
                 sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, background: mode === 'light' ? t.accent : 'transparent', color: mode === 'light' ? t.accentText : t.faint }}>☀</Box>

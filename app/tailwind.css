@@ -36,7 +36,9 @@ body {
   z-index: 9999;
   padding: 12px 24px;
   background: var(--accent, #5B6E48);
-  color: white;
+  /* The accent flips light in dark mode, so a hardcoded white label sat at
+     1.7:1 — the on-accent token is the one that tracks it. */
+  color: var(--accent-text, #FDFBF7);
   border-radius: 0 0 12px 12px;
   font-weight: 600;
   text-decoration: none;
@@ -46,6 +48,18 @@ body {
 
 .skip-to-main:focus {
   transform: translateY(0);
+}
+
+/* Emotion-independent floor for MUI icons.
+   MUI sizes every icon with `width: 1em; height: 1em` from an Emotion class.
+   If that class is missing — a failed hydration, a blocked or dropped
+   stylesheet — the <svg> falls back to intrinsic sizing and renders either
+   collapsed or enormous. This static copy lives in the stylesheet link, which
+   Emotion and React never own, and loses the cascade tie to Emotion's own rule
+   whenever that one is present, so it only takes effect as a fallback. */
+.MuiSvgIcon-root {
+  width: 1em;
+  height: 1em;
 }
 
 /* Animations */

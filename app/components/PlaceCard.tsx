@@ -218,7 +218,7 @@ export default function PlaceCard({
             <Box
               component="span"
               aria-label={tr('dashboard.cost') + ' ' + costOn}
-              sx={{ flex: 'none', display: { xs: 'none', sm: 'block' }, fontSize: 12.5, letterSpacing: '.06em', color: t.notRated }}
+              sx={{ flex: 'none', display: { xs: 'none', sm: 'block' }, fontSize: 12.5, letterSpacing: '.06em', color: t.faint }}
             >
               <Box component="span" sx={{ color: t.muted, fontWeight: 600 }}>{costOn}</Box>
               <Box component="span" aria-hidden>{costOff}</Box>
@@ -251,7 +251,7 @@ export default function PlaceCard({
             <Box
               component="span"
               aria-label={tr('dashboard.cost') + ' ' + costOn}
-              sx={{ flex: 'none', display: { xs: 'block', sm: 'none' }, fontSize: 11.5, letterSpacing: '.06em', color: t.notRated }}
+              sx={{ flex: 'none', display: { xs: 'block', sm: 'none' }, fontSize: 11.5, letterSpacing: '.06em', color: t.faint }}
             >
               <Box component="span" sx={{ color: t.muted, fontWeight: 600 }}>{costOn}</Box>
               <Box component="span" aria-hidden>{costOff}</Box>
@@ -378,6 +378,11 @@ export function BookingPill({ locations, tokens: t }: { locations: RestaurantLoc
         target="_blank"
         rel="noopener noreferrer"
         onClick={(e: React.MouseEvent) => e.stopPropagation()}
+        aria-label={
+          reservationLabel(booking.reservationPlatform || '')
+            ? tr('dashboard.reserveOn', { platform: reservationLabel(booking.reservationPlatform || '') })
+            : undefined
+        }
         sx={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -397,7 +402,7 @@ export function BookingPill({ locations, tokens: t }: { locations: RestaurantLoc
           '&:hover': { filter: 'brightness(1.05)' },
         }}
       >
-        {tr('dashboard.bookOn', { platform: reservationLabel(booking.reservationPlatform || '') })}
+        {tr('dashboard.book')}
       </Box>
     );
   }

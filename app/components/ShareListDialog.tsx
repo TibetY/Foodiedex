@@ -191,7 +191,7 @@ export default function ShareListDialog({
 
         {canManage && (
           <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+            <Typography variant="subtitle2" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
               {t('share.inviteLink')}
             </Typography>
 
@@ -220,7 +220,7 @@ export default function ShareListDialog({
                       </InputAdornment>
                     ),
                   }}
-                  aria-label={t('share.inviteLink')}
+                  inputProps={{ 'aria-label': t('share.inviteLink') }}
                 />
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 1.5, mb: 1 }}>
                   {t('share.joinsAsLong')}
@@ -269,7 +269,7 @@ export default function ShareListDialog({
 
         {canManage && (
           <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5, display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            <Typography variant="subtitle2" component="h3" sx={{ fontWeight: 600, mb: 0.5, display: 'flex', alignItems: 'center', gap: 0.75 }}>
               <Public fontSize="small" /> {t('share.publicLink')}
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1 }}>
@@ -297,7 +297,7 @@ export default function ShareListDialog({
                       </InputAdornment>
                     ),
                   }}
-                  aria-label={t('share.publicLink')}
+                  inputProps={{ 'aria-label': t('share.publicLink') }}
                 />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, flexWrap: 'wrap' }}>
                   <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -339,7 +339,7 @@ export default function ShareListDialog({
           </Box>
         )}
 
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography variant="subtitle2" component="h3" sx={{ fontWeight: 600, mb: 1 }}>
           {t('share.members')}
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -348,7 +348,14 @@ export default function ShareListDialog({
               <Avatar
                 src={m.profile?.avatarUrl}
                 alt={m.profile?.displayName || t('share.member')}
-                sx={{ width: 34, height: 34, fontSize: 14 }}
+                sx={{
+                  width: 34,
+                  height: 34,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  bgcolor: 'action.selected',
+                  color: 'text.primary',
+                }}
               >
                 {initials(m)}
               </Avatar>

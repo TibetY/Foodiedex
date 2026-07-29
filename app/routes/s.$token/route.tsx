@@ -15,7 +15,6 @@ import RestaurantThumb from '~/components/RestaurantThumb';
 import RestaurantDetailDialog from '~/components/RestaurantDetailDialog';
 import Bubbles from '~/components/Bubbles';
 import PlaceCard, { BookingPill } from '~/components/PlaceCard';
-import LanguageSwitcher from '~/components/LanguageSwitcher';
 import { LogoMark } from '~/components/Logo';
 import { useKanpaiTheme, type ListTokens } from '~/listTheme';
 import type { RestaurantMapProps } from '~/components/RestaurantMap';
@@ -229,7 +228,6 @@ export default function SharedListPage() {
             </Box>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <LanguageSwitcher />
             <Box sx={{ display: 'flex', background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px', padding: '3px' }}>
               <Box component="button" onClick={() => setMode('light')} aria-label={tr('dashboard.themeLight')} aria-pressed={mode === 'light'}
                 sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, background: mode === 'light' ? t.accent : 'transparent', color: mode === 'light' ? t.accentText : t.faint }}>☀</Box>

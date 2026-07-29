@@ -20,7 +20,6 @@ import { updateProfile, uploadAvatar } from '~/services/profiles.client';
 import { getSupabaseBrowserClient } from '~/supabase.client';
 import { useKanpaiTheme, ACCENTS, accentSwatch, type AccentName } from '~/listTheme';
 import type { Profile } from '~/types/restaurant';
-import LanguageSwitcher from '~/components/LanguageSwitcher';
 
 type LoaderData = {
   userId: string; profile: Profile | null };
@@ -150,7 +149,6 @@ export default function ProfilePage() {
         <Button startIcon={<ArrowBack />} onClick={() => navigate('/dashboard')} sx={{ color: tk.muted }}>
           {t('profile.back')}
         </Button>
-        <LanguageSwitcher />
       </Box>
 
       <Container maxWidth="sm" sx={{ pt: { xs: 5, sm: 7 }, pb: 10 }}>

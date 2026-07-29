@@ -2,6 +2,7 @@ import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, useActionData, Link } from "@remix-run/react";
 import { useTranslation } from "react-i18next";
+import { useKanpaiTheme } from "~/listTheme";
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
@@ -10,7 +11,7 @@ import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import { createSupabaseServerClient } from "~/supabase.server";
 import { getSiteUrl } from "~/utils/siteUrl.server";
-import i18nextServer from "~/i18next.server";
+import { getFixedT } from "~/i18n.server";
 
 type ActionData = {
   error?: string;
@@ -42,7 +43,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   if (error) {
     console.error("Password reset request error:", error.message);
-    const t = await i18nextServer.getFixedT(request);
+    const t = await getFixedT();
     return json<ActionData>({ error: t("forgot.error") }, { headers });
   }
 
@@ -54,6 +55,7 @@ export const action: ActionFunction = async ({ request }) => {
 export default function ForgotPasswordPage() {
   const actionData = useActionData<ActionData>();
   const { t } = useTranslation();
+  const { tokens: tk } = useKanpaiTheme();
 
   return (
     <Container
@@ -65,6 +67,7 @@ export default function ForgotPasswordPage() {
         justifyContent: "center",
         px: { xs: 3, sm: 4 },
         pt: 8,
+        background: tk.pageBg,
       }}
     >
       <Box
@@ -73,20 +76,20 @@ export default function ForgotPasswordPage() {
           maxWidth: 440,
           p: { xs: 3, sm: 5 },
           borderRadius: "24px",
-          background: "#FFFFFF",
-          border: "1px solid #E6E1D4",
-          boxShadow: "0 22px 46px -28px rgba(28,26,20,.4)",
+          background: tk.cardBg,
+          border: `1px solid ${tk.border}`,
+          boxShadow: tk.cardShadow,
         }}
         className="animate-fade-in-up"
       >
         <Typography
           variant="h4"
           component="h1"
-          sx={{ fontFamily: "'Instrument Serif', serif", fontWeight: 400, mb: 1, letterSpacing: "-0.01em" }}
+          sx={{ fontWeight: 600, mb: 1, letterSpacing: "-0.02em", color: tk.ink }}
         >
           {t("forgot.title")}
         </Typography>
-        <Typography variant="body1" sx={{ color: "text.secondary", mb: 4 }}>
+        <Typography variant="body1" sx={{ color: tk.muted, mb: 4 }}>
           {t("forgot.intro")}
         </Typography>
 

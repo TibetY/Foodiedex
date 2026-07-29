@@ -43,8 +43,15 @@ export function LogoMark({ size = 26 }: { size?: MarkSize }) {
   );
 }
 
-/** The mark followed by the brand wordmark. */
-export default function Logo() {
+/**
+ * The mark followed by the brand wordmark.
+ *
+ * `onAccent` is for the auth pages' accent panel, where the wordmark must take
+ * the panel's own on-accent colour. Everywhere else it pins to text.primary
+ * rather than inheriting — the Navbar sits in an MUI AppBar, whose default
+ * colour is the primary contrast text, which is near-invisible on paper.
+ */
+export default function Logo({ onAccent = false }: { onAccent?: boolean }) {
   const { t } = useTranslation();
   const brand = t("brand");
 
@@ -54,7 +61,7 @@ export default function Logo() {
       <Typography
         variant="h5"
         component="span"
-        sx={{ fontWeight: 600, letterSpacing: "-0.02em", color: "text.primary" }}
+        sx={{ fontWeight: 600, letterSpacing: "-0.02em", color: onAccent ? "inherit" : "text.primary" }}
       >
         {brand}
       </Typography>
