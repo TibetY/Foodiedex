@@ -50,6 +50,18 @@ body {
   transform: translateY(0);
 }
 
+/* Emotion-independent floor for MUI icons.
+   MUI sizes every icon with `width: 1em; height: 1em` from an Emotion class.
+   If that class is missing — a failed hydration, a blocked or dropped
+   stylesheet — the <svg> falls back to intrinsic sizing and renders either
+   collapsed or enormous. This static copy lives in the stylesheet link, which
+   Emotion and React never own, and loses the cascade tie to Emotion's own rule
+   whenever that one is present, so it only takes effect as a fallback. */
+.MuiSvgIcon-root {
+  width: 1em;
+  height: 1em;
+}
+
 /* Animations */
 @keyframes fadeInUp {
   from {
