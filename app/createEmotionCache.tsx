@@ -14,7 +14,18 @@ import createCache from "@emotion/cache";
  * Appending on both sides keeps the server and client markup in the same order.
  * MUI's styles now land after tailwind.css in the cascade, which is what we
  * want anyway: component styles should win over Tailwind's preflight.
+ *
+ * `speedy: false` matters more than it looks. Emotion's fast path inserts
+ * rules through CSSOM (sheet.insertRule) and leaves the <style> element empty,
+ * so the rules exist only as long as that exact node does. If React ever
+ * re-creates the document — which it does whenever hydration fails, for
+ * reasons a page cannot control, such as a browser extension or content
+ * blocker touching the DOM first — every CSSOM-inserted rule is lost and
+ * Emotion will not rewrite them, because its cache still lists their ids as
+ * inserted. The page then renders partly unstyled, and anything mounted after
+ * hydration (dialogs above all) comes up with no styling whatsoever. Writing
+ * real CSS text costs a little insertion speed and makes the styles survive.
  */
 export default function createEmotionCache() {
-  return createCache({ key: "css" });
+  return createCache({ key: "css", speedy: false });
 }
