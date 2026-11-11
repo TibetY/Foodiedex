@@ -373,9 +373,9 @@ export default function SharedListPage() {
             </Box>
           ) : (
             <Box sx={{ padding: { xs: '16px 0 40px', sm: '24px 0 40px' } }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(auto-fill, minmax(160px, 1fr))', sm: 'repeat(auto-fill, minmax(240px, 1fr))' }, gap: { xs: '12px', sm: '20px' } }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(auto-fill, minmax(160px, 1fr))', sm: 'repeat(auto-fill, minmax(240px, 1fr))' }, gap: { xs: '22px 12px', sm: '32px 20px' } }}>
                 {sorted.map((r) => (
-                  <PlaceCard key={r.id} r={r} tokens={t} serifFont={serif} onView={openDetail} />
+                  <PlaceCard key={r.id} r={r} tokens={t} onView={openDetail} />
                 ))}
               </Box>
             </Box>

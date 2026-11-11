@@ -48,6 +48,8 @@ interface RestaurantDetailDialogProps {
   onEdit: (restaurant: Restaurant) => void;
   onDelete: (id: string) => void;
   onToggleFavorite?: (restaurant: Restaurant) => void;
+  /** Flip been / want. The cards no longer carry this, so it lives here. */
+  onToggleStatus?: (restaurant: Restaurant) => void;
   onAddVisit?: (restaurant: Restaurant) => void;
   /** Everyone's verdicts on this spot ("what everyone said"). */
   ratings?: RestaurantRating[];
@@ -67,6 +69,7 @@ export default function RestaurantDetailDialog({
   onEdit,
   onDelete,
   onToggleFavorite,
+  onToggleStatus,
   onAddVisit,
   ratings = [],
   currentUserId,
@@ -107,6 +110,7 @@ export default function RestaurantDetailDialog({
   const myRating = currentUserId ? ratings.find((x) => x.userId === currentUserId) : undefined;
   const otherRatings = ratings.filter((x) => x.userId !== currentUserId);
   const isBeen = (r.status ?? 'want') === 'been';
+  const statusInteractive = canEdit && onToggleStatus;
 
   const sectionLabel = {
     display: 'block',
@@ -174,16 +178,31 @@ export default function RestaurantDetailDialog({
           <Close fontSize="small" />
         </IconButton>
         <Box
+          component={statusInteractive ? 'button' : 'span'}
+          type={statusInteractive ? 'button' : undefined}
+          onClick={statusInteractive ? () => onToggleStatus(r) : undefined}
+          title={statusInteractive ? tr('dashboard.toggleStatus') : undefined}
+          aria-label={
+            statusInteractive
+              ? tr('dashboard.markAs', {
+                  name: r.name,
+                  status: isBeen ? tr('dashboard.markWant') : tr('dashboard.markBeen'),
+                })
+              : undefined
+          }
           sx={{
             position: 'absolute',
             top: 12,
             left: 12,
+            border: 'none',
+            font: 'inherit',
             background: isBeen ? t.beenBg : t.wantBg,
             color: isBeen ? t.beenFg : t.wantFg,
-            fontSize: 11.5,
+            fontSize: 12,
             fontWeight: 600,
-            padding: '5px 11px',
+            padding: '6px 12px',
             borderRadius: '999px',
+            cursor: statusInteractive ? 'pointer' : 'default',
           }}
         >
           {isBeen ? tr('dashboard.statusBeen') : tr('dashboard.statusWant')}

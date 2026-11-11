@@ -13,6 +13,7 @@ interface RestaurantThumbProps {
   tokens: Tokens;
   /** Size it by width (default 100%); the height always follows the ratio. */
   sx?: SxProps<Theme>;
+  className?: string;
 }
 
 /** The one shape a place photo takes, everywhere: cards, rows, the detail hero. */
@@ -49,7 +50,7 @@ const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : us
  * dead link, or a legacy image that fails the checks above — gets the same
  * flat neutral tile with its name set quietly on it.
  */
-export default function RestaurantThumb({ image, name, tokens: t, sx }: RestaurantThumbProps) {
+export default function RestaurantThumb({ image, name, tokens: t, sx, className }: RestaurantThumbProps) {
   const imgRef = useRef<HTMLImageElement>(null);
   // Both are keyed by src, so a new `image` prop starts from a clean slate.
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
@@ -69,6 +70,7 @@ export default function RestaurantThumb({ image, name, tokens: t, sx }: Restaura
 
   return (
     <Box
+      className={className}
       sx={[
         {
           position: 'relative',

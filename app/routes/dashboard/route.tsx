@@ -763,9 +763,16 @@ export default function Dashboard() {
     try {
       await setRestaurantStatus(r.id, newStatus);
       // Marking "been" with no recorded visits implies a first visit.
-      if (newStatus === 'been' && (r.visitCount ?? 0) === 0) {
+      const firstVisit = newStatus === 'been' && (r.visitCount ?? 0) === 0;
+      if (firstVisit) {
         await setRestaurantVisitCount(r.id, 1);
       }
+      // Reflect immediately in an open detail dialog (loader revalidate lags).
+      setSelectedRestaurant((cur) =>
+        cur && cur.id === r.id
+          ? { ...cur, status: newStatus, visitCount: firstVisit ? 1 : cur.visitCount }
+          : cur
+      );
       revalidator.revalidate();
     } catch (error) {
       console.error('Error updating status:', error);
@@ -1569,22 +1576,11 @@ export default function Dashboard() {
                 <Box sx={{ padding: { xs: '16px 0 96px', sm: '24px 0 40px' } }}>
                   {/* Two-up on phones — 87 places at one giant card per screen
                       is unbrowsable; the compact card keeps the same slots. */}
-                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(auto-fill, minmax(160px, 1fr))', sm: 'repeat(auto-fill, minmax(240px, 1fr))' }, gap: { xs: '12px', sm: '20px' } }}>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(auto-fill, minmax(160px, 1fr))', sm: 'repeat(auto-fill, minmax(240px, 1fr))' }, gap: { xs: '22px 12px', sm: '32px 20px' } }}>
                     {listLoading
                       ? Array.from({ length: 8 }, (_, i) => <SkeletonCard key={i} tokens={t} />)
                       : sorted.map((r) => (
-                      <PlaceCard
-                        key={r.id}
-                        r={r}
-                        tokens={t}
-                        serifFont={serif}
-                        canEdit={canEdit}
-                        onView={handleViewRestaurant}
-                        onToggleStatus={handleToggleStatus}
-                        onToggleFavorite={handleToggleFavorite}
-                        onEdit={handleEditRestaurant}
-                        onDelete={handleDeleteClick}
-                      />
+                      <PlaceCard key={r.id} r={r} tokens={t} onView={handleViewRestaurant} />
                     ))}
                   </Box>
                 </Box>
@@ -1929,6 +1925,7 @@ export default function Dashboard() {
           onEdit={handleEditRestaurant}
           onDelete={(id) => { setDetailOpen(false); handleDeleteClick(id); }}
           onToggleFavorite={handleToggleFavorite}
+          onToggleStatus={(r) => handleToggleStatus(decorate(r))}
           onAddVisit={handleAddVisit}
           ratings={selectedRestaurant?.id ? ratings[selectedRestaurant.id] ?? [] : []}
           currentUserId={userId}
