@@ -177,10 +177,10 @@ export default function RestaurantDetailDialog({
           aria-label={tr('form.close')}
           sx={{
             position: 'absolute',
-            top: 12,
-            right: 12,
-            width: 40,
-            height: 40,
+            top: 8,
+            right: 8,
+            width: 44,
+            height: 44,
             background: r.image ? 'rgba(0,0,0,0.45)' : t.track,
             color: r.image ? '#fff' : t.ink,
             '&:hover': { background: r.image ? 'rgba(0,0,0,0.65)' : t.skeleton },
@@ -201,7 +201,7 @@ export default function RestaurantDetailDialog({
               onClick={() => onToggleFavorite(r)}
               aria-label={tr(r.favorite ? 'dashboard.unfavorite' : 'dashboard.favorite', { name: r.name })}
               aria-pressed={r.favorite ?? false}
-              sx={{ color: r.favorite ? t.error : t.muted, mt: '-4px', mr: '-8px', flex: 'none' }}
+              sx={{ color: r.favorite ? t.error : t.muted, width: 44, height: 44, mt: '-8px', mr: '-10px', flex: 'none' }}
             >
               {r.favorite ? <Favorite /> : <FavoriteBorder />}
             </IconButton>
@@ -259,6 +259,9 @@ export default function RestaurantDetailDialog({
               padding: '8px 14px',
               borderRadius: '999px',
               cursor: statusInteractive ? 'pointer' : 'default',
+              // The pill stays compact; its tap area reaches 44px.
+              position: 'relative',
+              '&::after': statusInteractive ? { content: '""', position: 'absolute', inset: '-4px' } : undefined,
             }}
           >
             {isBeen ? tr('dashboard.statusBeen') : tr('dashboard.statusWant')}
@@ -271,7 +274,16 @@ export default function RestaurantDetailDialog({
               onClick={() => onAddVisit(r)}
               aria-label={tr('detail.addVisit')}
               title={tr('detail.addVisit')}
-              sx={{ color: t.accent, border: `1px solid ${t.border}`, width: 36, height: 36, p: 0, ml: '-2px' }}
+              sx={{
+                color: t.accent,
+                border: `1px solid ${t.border}`,
+                width: 36,
+                height: 36,
+                p: 0,
+                ml: '-2px',
+                // Same compact look; the tap area reaches 44px.
+                '&::after': { content: '""', position: 'absolute', inset: '-5px' },
+              }}
             >
               <AddIcon sx={{ fontSize: 18 }} />
             </IconButton>
