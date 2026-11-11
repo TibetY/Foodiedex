@@ -6,7 +6,11 @@ export type DecoratedRestaurant = Restaurant & {
   initial: string;
   costStr: string;
   rated: boolean;
+  /** The one quiet line under a place's name: "French · New York · $$",
+   *  each part left out when unknown. */
   meta: string;
+  /** Always a label (falls back to the place type, then "Restaurant") — for
+   *  search and the cuisine column. `meta` leaves the fallback out. */
   cuisine: string;
   /** Best-effort city of the first located branch (heuristic; may be null). */
   city: string | null;
@@ -31,6 +35,9 @@ export function decorate(r: Restaurant, groupRatings?: { rating: number }[]): De
     groupRatings && groupRatings.length > 0
       ? groupRatings.reduce((sum, x) => sum + x.rating, 0) / groupRatings.length
       : r.rating;
+  // "Restaurant" says nothing on a restaurant list, so it never reaches the meta line.
+  const kind = r.cuisineType || r.placeTypes?.find((p) => p !== 'Restaurant') || '';
+  const city = cityFromAddress((r.locations ?? []).find((l) => l.address?.trim())?.address);
   return {
     ...r,
     rating,
@@ -38,8 +45,8 @@ export function decorate(r: Restaurant, groupRatings?: { rating: number }[]): De
     costStr: r.priceRange || '',
     rated: (rating ?? 0) > 0,
     cuisine,
-    meta: cuisine,
-    city: cityFromAddress((r.locations ?? []).find((l) => l.address?.trim())?.address),
+    meta: [kind, city, r.priceRange].filter(Boolean).join(' · '),
+    city,
     isBeen: status === 'been',
     isWant: status === 'want',
   };

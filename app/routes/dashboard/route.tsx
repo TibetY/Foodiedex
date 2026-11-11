@@ -27,15 +27,19 @@ import TextField from '@mui/material/TextField';
 import Divider from '@mui/material/Divider';
 import Add from '@mui/icons-material/Add';
 import Logout from '@mui/icons-material/Logout';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddAlt1 from '@mui/icons-material/PersonAddAlt1';
 import Person from '@mui/icons-material/Person';
-import Favorite from '@mui/icons-material/Favorite';
-import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
 import Close from '@mui/icons-material/Close';
 import Search from '@mui/icons-material/Search';
+import SearchOff from '@mui/icons-material/SearchOff';
+import RestaurantOutlined from '@mui/icons-material/RestaurantOutlined';
 import Insights from '@mui/icons-material/Insights';
+import DarkModeOutlined from '@mui/icons-material/DarkModeOutlined';
+import LightModeOutlined from '@mui/icons-material/LightModeOutlined';
+import GridViewOutlined from '@mui/icons-material/GridViewOutlined';
+import ViewListOutlined from '@mui/icons-material/ViewListOutlined';
+import TableRowsOutlined from '@mui/icons-material/TableRowsOutlined';
+import MapOutlined from '@mui/icons-material/MapOutlined';
 import { createSupabaseServerClient } from '~/supabase.server';
 import { getRestaurants } from '~/services/restaurants.server';
 import {
@@ -72,12 +76,11 @@ import ListSwitcher from '~/components/ListSwitcher';
 import ShareListDialog from '~/components/ShareListDialog';
 import Onboarding from '~/components/Onboarding';
 import FilterSheet from '~/components/FilterSheet';
-import SavedViewsBar from '~/components/SavedViewsBar';
 import Bubbles from '~/components/Bubbles';
-import PlaceCard, { BookingPill, CardAction } from '~/components/PlaceCard';
+import PlaceCard from '~/components/PlaceCard';
 import SkeletonCard, { SkeletonListRow } from '~/components/SkeletonCard';
 import { LogoMark } from '~/components/Logo';
-import { uploadRestaurantImage } from '~/services/storage.client';
+import { uploadRestaurantImage, ingestRestaurantImage } from '~/services/storage.client';
 import {
   createRestaurant,
   updateRestaurant,
@@ -106,8 +109,7 @@ export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: leafletStylesHref },
 ];
 import { useTranslation } from 'react-i18next';
-import { useKanpaiTheme, type ListMode } from '~/listTheme';
-import { cuisineEmoji } from '~/utils/cuisineEmoji';
+import { useKanpaiTheme } from '~/listTheme';
 
 /**
  * Turn whatever was thrown into a human-readable message. Supabase/PostgREST
@@ -322,6 +324,10 @@ export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const [view, setView] = useState<ViewMode>('tile');
+  // Phones fold the search into an icon; this is whether it is expanded.
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [viewMenuAnchor, setViewMenuAnchor] = useState<null | HTMLElement>(null);
   // Switching lists re-runs the loader while the OLD list's rows are still on
   // screen — show shimmering placeholders for that window. Filter-only URL
   // changes are skipped by shouldRevalidate and never flash skeletons.
@@ -608,6 +614,11 @@ export default function Dashboard() {
     return arr;
   }, [filtered, sort, sortReversed]);
 
+  const showSearch = searchOpen || !!searchQuery;
+  useEffect(() => {
+    if (searchOpen) searchRef.current?.focus();
+  }, [searchOpen]);
+
   const hasActiveFilters =
     filter !== 'all' ||
     !!searchQuery ||
@@ -637,8 +648,6 @@ export default function Dashboard() {
   );
 
   const total = decorated.length;
-  const beenCount = decorated.filter((r) => r.isBeen).length;
-  const wantCount = decorated.filter((r) => r.isWant).length;
   // How many locations (across the currently-shown places) have an address but
   // can't be plotted yet (no coordinates).
   const mapMissingCount = filtered.reduce(
@@ -677,13 +686,25 @@ export default function Dashboard() {
 
   const handleSaveRestaurant = async (
     restaurantData: Partial<Restaurant>,
-    imageFile?: File
+    imageFile?: File,
+    imageOrigin: 'scraped' | 'user' = 'scraped'
   ) => {
     if (!activeList) return;
     try {
+      // The photo we store is always our own copy: an uploaded file goes
+      // straight to storage, and an image URL passes the server's quality gate
+      // first. A refused image saves the place with no photo.
       let imageUrl = restaurantData.image;
+      let imageRejected = false;
       if (imageFile) {
         imageUrl = await uploadRestaurantImage(imageFile, userId);
+      } else {
+        const ingested = await ingestRestaurantImage(imageUrl, imageOrigin, {
+          name: restaurantData.name,
+          address: restaurantData.locations?.[0]?.address,
+        });
+        imageUrl = ingested.url;
+        imageRejected = ingested.rejected;
       }
       const dataToSave: Partial<Restaurant> = { ...restaurantData, image: imageUrl };
 
@@ -727,6 +748,8 @@ export default function Dashboard() {
       // map pin won't appear (rather than failing silently and looking buggy).
       if (geocodeFailed) {
         setSnackbar({ open: true, message: tr('dashboard.snackGeocodeFailed'), severity: 'warning' });
+      } else if (imageRejected) {
+        setSnackbar({ open: true, message: tr('dashboard.snackImageRejected'), severity: 'warning' });
       } else {
         setSnackbar({
           open: true,
@@ -749,9 +772,16 @@ export default function Dashboard() {
     try {
       await setRestaurantStatus(r.id, newStatus);
       // Marking "been" with no recorded visits implies a first visit.
-      if (newStatus === 'been' && (r.visitCount ?? 0) === 0) {
+      const firstVisit = newStatus === 'been' && (r.visitCount ?? 0) === 0;
+      if (firstVisit) {
         await setRestaurantVisitCount(r.id, 1);
       }
+      // Reflect immediately in an open detail dialog (loader revalidate lags).
+      setSelectedRestaurant((cur) =>
+        cur && cur.id === r.id
+          ? { ...cur, status: newStatus, visitCount: firstVisit ? 1 : cur.visitCount }
+          : cur
+      );
       revalidator.revalidate();
     } catch (error) {
       console.error('Error updating status:', error);
@@ -983,35 +1013,14 @@ export default function Dashboard() {
     form.submit();
   };
 
-  // --- style helpers --------------------------------------------------------
-  const seg = (val: ViewMode) => ({
-    background: view === val ? t.segBg : 'transparent',
-    color: view === val ? t.segFg : t.segIdle,
-  });
-  const themeBtn = (val: ListMode) => ({
-    background: mode === val ? t.cardBg : 'transparent',
-    color: mode === val ? t.ink : t.segIdle,
-    boxShadow: mode === val ? t.shadow1 : 'none',
-  });
-
-  const segBtnStyle = {
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '13.5px',
-    fontWeight: 500,
-    // Roomier on touch, where 34px was under the comfortable minimum.
-    padding: { xs: '10px 16px', sm: '7px 18px' },
-    borderRadius: '999px',
-  } as const;
-
-  const filterBtnStyle = {
-    border: `1px solid ${t.pillBorder}`,
-    cursor: 'pointer',
-    fontSize: '13px',
-    fontWeight: 500,
-    padding: { xs: '10px 15px', sm: '7px 15px' },
-    borderRadius: '999px',
-  } as const;
+  // --- view switch ------------------------------------------------------
+  const viewOptions: { id: ViewMode; label: string; Icon: typeof GridViewOutlined }[] = [
+    { id: 'tile', label: tr('dashboard.viewTile'), Icon: GridViewOutlined },
+    { id: 'list', label: tr('dashboard.viewList'), Icon: ViewListOutlined },
+    { id: 'table', label: tr('dashboard.viewTable', 'Table'), Icon: TableRowsOutlined },
+    { id: 'map', label: tr('dashboard.viewMap'), Icon: MapOutlined },
+  ];
+  const CurrentViewIcon = viewOptions.find((o) => o.id === view)?.Icon ?? GridViewOutlined;
 
   const serif = "'Archivo',sans-serif";
 
@@ -1081,87 +1090,40 @@ export default function Dashboard() {
           {(activeList?.name ?? 'My List') + ' — ' + tr('brand')}
         </Box>
 
-        {/* header */}
+        {/* header — brand, list, add, account. Nothing else lives up here. */}
         <Box
           component="header"
           sx={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: { xs: '10px 14px', md: '18px 40px' },
+            padding: { xs: '10px 14px', md: '14px 40px' },
             borderBottom: `1px solid ${t.border}`,
             background: t.panelBg,
             gap: 2,
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: '8px', sm: '11px' }, minWidth: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: '10px', sm: '14px' }, minWidth: 0 }}>
             <LogoMark size={{ xs: 22, sm: 27 }} />
-            {/* nowrap: the wordmark must never break into two lines on phones */}
-            <Box component="span" sx={{ fontFamily: serif, fontSize: { xs: 20, sm: 26 }, letterSpacing: '.01em', whiteSpace: 'nowrap' }}>
+            {/* nowrap: the wordmark must never break into two lines */}
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' }, fontFamily: serif, fontSize: 24, letterSpacing: '.01em', whiteSpace: 'nowrap' }}>
               {tr('brand')}
+            </Box>
+            <Box aria-hidden sx={{ width: '1px', height: 20, background: t.divider, display: { xs: 'none', sm: 'block' } }} />
+            <Box sx={{ minWidth: 0 }}>
+              <ListSwitcher
+                lists={lists}
+                activeList={activeList}
+                serifFont={serif}
+                onSelect={handleSelectList}
+                onCreate={() => setNewListOpen(true)}
+                onRename={handleRenameList}
+                onDelete={(l) => setDeleteListTarget(l)}
+              />
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: '6px', sm: '14px' } }}>
-            {/* search — a single <label> so clicking anywhere in the pill
-                (icon included) focuses the input, not two separate hit areas. */}
-            <Box
-              component="label"
-              sx={{
-                display: { xs: 'none', sm: 'flex' },
-                alignItems: 'center',
-                gap: '8px',
-                background: t.searchBg,
-                border: `1px solid ${t.border}`,
-                borderRadius: '999px',
-                padding: '8px 14px',
-                width: 180,
-                color: t.faint,
-                fontSize: '13.5px',
-                cursor: 'text',
-              }}
-            >
-              <Box aria-hidden sx={{ width: 13, height: 13, border: `1.6px solid ${t.faint}`, borderRadius: '50%', flex: 'none' }} />
-              <Box
-                component="input"
-                value={searchQuery}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                placeholder={tr('dashboard.searchPlaceholder')}
-                aria-label={tr('dashboard.searchLabel')}
-                sx={{
-                  border: 'none',
-                  outline: 'none',
-                  background: 'transparent',
-                  color: t.ink,
-                                    fontSize: '13.5px',
-                  width: '100%',
-                  '::placeholder': { color: t.faint },
-                }}
-              />
-              {searchQuery && (
-                <Box
-                  component="button"
-                  type="button"
-                  aria-label={tr('dashboard.searchClear')}
-                  onMouseDown={(e: React.MouseEvent) => e.preventDefault()}
-                  onClick={() => setSearchQuery('')}
-                  sx={{ display: 'flex', border: 'none', background: 'transparent', cursor: 'pointer', color: t.faint, p: 0, flex: 'none' }}
-                >
-                  <Close sx={{ fontSize: 15 }} />
-                </Box>
-              )}
-            </Box>
-
-
-            {/* theme toggle */}
-            <Box sx={{ display: 'flex', background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px', padding: '3px' }}>
-              <Box component="button" onClick={() => setMode('light')} title={tr('dashboard.themeLight')} aria-label={tr('dashboard.themeLight')}
-                sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, ...themeBtn('light') }}>☀</Box>
-              <Box component="button" onClick={() => setMode('dark')} title={tr('dashboard.themeDark')} aria-label={tr('dashboard.themeDark')}
-                sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, ...themeBtn('dark') }}>☾</Box>
-            </Box>
-
-            {/* add */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: '10px', sm: '14px' }, flex: 'none' }}>
             {canEdit && (
               <Tooltip title={tr('dashboard.addPlace')}>
                 <Box
@@ -1176,13 +1138,13 @@ export default function Dashboard() {
                     cursor: 'pointer',
                     background: t.accent,
                     color: t.accentText,
-                                        fontWeight: 600,
-                    fontSize: '13.5px',
-                    padding: '8px 16px',
-                    borderRadius: '999px',
+                    fontWeight: 600,
+                    fontSize: 14,
+                    padding: '8px 14px',
+                    borderRadius: '10px',
                   }}
                 >
-                  <Add sx={{ fontSize: 17 }} /> {tr('dashboard.add')}
+                  <Add sx={{ fontSize: 18 }} /> {tr('dashboard.add')}
                 </Box>
               </Tooltip>
             )}
@@ -1203,7 +1165,7 @@ export default function Dashboard() {
                   </Box>
                 )}
               {extraMembers > 0 && (
-                <Box sx={{ width: 30, height: 30, borderRadius: '50%', background: t.avatar3, color: t.muted, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, border: `2px solid ${t.panelBg}`, ml: '-9px' }}>
+                <Box sx={{ width: 30, height: 30, borderRadius: '50%', background: t.avatar3, color: t.muted, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, border: `2px solid ${t.panelBg}`, ml: '-9px' }}>
                   +{extraMembers}
                 </Box>
               )}
@@ -1227,6 +1189,12 @@ export default function Dashboard() {
                 <ListItemIcon><PersonAddAlt1 fontSize="small" sx={{ color: t.muted }} /></ListItemIcon>
                 <ListItemText>{tr('dashboard.shareMembers')}</ListItemText>
               </MenuItem>
+              <MenuItem onClick={() => { setMenuAnchor(null); setMode(mode === 'light' ? 'dark' : 'light'); }}>
+                <ListItemIcon>
+                  {mode === 'light' ? <DarkModeOutlined fontSize="small" sx={{ color: t.muted }} /> : <LightModeOutlined fontSize="small" sx={{ color: t.muted }} />}
+                </ListItemIcon>
+                <ListItemText>{mode === 'light' ? tr('dashboard.themeDark') : tr('dashboard.themeLight')}</ListItemText>
+              </MenuItem>
               <Divider sx={{ my: 0.5 }} />
               <MenuItem onClick={() => { setMenuAnchor(null); handleLogout(); }}>
                 <ListItemIcon><Logout fontSize="small" sx={{ color: t.muted }} /></ListItemIcon>
@@ -1237,251 +1205,196 @@ export default function Dashboard() {
         </Box>
 
         {/* body container */}
-        <Box sx={{ flexGrow: 1, width: '100%', maxWidth: 1320, mx: 'auto', padding: { xs: '16px 14px 0', sm: '24px 18px 0', md: '30px 40px 0' } }}>
+        <Box sx={{ flexGrow: 1, width: '100%', maxWidth: 1320, mx: 'auto', padding: { xs: '0 14px 0', sm: '0 18px 0', md: '0 40px 0' } }}>
           {error && (
-            <Alert severity="error" sx={{ mb: 3 }} role="alert">
+            <Alert severity="error" sx={{ mt: 3, mb: 3 }} role="alert">
               {tr('dashboard.loadError', { error })}
             </Alert>
           )}
-          {/* title + view toggle */}
-          <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
-            <Box>
-              <ListSwitcher
-                lists={lists}
-                activeList={activeList}
-                serifFont={serif}
-                onSelect={handleSelectList}
-                onCreate={() => setNewListOpen(true)}
-                onRename={handleRenameList}
-                onDelete={(l) => setDeleteListTarget(l)}
-              />
-              <Box component="p" sx={{ color: t.muted, fontSize: 15, mt: '8px', mb: 0 }}>
-                {tr('dashboard.stats', { total, been: beenCount, want: wantCount })}
-                {activeList && role !== 'owner' && ` · ${tr(`roles.${role}`)}`}
-              </Box>
-            </Box>
-            <Box role="group" aria-label={tr('dashboard.viewLabel')} sx={{ display: 'flex', background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px', padding: '4px' }}>
-              <Box component="button" aria-pressed={view === 'tile'} onClick={() => setView('tile')} sx={{ ...segBtnStyle, ...seg('tile') }}>{tr('dashboard.viewTile')}</Box>
-              <Box component="button" aria-pressed={view === 'list'} onClick={() => setView('list')} sx={{ ...segBtnStyle, ...seg('list') }}>{tr('dashboard.viewList')}</Box>
-              <Box component="button" aria-pressed={view === 'table'} onClick={() => setView('table')} sx={{ ...segBtnStyle, ...seg('table') }}>{tr('dashboard.viewTable', 'Table')}</Box>
-              <Box component="button" aria-pressed={view === 'map'} onClick={() => setView('map')} sx={{ ...segBtnStyle, ...seg('map') }}>{tr('dashboard.viewMap')}</Box>
-            </Box>
-          </Box>
 
-          {/* mobile search — the header search pill is hidden on xs, so give
-              phones a full-width field here instead of no search at all. */}
-          <Box
-            component="label"
-            sx={{
-              display: { xs: 'flex', sm: 'none' },
-              alignItems: 'center',
-              gap: '8px',
-              background: t.searchBg,
-              border: `1px solid ${t.border}`,
-              borderRadius: '999px',
-              padding: '10px 14px',
-              mt: '12px',
-              cursor: 'text',
-            }}
-          >
-            <Search aria-hidden sx={{ fontSize: 16, color: t.faint, flex: 'none' }} />
-            <Box
-              component="input"
-              value={searchQuery}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-              placeholder={tr('dashboard.searchPlaceholder')}
-              aria-label={tr('dashboard.searchLabel')}
-              sx={{
-                border: 'none',
-                outline: 'none',
-                background: 'transparent',
-                color: t.ink,
-                                // ≥16px so iOS doesn't auto-zoom (and stay zoomed) on focus.
-                fontSize: '16px',
-                width: '100%',
-                '::placeholder': { color: t.faint },
-              }}
-            />
-            {searchQuery && (
-              <Box
-                component="button"
-                type="button"
-                aria-label={tr('dashboard.searchClear')}
-                onMouseDown={(e: React.MouseEvent) => e.preventDefault()}
-                onClick={() => setSearchQuery('')}
-                sx={{ display: 'flex', border: 'none', background: 'transparent', cursor: 'pointer', color: t.faint, p: 0, flex: 'none' }}
-              >
-                <Close sx={{ fontSize: 16 }} />
-              </Box>
-            )}
-          </Box>
-
-          {/* saved views */}
-          <SavedViewsBar
-            tokens={t}
-            views={views}
-            currentParams={currentViewParams}
-            hasActiveFilters={hasActiveFilters}
-            onApply={handleApplyView}
-            onSave={() => setViewDialog({ mode: 'create', name: '' })}
-            onRename={(view) => setViewDialog({ mode: 'rename', id: view.id, name: view.name })}
-            onDelete={handleDeleteView}
-          />
-
-          {/* filters — a brand-new, empty-and-unfiltered list has nothing to
-              filter yet, so this bar stays hidden until there's data or an
-              active filter to clear (e.g. carried over from another list). */}
+          {/* One bar: search · status · filters · view. On a phone the search
+              folds into an icon and the view switch into a menu, so it all fits
+              on a single line. A brand-new, empty-and-unfiltered list has
+              nothing to filter yet, so the bar waits for data or a filter. */}
           {(total > 0 || hasActiveFilters) && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px', mt: { xs: '12px', sm: '22px' }, flexWrap: 'wrap' }}>
-            {/* been / want — the prototype's segmented track */}
-            <Box role="group" aria-label={tr('dashboard.filterStatusLabel')} sx={{ display: 'flex', gap: '4px', padding: '4px', background: t.track, borderRadius: '999px' }}>
-              {(['all', 'been', 'want'] as FilterMode[]).map((f) => (
-                <Box
-                  key={f}
-                  component="button"
-                  aria-pressed={filter === f}
-                  onClick={() => setFilter(f)}
-                  sx={{
-                    border: 0,
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: filter === f ? 600 : 400,
-                    padding: { xs: '10px 15px', sm: '7px 15px' },
-                    borderRadius: '999px',
-                    background: filter === f ? t.cardBg : 'transparent',
-                    color: filter === f ? t.ink : t.muted,
-                    boxShadow: filter === f ? t.shadow1 : 'none',
-                  }}
-                >
-                  {tr(f === 'all' ? 'dashboard.filterAll' : f === 'been' ? 'dashboard.filterBeen' : 'dashboard.filterWant')}
-                </Box>
-              ))}
-            </Box>
-            {/* tag (cuisine) chips — visible on wider screens, per the design's
-                toolbar; the sheet remains the compact path on phones. */}
-            {cuisineOptions.length > 0 && (
-              <Box role="group" aria-label={tr('dashboard.cuisine')} sx={{ display: { xs: 'none', md: 'flex' }, gap: '7px', flexWrap: 'wrap' }}>
-                {['', ...cuisineOptions.slice(0, 5)].map((c) => {
-                  const on = cuisineFilter === c;
-                  return (
-                    <Box
-                      key={c || 'all'}
-                      component="button"
-                      aria-pressed={on}
-                      onClick={() => setCuisineFilter(c)}
-                      sx={{
-                        border: on ? '1px solid transparent' : `1px solid ${t.hair}`,
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        fontWeight: on ? 600 : 400,
-                        padding: '6px 14px',
-                        borderRadius: '999px',
-                        background: on ? t.pBg : t.cardBg,
-                        color: on ? t.pFg : t.muted,
-                      }}
-                    >
-                      {c ? `${cuisineEmoji(c)} ${tr(`cuisines.${c}`, c)}` : tr('dashboard.filterAll')}
-                    </Box>
-                  );
-                })}
-              </Box>
-            )}
-            {costOptions.length > 0 && <Box sx={{ width: '1px', height: 20, background: t.hair, display: { xs: 'none', md: 'block' } }} />}
-            {/* cost chips */}
-            {costOptions.length > 0 && (
-              <Box role="group" aria-label={tr('dashboard.cost')} sx={{ display: { xs: 'none', md: 'flex' }, gap: '7px' }}>
-                {['', ...costOptions].map((c) => {
-                  const on = costFilter === c;
-                  return (
-                    <Box
-                      key={c || 'all'}
-                      component="button"
-                      aria-pressed={on}
-                      onClick={() => setCostFilter(c)}
-                      sx={{
-                        border: on ? '1px solid transparent' : `1px solid ${t.hair}`,
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        fontWeight: on ? 600 : 400,
-                        letterSpacing: '.04em',
-                        padding: '6px 13px',
-                        borderRadius: '999px',
-                        background: on ? t.pBg : t.cardBg,
-                        color: on ? t.pFg : t.muted,
-                      }}
-                    >
-                      {c || tr('dashboard.filterAll')}
-                    </Box>
-                  );
-                })}
-              </Box>
-            )}
-            <Box sx={{ width: '1px', height: 22, background: t.divider, mx: '4px', display: { xs: 'none', sm: 'block' } }} />
-            <FilterSheet
-              tokens={t}
-              cuisineOptions={cuisineOptions}
-              cityOptions={cityOptions}
-              costOptions={costOptions}
-              placeOptions={placeOptions}
-              dietOptions={dietOptions}
-              menuOptions={menuOptions}
-              sortModes={SORT_MODES}
-              cuisineFilter={cuisineFilter}
-              setCuisineFilter={setCuisineFilter}
-              cityFilter={cityFilter}
-              setCityFilter={setCityFilter}
-              costFilter={costFilter}
-              setCostFilter={setCostFilter}
-              ratingFilter={ratingFilter}
-              setRatingFilter={setRatingFilter}
-              placeFilter={placeFilter}
-              setPlaceFilter={setPlaceFilter}
-              dietFilter={dietFilter}
-              setDietFilter={setDietFilter}
-              menuFilter={menuFilter}
-              setMenuFilter={setMenuFilter}
-              sort={sort}
-              setSort={(v) => setSort(v as SortMode)}
-              sortReversed={sortReversed}
-              setSortReversed={setSortReversed}
-              onClear={clearFilters}
-            />
-            {hasActiveFilters && (
-              <Box
-                component="button"
-                type="button"
-                onClick={clearFilters}
-                sx={{ ...filterBtnStyle, background: 'transparent', color: t.muted }}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: '8px', sm: '12px' }, mt: { xs: '14px', sm: '24px' } }}>
+              <IconButton
+                aria-label={tr('dashboard.searchLabel')}
+                onClick={() => setSearchOpen(true)}
+                sx={{ display: { xs: showSearch ? 'none' : 'inline-flex', sm: 'none' }, color: t.muted, border: `1px solid ${t.border}`, width: 40, height: 40 }}
               >
-                {tr('dashboard.clearFilters')}
-              </Box>
-            )}
-            {/* sort — the design's visible select, right-aligned */}
-            <Box component="label" sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: '9px', fontSize: 12.5, color: t.faint }}>
-              {tr('dashboard.sortLabel')}
+                <Search sx={{ fontSize: 20 }} />
+              </IconButton>
               <Box
-                component="select"
-                value={sort}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSort(e.target.value as SortMode)}
+                component="label"
                 sx={{
-                  font: 'inherit',
-                  fontSize: '12.5px',
-                  color: t.ink,
-                  background: t.cardBg,
-                  border: `1px solid ${t.hair}`,
-                  borderRadius: '999px',
-                  padding: { xs: '10px 14px', sm: '7px 14px' },
-                  cursor: 'pointer',
-                  appearance: 'none',
+                  display: { xs: showSearch ? 'flex' : 'none', sm: 'flex' },
+                  alignItems: 'center',
+                  gap: '8px',
+                  flex: { xs: 1, sm: '1 1 auto' },
+                  maxWidth: { sm: 340 },
+                  minWidth: 0,
+                  height: 40,
+                  background: t.searchBg,
+                  borderRadius: '10px',
+                  padding: '0 12px',
+                  cursor: 'text',
                 }}
               >
-                {SORT_MODES.map((m) => (
-                  <option key={m} value={m}>{tr(`dashboard.sort_${m}`)}</option>
+                <Search aria-hidden sx={{ fontSize: 18, color: t.faint, flex: 'none' }} />
+                <Box
+                  component="input"
+                  ref={searchRef}
+                  value={searchQuery}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                  placeholder={tr('dashboard.searchPlaceholder')}
+                  aria-label={tr('dashboard.searchLabel')}
+                  sx={{
+                    border: 'none',
+                    outline: 'none',
+                    background: 'transparent',
+                    color: t.ink,
+                    // ≥16px on phones so iOS doesn't auto-zoom on focus.
+                    fontSize: { xs: '16px', sm: '14px' },
+                    width: '100%',
+                    minWidth: 0,
+                    '::placeholder': { color: t.faint },
+                  }}
+                />
+                {(searchQuery || searchOpen) && (
+                  <Box
+                    component="button"
+                    type="button"
+                    aria-label={tr('dashboard.searchClear')}
+                    onMouseDown={(e: React.MouseEvent) => e.preventDefault()}
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSearchOpen(false);
+                    }}
+                    sx={{ display: 'flex', border: 'none', background: 'transparent', cursor: 'pointer', color: t.faint, p: 0, flex: 'none' }}
+                  >
+                    <Close sx={{ fontSize: 18 }} />
+                  </Box>
+                )}
+              </Box>
+
+              {/* all / been / want */}
+              <Box
+                role="group"
+                aria-label={tr('dashboard.filterStatusLabel')}
+                sx={{ display: { xs: showSearch ? 'none' : 'flex', sm: 'flex' }, gap: '2px', padding: '3px', background: t.track, borderRadius: '999px', flex: 'none' }}
+              >
+                {(['all', 'been', 'want'] as FilterMode[]).map((f) => (
+                  <Box
+                    key={f}
+                    component="button"
+                    aria-pressed={filter === f}
+                    onClick={() => setFilter(f)}
+                    sx={{
+                      border: 0,
+                      cursor: 'pointer',
+                      fontSize: 14,
+                      fontWeight: filter === f ? 600 : 400,
+                      padding: { xs: '10px 12px', sm: '6px 14px' },
+                      borderRadius: '999px',
+                      background: filter === f ? t.cardBg : 'transparent',
+                      color: filter === f ? t.ink : t.muted,
+                      boxShadow: filter === f ? t.shadow1 : 'none',
+                    }}
+                  >
+                    {tr(f === 'all' ? 'dashboard.filterAll' : f === 'been' ? 'dashboard.filterBeen' : 'dashboard.filterWantShort')}
+                  </Box>
                 ))}
               </Box>
+
+              <Box sx={{ display: { xs: showSearch ? 'none' : 'flex', sm: 'flex' }, flex: 'none' }}>
+                <FilterSheet
+                  tokens={t}
+                  cuisineOptions={cuisineOptions}
+                  cityOptions={cityOptions}
+                  costOptions={costOptions}
+                  placeOptions={placeOptions}
+                  dietOptions={dietOptions}
+                  menuOptions={menuOptions}
+                  sortModes={SORT_MODES}
+                  cuisineFilter={cuisineFilter}
+                  setCuisineFilter={setCuisineFilter}
+                  cityFilter={cityFilter}
+                  setCityFilter={setCityFilter}
+                  costFilter={costFilter}
+                  setCostFilter={setCostFilter}
+                  ratingFilter={ratingFilter}
+                  setRatingFilter={setRatingFilter}
+                  placeFilter={placeFilter}
+                  setPlaceFilter={setPlaceFilter}
+                  dietFilter={dietFilter}
+                  setDietFilter={setDietFilter}
+                  menuFilter={menuFilter}
+                  setMenuFilter={setMenuFilter}
+                  sort={sort}
+                  setSort={(v) => setSort(v as SortMode)}
+                  sortReversed={sortReversed}
+                  setSortReversed={setSortReversed}
+                  onClear={clearFilters}
+                  views={views}
+                  currentParams={currentViewParams}
+                  hasActiveFilters={hasActiveFilters}
+                  onApplyView={handleApplyView}
+                  onSaveView={() => setViewDialog({ mode: 'create', name: '' })}
+                  onRenameView={(v) => setViewDialog({ mode: 'rename', id: v.id, name: v.name })}
+                  onDeleteView={handleDeleteView}
+                />
+              </Box>
+
+              {/* view switch: four icons on wide screens, one menu on a phone */}
+              <Box
+                role="group"
+                aria-label={tr('dashboard.viewLabel')}
+                sx={{ display: { xs: 'none', sm: 'flex' }, gap: '2px', padding: '3px', background: t.track, borderRadius: '999px', ml: 'auto', flex: 'none' }}
+              >
+                {viewOptions.map(({ id, label, Icon }) => (
+                  <Box
+                    key={id}
+                    component="button"
+                    aria-pressed={view === id}
+                    aria-label={label}
+                    title={label}
+                    onClick={() => setView(id)}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 36,
+                      height: 30,
+                      border: 0,
+                      cursor: 'pointer',
+                      borderRadius: '999px',
+                      background: view === id ? t.cardBg : 'transparent',
+                      color: view === id ? t.ink : t.muted,
+                      boxShadow: view === id ? t.shadow1 : 'none',
+                    }}
+                  >
+                    <Icon sx={{ fontSize: 19 }} />
+                  </Box>
+                ))}
+              </Box>
+              <IconButton
+                aria-label={tr('dashboard.viewLabel')}
+                aria-haspopup="true"
+                onClick={(e) => setViewMenuAnchor(e.currentTarget)}
+                sx={{ display: { xs: showSearch ? 'none' : 'inline-flex', sm: 'none' }, ml: 'auto', color: t.muted, border: `1px solid ${t.border}`, width: 40, height: 40 }}
+              >
+                <CurrentViewIcon sx={{ fontSize: 20 }} />
+              </IconButton>
+              <Menu anchorEl={viewMenuAnchor} open={Boolean(viewMenuAnchor)} onClose={() => setViewMenuAnchor(null)}>
+                {viewOptions.map(({ id, label, Icon }) => (
+                  <MenuItem key={id} selected={view === id} onClick={() => { setView(id); setViewMenuAnchor(null); }}>
+                    <ListItemIcon><Icon fontSize="small" /></ListItemIcon>
+                    <ListItemText>{label}</ListItemText>
+                  </MenuItem>
+                ))}
+              </Menu>
             </Box>
-            <Box sx={{ fontSize: 13, color: t.faint, display: { xs: 'none', sm: 'block' } }}>{tr('dashboard.showing', { count: filtered.length })}</Box>
-          </Box>
           )}
 
           {/* empty state */}
@@ -1505,18 +1418,18 @@ export default function Dashboard() {
                 textAlign: 'center',
                 py: { xs: 6, md: 10 },
                 px: 3,
-                borderRadius: '16px',
-                border: `1px solid ${t.border}`,
-                background: t.cardBg,
+                borderRadius: '14px',
               }}
             >
-              <Box aria-hidden sx={{ fontSize: 44, lineHeight: 1, mb: 1.5 }}>
-                {hasActiveFilters ? '🔍' : '🍽️'}
-              </Box>
-              <Box sx={{ fontFamily: serif, fontSize: 30, mb: 1 }}>
+              {hasActiveFilters ? (
+                <SearchOff aria-hidden sx={{ fontSize: 40, color: t.faint, mb: 1.5 }} />
+              ) : (
+                <RestaurantOutlined aria-hidden sx={{ fontSize: 40, color: t.faint, mb: 1.5 }} />
+              )}
+              <Box sx={{ fontFamily: serif, fontSize: 20, fontWeight: 600, mb: 1 }}>
                 {hasActiveFilters ? tr('dashboard.noMatchesTitle') : tr('dashboard.emptyTitle')}
               </Box>
-              <Box sx={{ color: t.muted, fontSize: 15, mb: 3, maxWidth: 420, mx: 'auto' }}>
+              <Box sx={{ color: t.muted, fontSize: 16, mb: 3, maxWidth: 420, mx: 'auto' }}>
                 {hasActiveFilters
                   ? tr('dashboard.emptyTryFilter')
                   : canEdit
@@ -1538,7 +1451,7 @@ export default function Dashboard() {
                                         fontWeight: 600,
                     fontSize: '14px',
                     padding: '10px 20px',
-                    borderRadius: '999px',
+                    borderRadius: '10px',
                   }}
                 >
                   <Add sx={{ fontSize: 18 }} /> {tr('dashboard.addFirst')}
@@ -1552,36 +1465,25 @@ export default function Dashboard() {
               {view === 'tile' && (
                 // Extra bottom clearance on phones so the FAB never covers the
                 // last card's Book pill.
-                <Box sx={{ padding: { xs: '16px 0 96px', sm: '24px 0 40px' } }}>
+                <Box sx={{ padding: { xs: '20px 0 96px', sm: '28px 0 56px' } }}>
                   {/* Two-up on phones — 87 places at one giant card per screen
                       is unbrowsable; the compact card keeps the same slots. */}
-                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(auto-fill, minmax(160px, 1fr))', sm: 'repeat(auto-fill, minmax(240px, 1fr))' }, gap: { xs: '12px', sm: '20px' } }}>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(auto-fill, minmax(160px, 1fr))', sm: 'repeat(auto-fill, minmax(240px, 1fr))' }, gap: { xs: '22px 12px', sm: '32px 20px' } }}>
                     {listLoading
                       ? Array.from({ length: 8 }, (_, i) => <SkeletonCard key={i} tokens={t} />)
                       : sorted.map((r) => (
-                      <PlaceCard
-                        key={r.id}
-                        r={r}
-                        tokens={t}
-                        serifFont={serif}
-                        canEdit={canEdit}
-                        onView={handleViewRestaurant}
-                        onToggleStatus={handleToggleStatus}
-                        onToggleFavorite={handleToggleFavorite}
-                        onEdit={handleEditRestaurant}
-                        onDelete={handleDeleteClick}
-                      />
+                      <PlaceCard key={r.id} r={r} tokens={t} onView={handleViewRestaurant} />
                     ))}
                   </Box>
                 </Box>
               )}
 
-              {/* LIST */}
+              {/* LIST — photo, name, one meta line, rating; status only when "want" */}
               {view === 'list' && (
-                <Box sx={{ padding: { xs: '16px 0 96px', sm: '24px 0 40px' } }}>
-                  <Box sx={{ border: `1px solid ${t.border}`, borderRadius: '16px', overflow: 'hidden' }}>
-                    {listLoading && Array.from({ length: 6 }, (_, i) => <SkeletonListRow key={i} tokens={t} />)}
-                    {!listLoading && sorted.map((r) => (
+                <Box sx={{ padding: { xs: '12px 0 96px', sm: '16px 0 40px' } }}>
+                  {listLoading && Array.from({ length: 6 }, (_, i) => <SkeletonListRow key={i} tokens={t} />)}
+                  {!listLoading &&
+                    sorted.map((r) => (
                       <Box
                         key={r.id}
                         onClick={() => handleViewRestaurant(r)}
@@ -1589,149 +1491,46 @@ export default function Dashboard() {
                           display: 'flex',
                           alignItems: 'center',
                           gap: '16px',
-                          padding: '13px 18px',
-                          borderBottom: `1px solid ${t.borderSoft}`,
-                          background: t.cardBg,
+                          padding: '12px',
+                          margin: '0 -12px',
+                          borderRadius: '10px',
                           cursor: 'pointer',
-                          '&:hover': { filter: 'brightness(0.98)' },
-                          // Hover-only quick actions; on touch, tapping the row
-                          // opens the detail dialog, which carries Edit/Delete.
-                          '&:hover .row-actions, &:focus-within .row-actions': { opacity: 1 },
-                          '&:last-of-type': { borderBottom: 'none' },
+                          '&:hover': { background: t.rowHover },
                         }}
                       >
-                        <Box sx={{ width: 46, height: 46, borderRadius: '14px', flex: 'none' }}>
-                          <RestaurantThumb
-                            image={r.image}
-                            alt={r.name}
-                            initial={r.initial}
-                            serifFont={serif}
-                            tokens={t}
-                            initialFontSize={24}
-                            cuisine={r.cuisine}
-                            sx={{ width: '100%', height: '100%', borderRadius: '14px' }}
-                          />
-                        </Box>
+                        <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: { xs: 72, sm: 96 }, borderRadius: '8px' }} />
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Box
                             component="button"
                             type="button"
                             onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleViewRestaurant(r); }}
-                            sx={{
-                              fontFamily: serif,
-                              fontSize: 18,
-                              border: 'none',
-                              background: 'transparent',
-                              p: 0,
-                              m: 0,
-                              color: 'inherit',
-                              textAlign: 'left',
-                              cursor: 'pointer',
-                              display: 'block',
-                              maxWidth: '100%',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >{r.name}</Box>
-                          <Box sx={{ color: t.muted, fontSize: 13, mt: '1px' }}>
-                            {r.meta}
-                            {(r.locations?.length ?? 0) > 1 && (
-                              <Box component="span" sx={{ color: t.faint }}>
-                                {' · '}
-                                {tr('dashboard.locationsCount', { count: r.locations?.length ?? 0 })}
-                              </Box>
-                            )}
-                            {(r.visitCount ?? 0) > 0 && (
-                              <Box component="span" sx={{ color: t.faint }}>
-                                {' · '}
-                                {tr('dashboard.visitsCount', { count: r.visitCount ?? 0 })}
-                              </Box>
-                            )}
+                            sx={{ fontSize: 16, fontWeight: 600, border: 'none', background: 'transparent', p: 0, m: 0, color: 'inherit', textAlign: 'left', cursor: 'pointer', display: 'block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                          >
+                            {r.name}
                           </Box>
-                          {((r.michelinStars ?? 0) > 0 || r.bibGourmand) && (
-                            <Box sx={{ display: 'flex', gap: '6px', mt: '3px', flexWrap: 'wrap' }}>
-                              {(r.michelinStars ?? 0) > 0 && (
-                                <Box
-                                  component="span"
-                                  sx={{ fontSize: 10.5, fontWeight: 600, color: t.accent, border: `1px solid ${t.accent}`, borderRadius: '999px', padding: '0px 7px' }}
-                                >
-                                  {'★'.repeat(r.michelinStars ?? 0)} {tr('dashboard.michelinChip')}
-                                </Box>
-                              )}
-                              {r.bibGourmand && (
-                                <Box
-                                  component="span"
-                                  sx={{ fontSize: 10.5, fontWeight: 600, color: t.accent, border: `1px solid ${t.accent}`, borderRadius: '999px', padding: '0px 7px' }}
-                                >
-                                  {tr('dashboard.bibGourmand')}
-                                </Box>
-                              )}
-                            </Box>
+                          {r.meta && (
+                            <Box sx={{ color: t.muted, fontSize: 14, mt: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.meta}</Box>
                           )}
                         </Box>
-                        <Box sx={{ display: { xs: 'none', md: 'flex' }, flex: 'none' }}>
-                          <BookingPill locations={r.locations ?? []} tokens={t} />
-                        </Box>
-                        <Box sx={{ width: 90, color: t.cost, fontSize: 14, fontWeight: 600, display: { xs: 'none', sm: 'block' } }}>{r.costStr}</Box>
-                        <Box sx={{ width: 110, display: { xs: 'none', sm: 'block' } }}>
-                          {r.rated ? <Bubbles value={r.rating ?? 0} tokens={t} size={12} gap={5} /> : null}
-                        </Box>
-                        {canEdit ? (
-                          <IconButton
-                            size="small"
-                            onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleToggleFavorite(r); }}
-                            aria-label={tr(r.favorite ? 'dashboard.unfavorite' : 'dashboard.favorite', { name: r.name })}
-                            aria-pressed={r.favorite ?? false}
-                            sx={{ flex: 'none', color: r.favorite ? 'error.main' : t.faint }}
-                          >
-                            {r.favorite ? <Favorite sx={{ fontSize: 18 }} /> : <FavoriteBorder sx={{ fontSize: 18 }} />}
-                          </IconButton>
-                        ) : r.favorite ? (
-                          <Favorite role="img" aria-label={tr('dashboard.favorited')} sx={{ flex: 'none', fontSize: 18, color: 'error.main' }} />
-                        ) : null}
-                        <Box
-                          component={canEdit ? 'button' : 'span'}
-                          type={canEdit ? 'button' : undefined}
-                          onClick={canEdit ? (e: React.MouseEvent) => { e.stopPropagation(); handleToggleStatus(r); } : undefined}
-                          aria-label={canEdit ? tr('dashboard.markAs', { name: r.name, status: r.isBeen ? tr('dashboard.markWant') : tr('dashboard.markBeen') }) : undefined}
-                          sx={{
-                            width: 96,
-                            textAlign: 'center',
-                            background: r.isBeen ? t.beenBg : t.wantBg,
-                            color: r.isBeen ? t.beenFg : t.wantFg,
-                            fontSize: '11.5px',
-                            fontWeight: 600,
-                            fontFamily: 'inherit',
-                            border: 'none',
-                            padding: '5px 0',
-                            borderRadius: '999px',
-                            flex: 'none',
-                            cursor: canEdit ? 'pointer' : 'default',
-                          }}
-                        >
-                          {r.isBeen ? tr('dashboard.statusBeen') : tr('dashboard.statusWant')}
-                        </Box>
-                        {canEdit && (
-                          <Box className="row-actions" sx={{ display: 'flex', gap: '4px', opacity: 0, transition: 'opacity .15s' }}>
-                            <CardAction label={tr('dashboard.editX', { name: r.name })} onClick={() => handleEditRestaurant(r)} tokens={t} solid>
-                              <EditIcon sx={{ fontSize: 15 }} />
-                            </CardAction>
-                            <CardAction label={tr('dashboard.deleteX', { name: r.name })} onClick={() => r.id && handleDeleteClick(r.id)} tokens={t} solid danger>
-                              <DeleteIcon sx={{ fontSize: 15 }} />
-                            </CardAction>
+                        {r.rated && (
+                          <Box sx={{ display: { xs: 'none', sm: 'block' }, flex: 'none' }}>
+                            <Bubbles value={r.rating ?? 0} tokens={t} size={10} gap={4} />
+                          </Box>
+                        )}
+                        {r.isWant && (
+                          <Box component="span" sx={{ flex: 'none', fontSize: 12, color: t.muted, width: { sm: 80 }, textAlign: 'right' }}>
+                            {tr('dashboard.statusWant')}
                           </Box>
                         )}
                       </Box>
                     ))}
-                  </Box>
                 </Box>
               )}
 
               {/* TABLE — dense index for when the list gets long */}
               {view === 'table' && (
                 <Box sx={{ padding: { xs: '16px 0 96px', sm: '24px 0 40px' }, overflowX: 'auto' }}>
-                  <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+                  <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                     <Box component="thead">
                       <Box component="tr">
                         {[
@@ -1742,7 +1541,7 @@ export default function Dashboard() {
                           <Box
                             key={h}
                             component="th"
-                            sx={{ textAlign: 'left', fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: t.faint, padding: '10px 12px', borderBottom: `2px solid ${t.divider}` }}
+                            sx={{ textAlign: 'left', fontSize: 12, letterSpacing: '.08em', textTransform: 'uppercase', color: t.faint, padding: '10px 12px', borderBottom: `2px solid ${t.divider}` }}
                           >
                             {h}
                           </Box>
@@ -1765,22 +1564,18 @@ export default function Dashboard() {
                           onClick={() => handleViewRestaurant(r)}
                           sx={{ cursor: 'pointer', '&:hover': { background: t.rowHover } }}
                         >
-                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, width: 44 }}>
-                            <Box sx={{ width: 32, height: 32, borderRadius: '11px', overflow: 'hidden' }}>
-                              <RestaurantThumb image={r.image} alt={r.name} initial={r.initial} serifFont={serif} tokens={t} initialFontSize={13} sx={{ width: '100%', height: '100%' }} />
-                            </Box>
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, width: 72 }}>
+                            <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 48, borderRadius: '6px' }} />
                           </Box>
                           <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, fontWeight: 600 }}>{r.name}</Box>
-                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, color: t.muted, fontSize: 12.5 }}>{r.cuisine}</Box>
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, color: t.muted, fontSize: 12 }}>{r.cuisine}</Box>
                           <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}` }}>
-                            {r.rated ? <Bubbles value={r.rating ?? 0} tokens={t} size={9} gap={4} /> : <Box component="span" sx={{ color: t.notRated, fontSize: 12, fontStyle: 'italic' }}>{tr('dashboard.notRated')}</Box>}
+                            {r.rated ? <Bubbles value={r.rating ?? 0} tokens={t} size={9} gap={4} /> : null}
                           </Box>
                           <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, color: t.cost, fontWeight: 600 }}>{r.costStr}</Box>
                           <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, color: t.muted }}>{r.city ?? '—'}</Box>
                           <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}` }}>
-                            <Box component="span" sx={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: '999px', background: r.isBeen ? t.beenBg : t.wantBg, color: r.isBeen ? t.beenFg : t.wantFg }}>
-                              {r.isBeen ? tr('dashboard.statusBeen') : tr('dashboard.statusWant')}
-                            </Box>
+                            {r.isWant ? <Box component="span" sx={{ fontSize: 12, color: t.muted }}>{tr('dashboard.statusWant')}</Box> : null}
                           </Box>
                         </Box>
                       ))}
@@ -1823,7 +1618,7 @@ export default function Dashboard() {
                       ) : null}
                     </Box>
                     {mapMissingCount > 0 && (
-                      <Box sx={{ color: t.faint, fontSize: 12.5 }}>
+                      <Box sx={{ color: t.faint, fontSize: 12 }}>
                         {tr('dashboard.missingAddress', { count: mapMissingCount })}
                       </Box>
                     )}
@@ -1847,26 +1642,11 @@ export default function Dashboard() {
                         onMouseLeave={() => setHoveredId((cur) => (cur === syncKey ? null : cur))}
                         sx={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderBottom: `1px solid ${t.borderSoft}`, cursor: 'pointer', background: hoveredId === syncKey ? t.searchBg : 'transparent', transition: 'background .12s', '&:hover': { filter: 'brightness(0.98)' } }}
                       >
-                        <Box sx={{ width: 34, height: 34, borderRadius: '12px', flex: 'none' }}>
-                          <RestaurantThumb
-                            image={r.image}
-                            alt={r.name}
-                            initial={r.initial}
-                            serifFont={serif}
-                            tokens={t}
-                            initialFontSize={18}
-                            cuisine={r.cuisine}
-                            sx={{ width: '100%', height: '100%', borderRadius: '12px' }}
-                          />
-                        </Box>
+                        <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 54, borderRadius: '8px' }} />
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Box sx={{ fontSize: 14, fontWeight: 500 }}>{r.name}</Box>
-                          <Box sx={{ color: t.muted, fontSize: 12 }}>
-                            <Box component="span" aria-hidden sx={{ mr: '4px' }}>{cuisineEmoji(r.cuisine)}</Box>
-                            {tr(`cuisines.${r.cuisine}`, r.cuisine)}
-                          </Box>
+                          <Box sx={{ fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</Box>
+                          {r.meta && <Box sx={{ color: t.muted, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.meta}</Box>}
                         </Box>
-                        <Box component="span" sx={{ color: t.cost, fontSize: 13, fontWeight: 600 }}>{r.costStr}</Box>
                       </Box>
                       );
                     })}
@@ -1875,28 +1655,6 @@ export default function Dashboard() {
               )}
             </>
           )}
-        </Box>
-
-        {/* footer */}
-        <Box
-          component="footer"
-          sx={{
-            borderTop: `1px solid ${t.border}`,
-            background: t.footerBg,
-            padding: { xs: '20px 18px', md: '24px 40px' },
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 2,
-            flexWrap: 'wrap',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '9px', color: t.muted, fontSize: 13 }}>
-            <LogoMark size={16} />
-            <Box component="span" sx={{ fontFamily: serif, fontSize: 16, color: t.ink }}>{tr('brand')}</Box>
-            <Box component="span" sx={{ ml: '6px' }}>{tr('dashboard.footerTagline')}</Box>
-          </Box>
-          <Box sx={{ color: t.faint, fontSize: '12.5px' }}>{tr('dashboard.footerSpots', { count: total })}</Box>
         </Box>
 
         {/* mobile FAB */}
@@ -1939,6 +1697,7 @@ export default function Dashboard() {
           onEdit={handleEditRestaurant}
           onDelete={(id) => { setDetailOpen(false); handleDeleteClick(id); }}
           onToggleFavorite={handleToggleFavorite}
+          onToggleStatus={(r) => handleToggleStatus(decorate(r))}
           onAddVisit={handleAddVisit}
           ratings={selectedRestaurant?.id ? ratings[selectedRestaurant.id] ?? [] : []}
           currentUserId={userId}

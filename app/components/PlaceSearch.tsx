@@ -6,7 +6,6 @@ import Close from '@mui/icons-material/Close';
 import { useTranslation } from 'react-i18next';
 import type { PlaceCandidate } from '~/types/restaurant';
 import type { ListTokens } from '~/listTheme';
-import RestaurantThumb from '~/components/RestaurantThumb';
 import { formatDistance } from '~/utils/geo';
 import { requestLocationForSearch } from '~/utils/userLocation.client';
 
@@ -27,9 +26,6 @@ const DEBOUNCE_MS = 350;
 const MIN_QUERY = 2;
 
 /** Initial letter for a candidate's fallback thumb (mirrors decorate()). */
-function initialOf(name: string): string {
-  return (name.replace(/^The /i, '')[0] || '?').toUpperCase();
-}
 
 /**
  * Search-first place picker. Debounced queries hit /api/search-place; results
@@ -241,30 +237,18 @@ export default function PlaceSearch({
                   background: active === i ? t.searchBg : 'transparent',
                 }}
               >
-                <Box sx={{ width: 38, height: 38, borderRadius: '12px', flex: 'none' }}>
-                  <RestaurantThumb
-                    image={undefined}
-                    alt={c.name}
-                    initial={initialOf(c.name)}
-                    serifFont={serifFont}
-                    tokens={t}
-                    initialFontSize={20}
-                    cuisine={c.cuisineType ?? undefined}
-                    sx={{ width: '100%', height: '100%', borderRadius: '12px' }}
-                  />
-                </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Box sx={{ fontFamily: serifFont, fontSize: 16, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {c.name}
                   </Box>
-                  <Box sx={{ color: t.muted, fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <Box sx={{ color: t.muted, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {c.address}
                   </Box>
                 </Box>
                 {c.distanceM != null && (
                   <Box
                     component="span"
-                    sx={{ flex: 'none', fontWeight: 600, fontSize: 11.5, color: t.faint }}
+                    sx={{ flex: 'none', fontWeight: 600, fontSize: 12, color: t.faint }}
                   >
                     {formatDistance(c.distanceM)}
                   </Box>
@@ -274,7 +258,7 @@ export default function PlaceSearch({
                     component="span"
                     sx={{
                       flex: 'none',
-                      fontSize: 11.5,
+                      fontSize: 12,
                       fontWeight: 600,
                       color: t.accent,
                       border: `1px solid ${t.accent}`,

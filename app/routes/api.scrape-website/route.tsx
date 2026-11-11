@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { load } from 'cheerio';
 import { cuisineTypes } from '~/types/restaurant';
+import { isSafeExternalUrl } from '~/utils/safeUrl.server';
 
 const FETCH_TIMEOUT_MS = 6000;
 const MAX_BODY_BYTES = 1.5 * 1024 * 1024;
@@ -104,33 +105,6 @@ function mergeMissing(primary: ScrapeResult, extra: ScrapeResult): ScrapeResult 
     michelinStars: primary.michelinStars ?? extra.michelinStars,
     bibGourmand: primary.bibGourmand ?? extra.bibGourmand,
   };
-}
-
-/** Rejects anything that isn't a plausible public http(s) URL. Basic SSRF guard. */
-function isSafeExternalUrl(value: string): boolean {
-  let parsed: URL;
-  try {
-    parsed = new URL(value);
-  } catch {
-    return false;
-  }
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
-
-  const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
-  if (hostname === 'localhost' || hostname === '0.0.0.0' || hostname === '::1') {
-    return false;
-  }
-  // Literal private/loopback/link-local IPv4 ranges.
-  if (
-    /^127\./.test(hostname) ||
-    /^10\./.test(hostname) ||
-    /^192\.168\./.test(hostname) ||
-    /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
-    /^169\.254\./.test(hostname)
-  ) {
-    return false;
-  }
-  return true;
 }
 
 async function fetchWithLimits(targetUrl: string): Promise<string> {

@@ -76,7 +76,7 @@ function popupHtml(pin: LocatedPin, t: TFunction, accent: string): string {
   const title = location.label ? `${r.name} (${location.label})` : r.name;
   let html = '';
   if (r.image && /^https?:\/\//i.test(r.image)) {
-    html += `<img src="${escapeHtml(r.image)}" alt="" style="width:100%;height:96px;object-fit:cover;border-radius:8px;margin-bottom:6px;display:block" />`;
+    html += `<img src="${escapeHtml(r.image)}" alt="" loading="lazy" onerror="this.style.display='none'" style="width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:8px;margin-bottom:6px;display:block" />`;
   }
   html += `<strong>${escapeHtml(title)}</strong>`;
   if ((r.rating ?? 0) > 0) {

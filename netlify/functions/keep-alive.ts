@@ -4,7 +4,7 @@ import type { Config } from '@netlify/functions';
  * Supabase free-tier projects are paused after ~7 days with no activity, which
  * makes the app fail to load until someone manually resumes the project in the
  * dashboard. This scheduled function makes one tiny authenticated request to the
- * REST API each day so the project always counts as active and never sleeps.
+ * REST API each hour so the project always counts as active and never sleeps.
  *
  * It uses the same public env the app already relies on (SUPABASE_URL /
  * SUPABASE_ANON_KEY) — no secret key is needed. The query is RLS-filtered to
@@ -36,6 +36,5 @@ export default async () => {
 };
 
 export const config: Config = {
-  // Once a day is well within the ~7-day inactivity window.
-  schedule: '@daily',
+  schedule: '@hourly',
 };

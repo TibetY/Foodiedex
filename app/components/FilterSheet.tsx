@@ -8,8 +8,9 @@ import FilterList from '@mui/icons-material/FilterList';
 import ArrowUpward from '@mui/icons-material/ArrowUpward';
 import ArrowDownward from '@mui/icons-material/ArrowDownward';
 import { useTranslation } from 'react-i18next';
+import type { ListView } from '~/types/restaurant';
 import type { ListTokens } from '~/listTheme';
-import { cuisineEmoji, placeTypeEmoji, dietEmoji, menuTypeEmoji } from '~/utils/cuisineEmoji';
+import SavedViewsBar from '~/components/SavedViewsBar';
 
 type Tokens = ListTokens;
 type MultiSetter = (updater: string[] | ((prev: string[]) => string[])) => void;
@@ -42,6 +43,14 @@ interface FilterSheetProps {
   sortReversed: boolean;
   setSortReversed: (updater: boolean | ((prev: boolean) => boolean)) => void;
   onClear: () => void;
+  views: ListView[];
+  /** Canonical serialized current filter params, for the active-view highlight. */
+  currentParams: string;
+  hasActiveFilters: boolean;
+  onApplyView: (view: ListView) => void;
+  onSaveView: () => void;
+  onRenameView: (view: ListView) => void;
+  onDeleteView: (view: ListView) => void;
 }
 
 function toggle(arr: string[], value: string): string[] {
@@ -79,7 +88,7 @@ export default function FilterSheet(props: FilterSheetProps) {
     color: selected ? t.pFg : t.muted,
     borderRadius: '999px',
     padding: '6px 13px',
-    fontSize: '13px',
+    fontSize: '14px',
     cursor: 'pointer',
     lineHeight: 1.4,
     transition: 'transform .12s ease',
@@ -88,6 +97,25 @@ export default function FilterSheet(props: FilterSheetProps) {
 
   const content = (
     <Box sx={{ p: { xs: 2.5, sm: 2 }, width: { xs: 'auto', sm: 340 } }}>
+      {/* Saved views */}
+      {(props.views.length > 0 || props.hasActiveFilters) && (
+        <Box sx={{ mb: 2 }}>
+          <Box sx={{ fontSize: 12, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: t.faint, mb: 1 }}>
+            {tr('views.title')}
+          </Box>
+          <SavedViewsBar
+            tokens={t}
+            views={props.views}
+            currentParams={props.currentParams}
+            hasActiveFilters={props.hasActiveFilters}
+            onApply={props.onApplyView}
+            onSave={props.onSaveView}
+            onRename={props.onRenameView}
+            onDelete={props.onDeleteView}
+          />
+        </Box>
+      )}
+
       {/* Sort */}
       <Section tokens={t} label={tr('dashboard.sortLabel', 'Sort')}>
         {props.sortModes.map((m) => (
@@ -142,9 +170,6 @@ export default function FilterSheet(props: FilterSheetProps) {
           </Box>
           {props.cuisineOptions.map((c) => (
             <Box component="button" key={c} type="button" onClick={() => props.setCuisineFilter(c)} sx={pillSx(props.cuisineFilter === c)}>
-              <Box component="span" aria-hidden sx={{ mr: '5px' }}>
-                {cuisineEmoji(c)}
-              </Box>
               {tr(`cuisines.${c}`, c)}
             </Box>
           ))}
@@ -170,7 +195,6 @@ export default function FilterSheet(props: FilterSheetProps) {
         <Section tokens={t} label={tr('dashboard.placeType')}>
           {props.placeOptions.map((p) => (
             <Box component="button" key={p} type="button" aria-pressed={props.placeFilter.includes(p)} onClick={() => props.setPlaceFilter((prev) => toggle(prev, p))} sx={pillSx(props.placeFilter.includes(p))}>
-              <Box component="span" aria-hidden sx={{ mr: '5px' }}>{placeTypeEmoji(p)}</Box>
               {tr(`placeTypes.${p}`, p)}
             </Box>
           ))}
@@ -182,7 +206,6 @@ export default function FilterSheet(props: FilterSheetProps) {
         <Section tokens={t} label={tr('dashboard.dietary')}>
           {props.dietOptions.map((d) => (
             <Box component="button" key={d} type="button" aria-pressed={props.dietFilter.includes(d)} onClick={() => props.setDietFilter((prev) => toggle(prev, d))} sx={pillSx(props.dietFilter.includes(d))}>
-              <Box component="span" aria-hidden sx={{ mr: '5px' }}>{dietEmoji(d)}</Box>
               {tr(`dietary.${d}`, d)}
             </Box>
           ))}
@@ -194,7 +217,6 @@ export default function FilterSheet(props: FilterSheetProps) {
         <Section tokens={t} label={tr('dashboard.menuType')}>
           {props.menuOptions.map((m) => (
             <Box component="button" key={m} type="button" aria-pressed={props.menuFilter.includes(m)} onClick={() => props.setMenuFilter((prev) => toggle(prev, m))} sx={pillSx(props.menuFilter.includes(m))}>
-              <Box component="span" aria-hidden sx={{ mr: '5px' }}>{menuTypeEmoji(m)}</Box>
               {tr(`menuTypes.${m}`, m)}
             </Box>
           ))}
@@ -208,7 +230,7 @@ export default function FilterSheet(props: FilterSheetProps) {
           type="button"
           onClick={props.onClear}
           disabled={activeCount === 0}
-          sx={{ border: 'none', background: 'transparent', color: activeCount === 0 ? t.faint : t.muted, fontSize: '13.5px', cursor: activeCount === 0 ? 'default' : 'pointer' }}
+          sx={{ border: 'none', background: 'transparent', color: activeCount === 0 ? t.faint : t.muted, fontSize: '14px', cursor: activeCount === 0 ? 'default' : 'pointer' }}
         >
           {tr('dashboard.clearFilters')}
         </Box>
@@ -216,7 +238,7 @@ export default function FilterSheet(props: FilterSheetProps) {
           component="button"
           type="button"
           onClick={() => setAnchor(null)}
-          sx={{ border: 'none', background: t.accent, color: t.accentText, fontWeight: 600, fontSize: '13.5px', padding: '8px 18px', borderRadius: '999px', cursor: 'pointer', transition: 'transform .12s ease', '&:active': { transform: 'scale(.96)' } }}
+          sx={{ border: 'none', background: t.accent, color: t.accentText, fontWeight: 600, fontSize: '14px', padding: '10px 18px', borderRadius: '10px', cursor: 'pointer', transition: 'transform .12s ease', '&:active': { transform: 'scale(.96)' } }}
         >
           {tr('filters.done')}
         </Box>
@@ -231,6 +253,7 @@ export default function FilterSheet(props: FilterSheetProps) {
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
+        aria-label={tr('filters.button')}
         onClick={(e: React.MouseEvent<HTMLButtonElement>) => setAnchor(e.currentTarget)}
         sx={{
           display: 'inline-flex',
@@ -239,17 +262,20 @@ export default function FilterSheet(props: FilterSheetProps) {
           border: `1px solid ${activeCount ? t.accent : t.pillBorder}`,
           background: activeCount ? t.pBg : 'transparent',
           color: activeCount ? t.pFg : t.muted,
-          borderRadius: '999px',
-          padding: '7px 15px',
-          fontSize: '13px',
+          borderRadius: '10px',
+          height: 40,
+          padding: '0 14px',
+          fontSize: '14px',
           fontWeight: 500,
           cursor: 'pointer',
         }}
       >
-        <FilterList sx={{ fontSize: 17 }} />
-        {tr('filters.button')}
+        <FilterList sx={{ fontSize: 18 }} />
+        <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+          {tr('filters.button')}
+        </Box>
         {activeCount > 0 && (
-          <Box component="span" sx={{ minWidth: 18, height: 18, px: '5px', borderRadius: '999px', background: activeCount ? t.pFg : t.accent, color: activeCount ? t.pBg : t.accentText, fontSize: 11, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Box component="span" sx={{ minWidth: 18, height: 18, px: '5px', borderRadius: '999px', background: activeCount ? t.pFg : t.accent, color: activeCount ? t.pBg : t.accentText, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
             {activeCount}
           </Box>
         )}
@@ -283,7 +309,7 @@ export default function FilterSheet(props: FilterSheetProps) {
 function Section({ tokens: t, label, children }: { tokens: Tokens; label: string; children: React.ReactNode }) {
   return (
     <Box sx={{ mb: 2 }}>
-      <Box sx={{ fontSize: 11.5, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: t.faint, mb: 1 }}>
+      <Box sx={{ fontSize: 12, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: t.faint, mb: 1 }}>
         {label}
       </Box>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>{children}</Box>
