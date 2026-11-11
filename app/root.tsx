@@ -70,7 +70,7 @@ export const links: LinksFunction = () => [
 export const meta: MetaFunction = () => {
   const m = resources[fallbackLng].common.meta;
   return [
-    { charset: "utf-8" },
+    { charSet: "utf-8" },
     { title: m.title },
     { name: "description", content: m.description },
     { name: "viewport", content: "width=device-width,initial-scale=1" },
@@ -107,6 +107,13 @@ export default function App() {
   return (
     <html lang={fallbackLng} data-theme={mode} data-accent={accent}>
       <head>
+        {/* MUI's styled engine looks for this tag the moment its module loads
+            in the browser and, if it is missing, PREPENDS one to <head> — before
+            React hydrates. Hydration then finds an extra node where it expects
+            <Meta/>'s first tag, gives up, and re-renders the whole document.
+            Rendering it ourselves, first, on the server and the client keeps
+            the two trees identical. It must stay the first child of <head>. */}
+        <meta name="emotion-insertion-point" content="" />
         <Meta />
         <Links />
         {/* Brand design tokens as CSS custom properties (generated from the same
@@ -166,6 +173,7 @@ export function ErrorBoundary() {
   return (
     <html lang="en">
       <head>
+        <meta name="emotion-insertion-point" content="" />
         <title>{title}</title>
         <Meta />
         <Links />
