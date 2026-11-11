@@ -94,7 +94,7 @@ export default function Index() {
               color: tk.beenFg,
               borderRadius: "999px",
               padding: "7px 15px",
-              fontSize: 11.5,
+              fontSize: 12,
               fontWeight: 600,
               letterSpacing: ".06em",
               textTransform: "uppercase",
@@ -147,7 +147,7 @@ export default function Index() {
                     width: 26, height: 26, borderRadius: "50%", ml: i === 0 ? 0 : "-8px",
                     border: `2px solid ${tk.cardBg}`,
                     background: i === 0 ? tk.avatar3 : i === 1 ? tk.wantBg : tk.avatar2,
-                    color: tk.ink, fontSize: 11, fontWeight: 600,
+                    color: tk.ink, fontSize: 12, fontWeight: 600,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}
                 >
@@ -155,7 +155,7 @@ export default function Index() {
                 </Box>
               ))}
             </Box>
-            <Typography sx={{ color: tk.muted, fontSize: 12.5 }}>{t("landing.socialProof")}</Typography>
+            <Typography sx={{ color: tk.muted, fontSize: 12 }}>{t("landing.socialProof")}</Typography>
           </Box>
           {[
             { name: "Hoshiba", meta: `${t("cuisines.Japanese", "Izakaya")} · Fremont`, price: "$$", rating: 4, been: true },
@@ -164,8 +164,8 @@ export default function Index() {
             <Box key={c.name} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, borderRadius: "16px", background: tk.panelBg }}>
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
-                  <Box sx={{ fontWeight: 600, fontSize: 15 }}>{c.name}</Box>
-                  <Box sx={{ fontSize: 12.5, fontWeight: 600, color: tk.cost }}>{c.price}</Box>
+                  <Box sx={{ fontWeight: 600, fontSize: 16 }}>{c.name}</Box>
+                  <Box sx={{ fontSize: 12, fontWeight: 600, color: tk.cost }}>{c.price}</Box>
                 </Box>
                 <Box sx={{ color: tk.muted, fontSize: 12, mt: "1px" }}>{c.meta}</Box>
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: "6px" }}>
@@ -181,7 +181,7 @@ export default function Index() {
                       />
                     ))}
                   </Box>
-                  <Box sx={{ fontSize: 10.5, fontWeight: 600, px: "9px", py: "3px", borderRadius: "999px", background: c.been ? tk.beenBg : tk.wantBg, color: c.been ? tk.beenFg : tk.wantFg }}>
+                  <Box sx={{ fontSize: 12, fontWeight: 600, px: "9px", py: "3px", borderRadius: "999px", background: c.been ? tk.beenBg : tk.wantBg, color: c.been ? tk.beenFg : tk.wantFg }}>
                     {c.been ? t("dashboard.statusBeen") : t("dashboard.statusWant")}
                   </Box>
                 </Box>
@@ -209,14 +209,14 @@ export default function Index() {
               {f.icon}
             </Box>
             <Typography sx={{ fontSize: 19, fontWeight: 600, mb: 1 }}>{f.title}</Typography>
-            <Typography sx={{ color: tk.muted, fontSize: 13.5, lineHeight: 1.6 }}>{f.description}</Typography>
+            <Typography sx={{ color: tk.muted, fontSize: 14, lineHeight: 1.6 }}>{f.description}</Typography>
           </Box>
         ))}
       </Box>
 
       {/* closing band */}
       <Box sx={{ padding: { xs: "40px 20px", md: "48px 44px" }, background: tk.accent, color: tk.accentText }}>
-        <Box sx={{ fontSize: 11.5, letterSpacing: ".14em", textTransform: "uppercase", opacity: 0.7, mb: "18px" }}>
+        <Box sx={{ fontSize: 12, letterSpacing: ".14em", textTransform: "uppercase", opacity: 0.7, mb: "18px" }}>
           {t("landing.closingEyebrow", "Where we want to go next")}
         </Box>
         <Typography sx={{ fontSize: { xs: 30, md: 40 }, lineHeight: 1.1, fontWeight: 600, letterSpacing: "-.03em", mb: "22px", maxWidth: "24ch" }}>

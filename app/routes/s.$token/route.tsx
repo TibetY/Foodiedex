@@ -237,11 +237,11 @@ export default function SharedListPage() {
               <Box component="h1" sx={{ fontFamily: serif, fontSize: { xs: 34, md: 44 }, fontWeight: 600, letterSpacing: '-.02em', m: 0, lineHeight: 1.05 }}>
                 {shared.list.name}
               </Box>
-              <Box component="p" sx={{ color: t.muted, fontSize: 15, mt: '8px', mb: 0 }}>
+              <Box component="p" sx={{ color: t.muted, fontSize: 16, mt: '8px', mb: 0 }}>
                 {shared.ownerName ? tr('shared.byline', { name: shared.ownerName }) + ' · ' : ''}
                 {tr('dashboard.stats', { total, been: beenCount, want: wantCount })}
               </Box>
-              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '6px', mt: '8px', color: t.faint, fontSize: 12.5 }}>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '6px', mt: '8px', color: t.faint, fontSize: 12 }}>
                 {tr('shared.readOnly')}
               </Box>
             </Box>
@@ -367,10 +367,10 @@ export default function SharedListPage() {
 
           {/* content */}
           {sorted.length === 0 ? (
-            <Box sx={{ mt: '24px', mb: '40px', textAlign: 'center', py: { xs: 6, md: 10 }, px: 3, borderRadius: '16px', border: `1px solid ${t.border}`, background: t.cardBg }}>
+            <Box sx={{ mt: '24px', mb: '40px', textAlign: 'center', py: { xs: 6, md: 10 }, px: 3, borderRadius: '14px' }}>
               <SearchOff aria-hidden sx={{ fontSize: 40, color: t.faint, mb: 1.5 }} />
-              <Box sx={{ fontFamily: serif, fontSize: 30, mb: 1 }}>{tr('dashboard.noMatchesTitle')}</Box>
-              <Box sx={{ color: t.muted, fontSize: 15 }}>{tr('dashboard.emptyTryFilter')}</Box>
+              <Box sx={{ fontFamily: serif, fontSize: 20, fontWeight: 600, mb: 1 }}>{tr('dashboard.noMatchesTitle')}</Box>
+              <Box sx={{ color: t.muted, fontSize: 16 }}>{tr('dashboard.emptyTryFilter')}</Box>
             </Box>
           ) : view === 'map' ? (
             <Box sx={{ padding: '24px 0 40px', display: 'flex', gap: '18px', flexDirection: { xs: 'column', md: 'row' } }}>

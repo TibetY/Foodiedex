@@ -6,6 +6,9 @@ import leafletStylesHref from 'leaflet/dist/leaflet.css?url';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import ArrowBack from '@mui/icons-material/ArrowBack';
+import DarkModeOutlined from '@mui/icons-material/DarkModeOutlined';
+import LightModeOutlined from '@mui/icons-material/LightModeOutlined';
+import IconButton from '@mui/material/IconButton';
 import Download from '@mui/icons-material/Download';
 import { useTranslation } from 'react-i18next';
 import { createSupabaseServerClient } from '~/supabase.server';
@@ -134,24 +137,25 @@ export default function StatsPage() {
             <ArrowBack sx={{ fontSize: 18 }} /> {tr('stats.back')}
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <Box sx={{ display: 'flex', background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px', padding: '3px' }}>
-              <Box component="button" onClick={() => setMode('light')} aria-label={tr('dashboard.themeLight')} aria-pressed={mode === 'light'}
-                sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, background: mode === 'light' ? t.accent : 'transparent', color: mode === 'light' ? t.accentText : t.faint }}>☀</Box>
-              <Box component="button" onClick={() => setMode('dark')} aria-label={tr('dashboard.themeDark')} aria-pressed={mode === 'dark'}
-                sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, background: mode === 'dark' ? t.accent : 'transparent', color: mode === 'dark' ? t.accentText : t.faint }}>☾</Box>
-            </Box>
+            <IconButton
+              onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}
+              aria-label={mode === 'light' ? tr('dashboard.themeDark') : tr('dashboard.themeLight')}
+              sx={{ color: t.muted }}
+            >
+              {mode === 'light' ? <DarkModeOutlined sx={{ fontSize: 20 }} /> : <LightModeOutlined sx={{ fontSize: 20 }} />}
+            </IconButton>
           </Box>
         </Box>
 
         <Box sx={{ flexGrow: 1, width: '100%', maxWidth: 980, mx: 'auto', padding: { xs: '28px 18px 48px', md: '44px 40px 64px' } }}>
-          <Box component="p" sx={{ color: t.accent, fontSize: 13, fontWeight: 600, letterSpacing: '.14em', textTransform: 'uppercase', m: 0, mb: 1 }}>
+          <Box component="p" sx={{ color: t.accent, fontSize: 14, fontWeight: 600, letterSpacing: '.14em', textTransform: 'uppercase', m: 0, mb: 1 }}>
             {tr('stats.eyebrow', { name: listName })}
           </Box>
 
           {stats.total === 0 ? (
             <Box sx={{ mt: 4, py: { xs: 6, md: 10 }, textAlign: 'center', border: `1px solid ${t.border}`, borderRadius: '16px', background: t.cardBg }}>
               <Box sx={{ fontWeight: 600, fontSize: 30, mb: 1 }}>{tr('stats.emptyTitle')}</Box>
-              <Box sx={{ color: t.muted, fontSize: 15, mb: 3 }}>{tr('stats.emptyBody')}</Box>
+              <Box sx={{ color: t.muted, fontSize: 16, mb: 3 }}>{tr('stats.emptyBody')}</Box>
               <Button component={Link} to={backHref} variant="contained">{tr('stats.back')}</Button>
             </Box>
           ) : (
@@ -207,7 +211,7 @@ export default function StatsPage() {
               {/* share */}
               <Box sx={{ mt: 5, padding: { xs: 3, md: 4 }, borderRadius: '18px', border: `1px solid ${t.border}`, background: t.cardBg }}>
                 <Box sx={{ fontWeight: 600, fontSize: { xs: 24, md: 30 }, color: t.ink }}>{tr('stats.shareTitle')}</Box>
-                <Box sx={{ color: t.muted, fontSize: 14.5, mt: 1, mb: 2.5, maxWidth: 520 }}>{tr('stats.shareBody')}</Box>
+                <Box sx={{ color: t.muted, fontSize: 14, mt: 1, mb: 2.5, maxWidth: 520 }}>{tr('stats.shareBody')}</Box>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                   <Button onClick={() => share('square')} variant="contained" startIcon={<Download />}>{tr('stats.downloadSquare')}</Button>
                   <Button onClick={() => share('story')} variant="outlined" startIcon={<Download />}>{tr('stats.downloadStory')}</Button>
@@ -224,7 +228,7 @@ type Tokens = ListTokens;
 
 function SectionTitle({ children, tokens: t }: { children: React.ReactNode; tokens: Tokens }) {
   return (
-    <Box component="h2" sx={{ fontSize: 12.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: t.faint, m: 0 }}>
+    <Box component="h2" sx={{ fontSize: 12, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: t.faint, m: 0 }}>
       {children}
     </Box>
   );
@@ -234,7 +238,7 @@ function StatTile({ tokens: t, value, label }: { tokens: Tokens; value: number |
   return (
     <Box sx={{ padding: '16px 18px', borderRadius: '14px', border: `1px solid ${t.border}`, background: t.cardBg }}>
       <Box sx={{ fontWeight: 800, fontSize: 34, lineHeight: 1, color: t.ink }}>{value}</Box>
-      <Box sx={{ color: t.muted, fontSize: 12.5, mt: '6px' }}>{label}</Box>
+      <Box sx={{ color: t.muted, fontSize: 12, mt: '6px' }}>{label}</Box>
     </Box>
   );
 }
@@ -245,15 +249,12 @@ function BarSection({
   rows,
   mono,
   emptyLabel,
-  glyph,
 }: {
   tokens: Tokens;
   title: string;
   rows: LabelCount[];
   mono?: boolean;
   emptyLabel?: string;
-  /** Optional food/place glyph rendered before each row label. */
-  glyph?: (label: string) => string;
 }) {
   const max = rows[0]?.count ?? 1;
   return (
@@ -261,7 +262,7 @@ function BarSection({
       <SectionTitle tokens={t}>{title}</SectionTitle>
       <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {rows.length === 0 ? (
-          <Box sx={{ color: t.faint, fontSize: 13.5 }}>{emptyLabel ?? '—'}</Box>
+          <Box sx={{ color: t.faint, fontSize: 14 }}>{emptyLabel ?? '—'}</Box>
         ) : (
           rows.map((r) => (
             <Box key={r.label} sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -271,7 +272,7 @@ function BarSection({
               <Box sx={{ flex: 1, height: 10, borderRadius: '999px', background: t.skeleton, overflow: 'hidden' }}>
                 <Box sx={{ width: `${Math.max(6, (r.count / max) * 100)}%`, height: '100%', background: t.accent, borderRadius: '999px' }} />
               </Box>
-              <Box sx={{ width: 34, flex: 'none', textAlign: 'right', fontWeight: 600, fontSize: 13, color: t.muted }}>{r.count}</Box>
+              <Box sx={{ width: 34, flex: 'none', textAlign: 'right', fontWeight: 600, fontSize: 14, color: t.muted }}>{r.count}</Box>
             </Box>
           ))
         )}
@@ -298,13 +299,13 @@ function MostVisited({
       <SectionTitle tokens={t}>{title}</SectionTitle>
       <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {rows.length === 0 ? (
-          <Box sx={{ color: t.faint, fontSize: 13.5 }}>{emptyLabel}</Box>
+          <Box sx={{ color: t.faint, fontSize: 14 }}>{emptyLabel}</Box>
         ) : (
           rows.map((r, i) => (
             <Box key={`${r.name}-${i}`} sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <Box sx={{ fontWeight: 600, fontSize: 18, color: t.accent, width: 22, flex: 'none' }}>{i + 1}</Box>
               <Box sx={{ flex: 1, fontWeight: 600, fontSize: 16, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</Box>
-              <Box sx={{ color: t.muted, fontSize: 12.5, flex: 'none' }}>{visitsLabel(r.visitCount)}</Box>
+              <Box sx={{ color: t.muted, fontSize: 12, flex: 'none' }}>{visitsLabel(r.visitCount)}</Box>
             </Box>
           ))
         )}

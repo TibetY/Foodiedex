@@ -4,6 +4,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Check from '@mui/icons-material/Check';
 import ErrorOutline from '@mui/icons-material/ErrorOutline';
 import Add from '@mui/icons-material/Add';
+import WineBarOutlined from '@mui/icons-material/WineBarOutlined';
+import BakeryDiningOutlined from '@mui/icons-material/BakeryDiningOutlined';
+import LocalBarOutlined from '@mui/icons-material/LocalBarOutlined';
 import { useTranslation } from 'react-i18next';
 import type { PlaceCandidate } from '~/types/restaurant';
 import type { ListTokens } from '~/listTheme';
@@ -32,8 +35,7 @@ interface OnboardingProps {
 interface StarterPack {
   id: string;
   labelKey: string;
-  /** The pack's food glyph, shown on a tile tint like every other glyph. */
-  glyph: string;
+  Icon: typeof WineBarOutlined;
   places: PlaceSeed[];
 }
 
@@ -41,7 +43,7 @@ const STARTER_PACKS: StarterPack[] = [
   {
     id: 'paris-wine',
     labelKey: 'onboarding.packParisWine',
-    glyph: '🍷',
+    Icon: WineBarOutlined,
     places: [
       { name: 'Septime', address: '80 Rue de Charonne, 75011 Paris, France' },
       { name: 'Clamato', address: '80 Rue de Charonne, 75011 Paris, France' },
@@ -51,7 +53,7 @@ const STARTER_PACKS: StarterPack[] = [
   {
     id: 'sf-classics',
     labelKey: 'onboarding.packSfClassics',
-    glyph: '🥖',
+    Icon: BakeryDiningOutlined,
     places: [
       { name: 'Zuni Café', address: '1658 Market St, San Francisco, CA' },
       { name: 'Tartine Bakery', address: '600 Guerrero St, San Francisco, CA' },
@@ -61,7 +63,7 @@ const STARTER_PACKS: StarterPack[] = [
   {
     id: 'date-night',
     labelKey: 'onboarding.packDateNight',
-    glyph: '🍾',
+    Icon: LocalBarOutlined,
     places: [
       { name: 'Le Bernardin', address: '155 West 51st St, New York, NY' },
       { name: 'Alinea', address: '1723 North Halsted St, Chicago, IL' },
@@ -142,7 +144,7 @@ export default function Onboarding({
       <Box component="h2" sx={{ fontFamily: serifFont, fontWeight: 600, letterSpacing: '-.02em', fontSize: { xs: 30, md: 40 }, color: t.ink, m: 0, lineHeight: 1.1 }}>
         {tr('onboarding.title')}
       </Box>
-      <Box component="p" sx={{ color: t.muted, fontSize: 15.5, lineHeight: 1.6, mt: 1.5, mb: 3.5, maxWidth: 460, mx: 'auto' }}>
+      <Box component="p" sx={{ color: t.muted, fontSize: 16, lineHeight: 1.6, mt: 1.5, mb: 3.5, maxWidth: 460, mx: 'auto' }}>
         {tr('onboarding.subtitle')}
       </Box>
 
@@ -190,10 +192,10 @@ export default function Onboarding({
                 </Box>
               </Box>
               <Box sx={{ padding: '8px 10px 10px' }}>
-                <Box sx={{ fontFamily: serifFont, fontSize: 15, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <Box sx={{ fontFamily: serifFont, fontSize: 16, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {c.name}
                 </Box>
-                <Box sx={{ fontSize: 11.5, color: c.phase === 'error' ? t.error : t.muted, mt: '2px' }}>
+                <Box sx={{ fontSize: 12, color: c.phase === 'error' ? t.error : t.muted, mt: '2px' }}>
                   {c.phase === 'pending'
                     ? tr('onboarding.resolving')
                     : c.phase === 'error'
@@ -209,17 +211,17 @@ export default function Onboarding({
       {/* city starter packs */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', my: 3.5 }}>
         <Box sx={{ flex: 1, height: '1px', background: t.divider }} />
-        <Box sx={{ color: t.faint, fontSize: 12.5, textTransform: 'uppercase', letterSpacing: '.08em' }}>
+        <Box sx={{ color: t.faint, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em' }}>
           {tr('onboarding.orStarter')}
         </Box>
         <Box sx={{ flex: 1, height: '1px', background: t.divider }} />
       </Box>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3,1fr)' }, gap: '12px', textAlign: 'left' }}>
-        {STARTER_PACKS.map((pack, i) => (
+        {STARTER_PACKS.map((pack) => (
           <Box
             key={pack.id}
-            sx={{ border: `1px solid ${t.border}`, borderRadius: '22px', background: t.cardBg, boxShadow: t.bubbleShadow, padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}
+            sx={{ border: `1px solid ${t.border}`, borderRadius: '14px', background: t.cardBg, padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Box
@@ -229,18 +231,18 @@ export default function Onboarding({
                   height: 40,
                   flex: 'none',
                   borderRadius: '14px',
-                  background: [t.tileTint, t.tileTint2, t.tileTint3][i % 3],
+                  background: t.chip,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: 20,
                 }}
               >
-                {pack.glyph}
+                <pack.Icon sx={{ fontSize: 22, color: t.muted }} />
               </Box>
               <Box sx={{ fontFamily: serifFont, fontSize: 18, color: t.ink }}>{tr(pack.labelKey)}</Box>
             </Box>
-            <Box sx={{ color: t.muted, fontSize: 12.5, lineHeight: 1.5, flex: 1 }}>
+            <Box sx={{ color: t.muted, fontSize: 12, lineHeight: 1.5, flex: 1 }}>
               {pack.places.map((p) => p.name).join(' · ')}
             </Box>
             <Box
@@ -258,7 +260,7 @@ export default function Onboarding({
                 background: 'transparent',
                 color: busy ? t.faint : t.accent,
                 fontWeight: 600,
-                fontSize: '13.5px',
+                fontSize: '14px',
                 padding: '8px 14px',
                 cursor: busy ? 'default' : 'pointer',
                 transition: 'transform .12s ease, background-color .15s ease',
@@ -276,7 +278,7 @@ export default function Onboarding({
         component="button"
         type="button"
         onClick={onAddManually}
-        sx={{ mt: 3, border: 'none', background: 'transparent', color: t.muted, fontSize: '13.5px', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '3px' }}
+        sx={{ mt: 3, border: 'none', background: 'transparent', color: t.muted, fontSize: '14px', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '3px' }}
       >
         {tr('onboarding.manual')}
       </Box>

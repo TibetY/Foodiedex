@@ -103,7 +103,7 @@ export default function ListSwitcher({
                 <Chip
                   size="small"
                   label={t(`roles.${list.role}`)}
-                  sx={{ ml: 1, height: 20, fontSize: 11 }}
+                  sx={{ ml: 1, height: 20, fontSize: 12 }}
                 />
               )}
               {(list.memberCount ?? 1) > 1 && (

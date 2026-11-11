@@ -47,7 +47,6 @@ import type { ListTokens } from '~/listTheme';
 import PlaceSearch from '~/components/PlaceSearch';
 import NearbyAdds from '~/components/NearbyAdds';
 import { BubbleInput } from '~/components/Bubbles';
-import { placeTypeEmoji, dietEmoji, menuTypeEmoji } from '~/utils/cuisineEmoji';
 
 type Tokens = ListTokens;
 
@@ -917,7 +916,7 @@ export default function RestaurantFormDialog({
                       border: 0,
                       cursor: 'pointer',
                       font: 'inherit',
-                      fontSize: '13px',
+                      fontSize: '14px',
                       fontWeight: on ? 600 : 400,
                       padding: '8px 18px',
                       borderRadius: '999px',
@@ -1050,7 +1049,7 @@ export default function RestaurantFormDialog({
                       border: on ? '1px solid transparent' : `1px solid ${tokens.pillBorder}`,
                       cursor: 'pointer',
                       font: 'inherit',
-                      fontSize: '13px',
+                      fontSize: '14px',
                       fontWeight: on ? 600 : 400,
                       letterSpacing: '.04em',
                       padding: '8px 16px',
@@ -1091,7 +1090,7 @@ export default function RestaurantFormDialog({
                 <TagChip
                   key={type}
                   tokens={tokens}
-                  label={`${placeTypeEmoji(type)} ${t(`placeTypes.${type}`, type)}`}
+                  label={t(`placeTypes.${type}`, type)}
                   selected={formData.placeTypes?.includes(type) ?? false}
                   onClick={() => toggleArrayValue('placeTypes', type)}
                 />
@@ -1109,7 +1108,7 @@ export default function RestaurantFormDialog({
                 <TagChip
                   key={type}
                   tokens={tokens}
-                  label={`${menuTypeEmoji(type)} ${t(`menuTypes.${type}`, type)}`}
+                  label={t(`menuTypes.${type}`, type)}
                   selected={formData.menuTypes?.includes(type) ?? false}
                   onClick={() => toggleArrayValue('menuTypes', type)}
                 />
@@ -1127,7 +1126,7 @@ export default function RestaurantFormDialog({
                 <TagChip
                   key={tag}
                   tokens={tokens}
-                  label={`${dietEmoji(tag)} ${t(`dietary.${tag}`, tag)}`}
+                  label={t(`dietary.${tag}`, tag)}
                   selected={formData.dietaryTags?.includes(tag) ?? false}
                   onClick={() => toggleArrayValue('dietaryTags', tag)}
                 />
@@ -1149,7 +1148,7 @@ export default function RestaurantFormDialog({
             >
               {michelinStarOptions.map((n) => (
                 <MenuItem key={n} value={n}>
-                  {n === 0 ? t('form.none') : '★'.repeat(n)}
+                  {n === 0 ? t('form.none') : t('detail.michelin', { count: n })}
                 </MenuItem>
               ))}
             </TextField>

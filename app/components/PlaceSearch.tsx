@@ -241,14 +241,14 @@ export default function PlaceSearch({
                   <Box sx={{ fontFamily: serifFont, fontSize: 16, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {c.name}
                   </Box>
-                  <Box sx={{ color: t.muted, fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <Box sx={{ color: t.muted, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {c.address}
                   </Box>
                 </Box>
                 {c.distanceM != null && (
                   <Box
                     component="span"
-                    sx={{ flex: 'none', fontWeight: 600, fontSize: 11.5, color: t.faint }}
+                    sx={{ flex: 'none', fontWeight: 600, fontSize: 12, color: t.faint }}
                   >
                     {formatDistance(c.distanceM)}
                   </Box>
@@ -258,7 +258,7 @@ export default function PlaceSearch({
                     component="span"
                     sx={{
                       flex: 'none',
-                      fontSize: 11.5,
+                      fontSize: 12,
                       fontWeight: 600,
                       color: t.accent,
                       border: `1px solid ${t.accent}`,

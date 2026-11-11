@@ -31,6 +31,8 @@ import PersonAddAlt1 from '@mui/icons-material/PersonAddAlt1';
 import Person from '@mui/icons-material/Person';
 import Close from '@mui/icons-material/Close';
 import Search from '@mui/icons-material/Search';
+import SearchOff from '@mui/icons-material/SearchOff';
+import RestaurantOutlined from '@mui/icons-material/RestaurantOutlined';
 import Insights from '@mui/icons-material/Insights';
 import DarkModeOutlined from '@mui/icons-material/DarkModeOutlined';
 import LightModeOutlined from '@mui/icons-material/LightModeOutlined';
@@ -1416,18 +1418,18 @@ export default function Dashboard() {
                 textAlign: 'center',
                 py: { xs: 6, md: 10 },
                 px: 3,
-                borderRadius: '16px',
-                border: `1px solid ${t.border}`,
-                background: t.cardBg,
+                borderRadius: '14px',
               }}
             >
-              <Box aria-hidden sx={{ fontSize: 44, lineHeight: 1, mb: 1.5 }}>
-                {hasActiveFilters ? '🔍' : '🍽️'}
-              </Box>
-              <Box sx={{ fontFamily: serif, fontSize: 30, mb: 1 }}>
+              {hasActiveFilters ? (
+                <SearchOff aria-hidden sx={{ fontSize: 40, color: t.faint, mb: 1.5 }} />
+              ) : (
+                <RestaurantOutlined aria-hidden sx={{ fontSize: 40, color: t.faint, mb: 1.5 }} />
+              )}
+              <Box sx={{ fontFamily: serif, fontSize: 20, fontWeight: 600, mb: 1 }}>
                 {hasActiveFilters ? tr('dashboard.noMatchesTitle') : tr('dashboard.emptyTitle')}
               </Box>
-              <Box sx={{ color: t.muted, fontSize: 15, mb: 3, maxWidth: 420, mx: 'auto' }}>
+              <Box sx={{ color: t.muted, fontSize: 16, mb: 3, maxWidth: 420, mx: 'auto' }}>
                 {hasActiveFilters
                   ? tr('dashboard.emptyTryFilter')
                   : canEdit
@@ -1449,7 +1451,7 @@ export default function Dashboard() {
                                         fontWeight: 600,
                     fontSize: '14px',
                     padding: '10px 20px',
-                    borderRadius: '999px',
+                    borderRadius: '10px',
                   }}
                 >
                   <Add sx={{ fontSize: 18 }} /> {tr('dashboard.addFirst')}
@@ -1528,7 +1530,7 @@ export default function Dashboard() {
               {/* TABLE — dense index for when the list gets long */}
               {view === 'table' && (
                 <Box sx={{ padding: { xs: '16px 0 96px', sm: '24px 0 40px' }, overflowX: 'auto' }}>
-                  <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+                  <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                     <Box component="thead">
                       <Box component="tr">
                         {[
@@ -1539,7 +1541,7 @@ export default function Dashboard() {
                           <Box
                             key={h}
                             component="th"
-                            sx={{ textAlign: 'left', fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: t.faint, padding: '10px 12px', borderBottom: `2px solid ${t.divider}` }}
+                            sx={{ textAlign: 'left', fontSize: 12, letterSpacing: '.08em', textTransform: 'uppercase', color: t.faint, padding: '10px 12px', borderBottom: `2px solid ${t.divider}` }}
                           >
                             {h}
                           </Box>
@@ -1566,7 +1568,7 @@ export default function Dashboard() {
                             <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 48, borderRadius: '6px' }} />
                           </Box>
                           <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, fontWeight: 600 }}>{r.name}</Box>
-                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, color: t.muted, fontSize: 12.5 }}>{r.cuisine}</Box>
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, color: t.muted, fontSize: 12 }}>{r.cuisine}</Box>
                           <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}` }}>
                             {r.rated ? <Bubbles value={r.rating ?? 0} tokens={t} size={9} gap={4} /> : null}
                           </Box>
@@ -1616,7 +1618,7 @@ export default function Dashboard() {
                       ) : null}
                     </Box>
                     {mapMissingCount > 0 && (
-                      <Box sx={{ color: t.faint, fontSize: 12.5 }}>
+                      <Box sx={{ color: t.faint, fontSize: 12 }}>
                         {tr('dashboard.missingAddress', { count: mapMissingCount })}
                       </Box>
                     )}

@@ -236,18 +236,9 @@ export interface ListTokens {
   /** The empty-bubble outline in <Bubbles> — decorative (aria-hidden) only.
    *  Quiet text uses `faint`, which is held to the 4.5:1 AA minimum. */
   notRated: string;
-  monoGrad: string;
-  monoInitial: string;
-  thumbStripeA: string;
-  thumbStripeB: string;
   cardShadow: string;
   // Soft ambient "bubble" shadow for floating tiles/pills (gentler than cardShadow).
   bubbleShadow: string;
-  // The cuisine-tile tints — a deliberately small family (3, assigned by hash)
-  // instead of one tint per cuisine, so tile grids read calm, not carnival.
-  tileTint: string;
-  tileTint2: string;
-  tileTint3: string;
   beenBg: string;
   beenFg: string;
   wantBg: string;
@@ -314,16 +305,8 @@ export function getListTokens(mode: ListMode, accent: AccentName): ListTokens {
     cost: b.ink60,
     rating: a.deep,
     notRated: b.ink25,
-    monoGrad: `linear-gradient(135deg,${a.tint},${a.soft})`,
-    monoInitial: hexToRgba(a.deep, 0.3),
-    thumbStripeA: a.tint,
-    thumbStripeB: a.soft,
     cardShadow: b.lift,
     bubbleShadow: b.lift,
-    // accent tint · sakura · peach — the three tile tints, in the current mode.
-    tileTint: a.tint,
-    tileTint2: sakura.bg,
-    tileTint3: peach.bg,
     beenBg: a.tint,
     beenFg: a.deep,
     wantBg: sakura.bg,
@@ -400,11 +383,6 @@ const CSS_VAR_MAP: [cssVar: string, token: keyof ListTokens][] = [
   ['--shadow-3', 'shadow3'],
   ['--card-shadow', 'cardShadow'],
   ['--bubble-shadow', 'bubbleShadow'],
-  ['--tile-tint', 'tileTint'],
-  ['--tile-tint-2', 'tileTint2'],
-  ['--tile-tint-3', 'tileTint3'],
-  ['--thumb-stripe-a', 'thumbStripeA'],
-  ['--thumb-stripe-b', 'thumbStripeB'],
 ];
 
 const ALL_MODES: ListMode[] = ['light', 'dark'];
@@ -422,7 +400,7 @@ export function brandCssVars(): string {
     const t = getListTokens(mode, accent);
     return CSS_VAR_MAP.map(([cssVar, token]) => `${cssVar}:${t[token]}`).join(';');
   };
-  const statics = '--radius:20px;--radius-pill:999px;--space:4px';
+  const statics = '--radius:14px;--radius-control:10px;--radius-pill:999px;--space:4px';
   const rules: string[] = [`:root{${block('light', 'matcha')};${statics}}`];
   for (const mode of ALL_MODES) {
     for (const accent of ALL_ACCENTS) {
@@ -432,8 +410,32 @@ export function brandCssVars(): string {
   return rules.join('');
 }
 
-/** Build the MUI theme for one (mode, accent) pair — Archivo type, pill
- *  buttons, large-radius surfaces, per the Kanpai design system. */
+/**
+ * The type scale. Five sizes, and nothing in between: text that is not one of
+ * these is a bug. Inputs are the one exception on phones, where they stay at
+ * 16px so iOS does not zoom the page on focus.
+ */
+export const TYPE = {
+  /** Labels, counts, captions. */
+  caption: 12,
+  /** Secondary text: meta lines, controls, table cells. */
+  body: 14,
+  /** Primary text: names, notes, link rows. */
+  bodyLg: 16,
+  /** Section and list titles. */
+  title: 20,
+  /** One per screen: the place or page name. */
+  display: 28,
+} as const;
+
+/**
+ * Corner radii. A full pill is reserved for things that are a toggle or a
+ * status, so those read differently from buttons and fields.
+ */
+export const RADIUS = { chip: 8, control: 10, surface: 14, dialog: 22, pill: 999 } as const;
+
+/** Build the MUI theme for one (mode, accent) pair — Archivo type on the TYPE
+ *  scale, RADIUS corners, and either a border or a shadow per surface. */
 export function makeListTheme(mode: ListMode, accent: AccentName): Theme {
   const t = getListTokens(mode, accent);
 
@@ -454,9 +456,14 @@ export function makeListTheme(mode: ListMode, accent: AccentName): Theme {
       h2: { fontWeight: 600, letterSpacing: '-.022em' },
       h3: { fontWeight: 600, letterSpacing: '-.022em' },
       h4: { fontWeight: 600, letterSpacing: '-.022em' },
-      button: { textTransform: 'none', fontWeight: 600 },
+      body1: { fontSize: TYPE.bodyLg },
+      body2: { fontSize: TYPE.body },
+      caption: { fontSize: TYPE.caption },
+      subtitle1: { fontSize: TYPE.bodyLg },
+      subtitle2: { fontSize: TYPE.body, fontWeight: 600 },
+      button: { textTransform: 'none', fontWeight: 600, fontSize: TYPE.body },
     },
-    shape: { borderRadius: 16 },
+    shape: { borderRadius: RADIUS.surface },
     spacing: 4,
     components: {
       // MUI's ButtonBase resets `outline: 0`, which beats the global
@@ -476,7 +483,7 @@ export function makeListTheme(mode: ListMode, accent: AccentName): Theme {
       MuiButton: {
         styleOverrides: {
           root: ({ ownerState }) => ({
-            borderRadius: 999,
+            borderRadius: RADIUS.control,
             padding: '9px 18px',
             // The "squish": buttons compress a touch when pressed.
             transition: 'transform .12s ease, background-color .15s ease, border-color .15s ease',
@@ -506,22 +513,21 @@ export function makeListTheme(mode: ListMode, accent: AccentName): Theme {
           paper: {
             backgroundColor: t.panelBg,
             backgroundImage: 'none',
-            border: `1px solid ${t.border}`,
-            borderRadius: 22,
+            borderRadius: RADIUS.dialog,
             boxShadow: t.shadow3,
           },
         },
       },
       MuiMenu: {
         styleOverrides: {
-          paper: { borderRadius: 16, border: `1px solid ${t.border}`, boxShadow: t.shadow2 },
+          paper: { borderRadius: RADIUS.surface, boxShadow: t.shadow2 },
         },
       },
       MuiTextField: {
         styleOverrides: {
           root: {
             '& .MuiOutlinedInput-root': {
-              borderRadius: 14,
+              borderRadius: RADIUS.control,
               backgroundColor: t.field,
               '& fieldset': { borderColor: t.fieldBorder },
               '&:hover fieldset': { borderColor: t.borderStrong },
@@ -532,10 +538,10 @@ export function makeListTheme(mode: ListMode, accent: AccentName): Theme {
         },
       },
       MuiChip: {
-        styleOverrides: { root: { borderRadius: 999, fontWeight: 500 } },
+        styleOverrides: { root: { borderRadius: RADIUS.chip, fontWeight: 500 } },
       },
       MuiAlert: {
-        styleOverrides: { root: { borderRadius: 14 } },
+        styleOverrides: { root: { borderRadius: RADIUS.control } },
       },
       MuiRating: {
         styleOverrides: {

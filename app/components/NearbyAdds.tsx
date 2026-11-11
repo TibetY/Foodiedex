@@ -82,7 +82,7 @@ export default function NearbyAdds({ tokens: t, serifFont, onPick, disabled }: N
   };
 
   const heading = (
-    <Box sx={{ fontSize: 11.5, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: t.faint, mb: 1 }}>
+    <Box sx={{ fontSize: 12, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: t.faint, mb: 1 }}>
       {tr('nearby.title')}
     </Box>
   );
@@ -103,7 +103,7 @@ export default function NearbyAdds({ tokens: t, serifFont, onPick, disabled }: N
           background: 'transparent',
           color: t.accent,
           borderRadius: '12px',
-          fontSize: '13.5px',
+          fontSize: '14px',
           fontWeight: 700,
           padding: '9px 16px',
           cursor: 'pointer',
@@ -119,7 +119,7 @@ export default function NearbyAdds({ tokens: t, serifFont, onPick, disabled }: N
     return (
       <Box>
         {heading}
-        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '10px', color: t.muted, fontSize: 13.5 }}>
+        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '10px', color: t.muted, fontSize: 14 }}>
           <CircularProgress size={16} sx={{ color: t.accent }} />
           {tr(status === 'locating' ? 'nearby.locating' : 'nearby.loading')}
         </Box>
@@ -131,7 +131,7 @@ export default function NearbyAdds({ tokens: t, serifFont, onPick, disabled }: N
     return (
       <Box>
         {heading}
-        <Box sx={{ color: t.muted, fontSize: 13.5 }}>
+        <Box sx={{ color: t.muted, fontSize: 14 }}>
           {tr(status === 'empty' ? 'nearby.empty' : 'nearby.denied')}
         </Box>
       </Box>
@@ -168,7 +168,7 @@ export default function NearbyAdds({ tokens: t, serifFont, onPick, disabled }: N
             }}
           >
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Box sx={{ fontFamily: serifFont, fontSize: 15.5, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <Box sx={{ fontFamily: serifFont, fontSize: 16, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {c.name}
               </Box>
               <Box sx={{ color: t.muted, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

@@ -50,7 +50,7 @@ function Section({
 }) {
   return (
     <Box sx={{ py: 4, borderTop: `2px solid ${t.divider}` }}>
-      <Box sx={{ fontSize: 11.5, letterSpacing: '.1em', textTransform: 'uppercase', color: t.faint, mb: 2 }}>
+      <Box sx={{ fontSize: 12, letterSpacing: '.1em', textTransform: 'uppercase', color: t.faint, mb: 2 }}>
         {eyebrow}
       </Box>
       {children}
@@ -213,8 +213,8 @@ export default function ProfilePage() {
                     <Box sx={{ width: 17, height: 17, borderRadius: '50%', background: sw.c2 }} />
                     <Box sx={{ width: 17, height: 17, borderRadius: '50%', background: sw.c3 }} />
                   </Box>
-                  <Box sx={{ fontSize: 13.5, fontWeight: 600 }}>{t(`accents.${name}`, sw.label)}</Box>
-                  <Box sx={{ fontSize: 11, color: tk.muted, mt: '2px' }}>{t(`accents.${name}Note`, sw.note)}</Box>
+                  <Box sx={{ fontSize: 14, fontWeight: 600 }}>{t(`accents.${name}`, sw.label)}</Box>
+                  <Box sx={{ fontSize: 12, color: tk.muted, mt: '2px' }}>{t(`accents.${name}Note`, sw.note)}</Box>
                 </Box>
               );
             })}
