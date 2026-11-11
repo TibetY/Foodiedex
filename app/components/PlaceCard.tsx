@@ -61,7 +61,6 @@ interface PlaceCardProps {
 export default function PlaceCard({
   r,
   tokens: t,
-  serifFont,
   canEdit = false,
   onView,
   onToggleStatus,
@@ -121,16 +120,8 @@ export default function PlaceCard({
       }}
     >
       {/* image */}
-      <Box sx={{ position: 'relative', height: { xs: 110, sm: 158 } }}>
-        <RestaurantThumb
-          image={r.image}
-          alt={r.name}
-          initial={r.initial}
-          serifFont={serifFont}
-          tokens={t}
-          cuisine={r.cuisine}
-          sx={{ height: '100%' }}
-        />
+      <Box sx={{ position: 'relative' }}>
+        <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ borderRadius: 0 }} />
         <Box
           component={statusInteractive ? 'button' : 'span'}
           type={statusInteractive ? 'button' : undefined}

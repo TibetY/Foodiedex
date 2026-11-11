@@ -55,7 +55,13 @@ interface RestaurantFormDialogProps {
   open: boolean;
   restaurant: Restaurant | null;
   onClose: () => void;
-  onSave: (restaurant: Partial<Restaurant>, imageFile?: File) => Promise<void>;
+  /** `imageOrigin` says who chose the image URL in the payload: a website
+   *  scrape ("scraped", fully quality-gated on save) or the user ("user"). */
+  onSave: (
+    restaurant: Partial<Restaurant>,
+    imageFile?: File,
+    imageOrigin?: 'scraped' | 'user'
+  ) => Promise<void>;
   /** Brand tokens + serif for the search accelerator (renders in both moods). */
   tokens: Tokens;
   serifFont: string;
@@ -217,6 +223,9 @@ export default function RestaurantFormDialog({
     locationsRef.current = locations;
   }, [locations]);
   const imageRef = useRef({ preview: '', hasFile: false });
+  // Who put the current image URL there. An image already on a saved place is
+  // treated as scraped: its provenance is unknown, so it gets the full gate.
+  const imageOrigin = useRef<'scraped' | 'user'>('scraped');
   useEffect(() => {
     imageRef.current = { preview: imagePreview, hasFile: Boolean(imageFile) };
   }, [imagePreview, imageFile]);
@@ -260,6 +269,7 @@ export default function RestaurantFormDialog({
       );
       setPlatformChoice(platformChoiceFor(locs[0]));
       setImagePreview(restaurant.image || '');
+      imageOrigin.current = 'scraped';
       setSocialOpen(
         Boolean(
           restaurant.socialMedia?.facebook ||
@@ -275,6 +285,7 @@ export default function RestaurantFormDialog({
       setCuisineChoice('');
       setPlatformChoice('');
       setImagePreview('');
+      imageOrigin.current = 'scraped';
       setSocialOpen(false);
     }
     setScrapeStatus('idle');
@@ -390,6 +401,7 @@ export default function RestaurantFormDialog({
 
     if (data.image && !imageRef.current.preview && !imageRef.current.hasFile) {
       setImagePreview(data.image);
+      imageOrigin.current = 'scraped';
       setFormData((prev) => ({ ...prev, image: data.image ?? undefined }));
       filled.push('image');
     }
@@ -628,6 +640,7 @@ export default function RestaurantFormDialog({
 
   const handleImageUrlPaste = (value: string) => {
     setImagePreview(value);
+    imageOrigin.current = 'user';
     setFormData((prev) => ({ ...prev, image: value }));
     setImageFile(undefined);
   };
@@ -709,7 +722,7 @@ export default function RestaurantFormDialog({
       } else if (payload.status === 'been') {
         payload.visitCount = 1;
       }
-      await onSave(payload, imageFile);
+      await onSave(payload, imageFile, imageOrigin.current);
       onClose();
     } catch (error) {
       console.error('Error saving restaurant:', error);

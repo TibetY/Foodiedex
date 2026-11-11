@@ -4,3 +4,6 @@ node_modules
 /build
 /.netlify
 .env
+
+# scripts/backfill-images.ts output
+backfill-images-report.csv

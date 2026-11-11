@@ -9,9 +9,10 @@ import type { PlaceCandidate } from '~/types/restaurant';
 import type { ListTokens } from '~/listTheme';
 import PlaceSearch from '~/components/PlaceSearch';
 import NearbyAdds from '~/components/NearbyAdds';
-import RestaurantThumb from '~/components/RestaurantThumb';
+import RestaurantThumb, { THUMB_ASPECT } from '~/components/RestaurantThumb';
 import { buildEnrichedRestaurant, type PlaceSeed } from '~/services/placeEnrich.client';
 import { createRestaurant } from '~/services/restaurants.client';
+import { ingestRestaurantImage } from '~/services/storage.client';
 
 type Tokens = ListTokens;
 
@@ -78,9 +79,6 @@ interface SeedingCard {
 }
 
 /** Initial letter for a card's fallback thumb (mirrors decorate()). */
-function initialOf(name: string): string {
-  return (name.replace(/^The /i, '')[0] || '?').toUpperCase();
-}
 
 /**
  * First-run empty state for an editable, brand-new list. Turns "zero places" into
@@ -118,6 +116,14 @@ export default function Onboarding({
     for (let i = 0; i < seeds.length; i++) {
       try {
         const payload = await buildEnrichedRestaurant(seeds[i]);
+        // Same save-time gate as the add form: keep only our own copy of a
+        // photo that passes, otherwise save the place without one.
+        payload.image = (
+          await ingestRestaurantImage(payload.image, 'scraped', {
+            name: seeds[i].name,
+            address: seeds[i].address,
+          })
+        ).url;
         await createRestaurant(payload, listId, userId);
         patch(cards[i].key, { phase: 'done', image: payload.image });
       } catch {
@@ -169,17 +175,9 @@ export default function Onboarding({
                 boxShadow: c.phase === 'done' ? `0 0 0 3px ${t.glow}` : 'none',
               }}
             >
-              <Box sx={{ position: 'relative', height: 96, background: t.skeleton }}>
+              <Box sx={{ position: 'relative', aspectRatio: THUMB_ASPECT, background: t.skeleton }}>
                 {c.phase !== 'pending' && (
-                  <RestaurantThumb
-                    image={c.image}
-                    alt={c.name}
-                    initial={initialOf(c.name)}
-                    serifFont={serifFont}
-                    tokens={t}
-                    initialFontSize={34}
-                    sx={{ height: '100%' }}
-                  />
+                  <RestaurantThumb image={c.image} name={c.name} tokens={t} sx={{ borderRadius: 0 }} />
                 )}
                 <Box sx={{ position: 'absolute', top: 8, right: 8, display: 'flex' }}>
                   {c.phase === 'pending' && <CircularProgress size={16} sx={{ color: t.accent }} />}

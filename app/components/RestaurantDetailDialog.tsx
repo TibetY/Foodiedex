@@ -106,7 +106,6 @@ export default function RestaurantDetailDialog({
   const rating = Math.round(shownRating);
   const myRating = currentUserId ? ratings.find((x) => x.userId === currentUserId) : undefined;
   const otherRatings = ratings.filter((x) => x.userId !== currentUserId);
-  const initial = (r.name.replace(/^The /i, '')[0] || '?').toUpperCase();
   const isBeen = (r.status ?? 'want') === 'been';
 
   const sectionLabel = {
@@ -158,17 +157,8 @@ export default function RestaurantDetailDialog({
       }}
     >
       {/* Hero image / initial */}
-      <Box sx={{ position: 'relative', height: 200 }}>
-        <RestaurantThumb
-          image={r.image}
-          alt={r.name}
-          initial={initial}
-          serifFont={serifFont}
-          tokens={t}
-          initialFontSize={88}
-          cuisine={r.cuisineType}
-          sx={{ height: '100%' }}
-        />
+      <Box sx={{ position: 'relative' }}>
+        <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ borderRadius: 0 }} />
         <IconButton
           onClick={onClose}
           aria-label={tr('form.close')}

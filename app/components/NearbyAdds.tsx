@@ -5,7 +5,6 @@ import NearMe from '@mui/icons-material/NearMe';
 import { useTranslation } from 'react-i18next';
 import type { PlaceCandidate } from '~/types/restaurant';
 import type { ListTokens } from '~/listTheme';
-import RestaurantThumb from '~/components/RestaurantThumb';
 import { formatDistance } from '~/utils/geo';
 import { setCachedLocation } from '~/utils/userLocation.client';
 
@@ -21,9 +20,6 @@ interface NearbyAddsProps {
   disabled?: boolean;
 }
 
-function initialOf(name: string): string {
-  return (name.replace(/^The /i, '')[0] || '?').toUpperCase();
-}
 
 /**
  * "Nearby, right now" — zero-typing adds. On request, uses the browser's
@@ -171,18 +167,6 @@ export default function NearbyAdds({ tokens: t, serifFont, onPick, disabled }: N
               '&:hover': disabled ? {} : { background: t.searchBg },
             }}
           >
-            <Box sx={{ width: 34, height: 34, borderRadius: '12px', flex: 'none' }}>
-              <RestaurantThumb
-                image={undefined}
-                alt={c.name}
-                initial={initialOf(c.name)}
-                serifFont={serifFont}
-                tokens={t}
-                initialFontSize={18}
-                cuisine={c.cuisineType ?? undefined}
-                sx={{ width: '100%', height: '100%', borderRadius: '12px' }}
-              />
-            </Box>
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Box sx={{ fontFamily: serifFont, fontSize: 15.5, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {c.name}

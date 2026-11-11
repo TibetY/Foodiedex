@@ -77,7 +77,7 @@ import Bubbles from '~/components/Bubbles';
 import PlaceCard, { BookingPill, CardAction } from '~/components/PlaceCard';
 import SkeletonCard, { SkeletonListRow } from '~/components/SkeletonCard';
 import { LogoMark } from '~/components/Logo';
-import { uploadRestaurantImage } from '~/services/storage.client';
+import { uploadRestaurantImage, ingestRestaurantImage } from '~/services/storage.client';
 import {
   createRestaurant,
   updateRestaurant,
@@ -677,13 +677,25 @@ export default function Dashboard() {
 
   const handleSaveRestaurant = async (
     restaurantData: Partial<Restaurant>,
-    imageFile?: File
+    imageFile?: File,
+    imageOrigin: 'scraped' | 'user' = 'scraped'
   ) => {
     if (!activeList) return;
     try {
+      // The photo we store is always our own copy: an uploaded file goes
+      // straight to storage, and an image URL passes the server's quality gate
+      // first. A refused image saves the place with no photo.
       let imageUrl = restaurantData.image;
+      let imageRejected = false;
       if (imageFile) {
         imageUrl = await uploadRestaurantImage(imageFile, userId);
+      } else {
+        const ingested = await ingestRestaurantImage(imageUrl, imageOrigin, {
+          name: restaurantData.name,
+          address: restaurantData.locations?.[0]?.address,
+        });
+        imageUrl = ingested.url;
+        imageRejected = ingested.rejected;
       }
       const dataToSave: Partial<Restaurant> = { ...restaurantData, image: imageUrl };
 
@@ -727,6 +739,8 @@ export default function Dashboard() {
       // map pin won't appear (rather than failing silently and looking buggy).
       if (geocodeFailed) {
         setSnackbar({ open: true, message: tr('dashboard.snackGeocodeFailed'), severity: 'warning' });
+      } else if (imageRejected) {
+        setSnackbar({ open: true, message: tr('dashboard.snackImageRejected'), severity: 'warning' });
       } else {
         setSnackbar({
           open: true,
@@ -1600,18 +1614,7 @@ export default function Dashboard() {
                           '&:last-of-type': { borderBottom: 'none' },
                         }}
                       >
-                        <Box sx={{ width: 46, height: 46, borderRadius: '14px', flex: 'none' }}>
-                          <RestaurantThumb
-                            image={r.image}
-                            alt={r.name}
-                            initial={r.initial}
-                            serifFont={serif}
-                            tokens={t}
-                            initialFontSize={24}
-                            cuisine={r.cuisine}
-                            sx={{ width: '100%', height: '100%', borderRadius: '14px' }}
-                          />
-                        </Box>
+                        <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 60, borderRadius: '8px' }} />
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Box
                             component="button"
@@ -1765,10 +1768,8 @@ export default function Dashboard() {
                           onClick={() => handleViewRestaurant(r)}
                           sx={{ cursor: 'pointer', '&:hover': { background: t.rowHover } }}
                         >
-                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, width: 44 }}>
-                            <Box sx={{ width: 32, height: 32, borderRadius: '11px', overflow: 'hidden' }}>
-                              <RestaurantThumb image={r.image} alt={r.name} initial={r.initial} serifFont={serif} tokens={t} initialFontSize={13} sx={{ width: '100%', height: '100%' }} />
-                            </Box>
+                          <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, width: 72 }}>
+                            <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 48, borderRadius: '6px' }} />
                           </Box>
                           <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, fontWeight: 600 }}>{r.name}</Box>
                           <Box component="td" sx={{ padding: '8px 12px', borderBottom: `1px solid ${t.borderSoft}`, color: t.muted, fontSize: 12.5 }}>{r.cuisine}</Box>
@@ -1847,18 +1848,7 @@ export default function Dashboard() {
                         onMouseLeave={() => setHoveredId((cur) => (cur === syncKey ? null : cur))}
                         sx={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderBottom: `1px solid ${t.borderSoft}`, cursor: 'pointer', background: hoveredId === syncKey ? t.searchBg : 'transparent', transition: 'background .12s', '&:hover': { filter: 'brightness(0.98)' } }}
                       >
-                        <Box sx={{ width: 34, height: 34, borderRadius: '12px', flex: 'none' }}>
-                          <RestaurantThumb
-                            image={r.image}
-                            alt={r.name}
-                            initial={r.initial}
-                            serifFont={serif}
-                            tokens={t}
-                            initialFontSize={18}
-                            cuisine={r.cuisine}
-                            sx={{ width: '100%', height: '100%', borderRadius: '12px' }}
-                          />
-                        </Box>
+                        <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 54, borderRadius: '8px' }} />
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Box sx={{ fontSize: 14, fontWeight: 500 }}>{r.name}</Box>
                           <Box sx={{ color: t.muted, fontSize: 12 }}>

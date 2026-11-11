@@ -335,9 +335,7 @@ export default function SharedListPage() {
                 {sorted.map((r) => (
                   <Box key={r.id} role="button" tabIndex={0} aria-label={r.name} onClick={() => openDetail(r)} onKeyDown={activateOnKey(() => openDetail(r))}
                     sx={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderBottom: `1px solid ${t.borderSoft}`, cursor: 'pointer', '&:hover': { filter: 'brightness(0.98)' } }}>
-                    <Box sx={{ width: 34, height: 34, borderRadius: '12px', flex: 'none' }}>
-                      <RestaurantThumb image={r.image} alt={r.name} initial={r.initial} serifFont={serif} tokens={t} initialFontSize={18} cuisine={r.cuisine} sx={{ width: '100%', height: '100%', borderRadius: '12px' }} />
-                    </Box>
+                    <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 54, borderRadius: '8px' }} />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box sx={{ fontSize: 14, fontWeight: 500 }}>{r.name}</Box>
                       <Box sx={{ color: t.muted, fontSize: 12 }}>{r.cuisine}</Box>
@@ -353,9 +351,7 @@ export default function SharedListPage() {
                 {sorted.map((r) => (
                   <Box key={r.id} onClick={() => openDetail(r)}
                     sx={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '13px 18px', borderBottom: `1px solid ${t.borderSoft}`, background: t.cardBg, cursor: 'pointer', '&:hover': { filter: 'brightness(0.98)' }, '&:last-of-type': { borderBottom: 'none' } }}>
-                    <Box sx={{ width: 46, height: 46, borderRadius: '14px', flex: 'none' }}>
-                      <RestaurantThumb image={r.image} alt={r.name} initial={r.initial} serifFont={serif} tokens={t} initialFontSize={24} cuisine={r.cuisine} sx={{ width: '100%', height: '100%', borderRadius: '14px' }} />
-                    </Box>
+                    <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 60, borderRadius: '8px' }} />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box component="button" type="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); openDetail(r); }}
                         sx={{ fontFamily: serif, fontSize: 18, border: 'none', background: 'transparent', p: 0, m: 0, color: 'inherit', textAlign: 'left', cursor: 'pointer', display: 'block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

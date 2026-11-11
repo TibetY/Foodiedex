@@ -222,6 +222,7 @@
     "create": "Create",
     "snackUpdated": "Restaurant updated successfully!",
     "snackAdded": "Restaurant added successfully!",
+    "snackImageRejected": "Saved without a photo. The image on the website looked like a logo or was too small, so you can upload one instead.",
     "snackSaveFailed": "Failed to save restaurant. Please try again.",
     "snackGeocodeFailed": "Saved, but we couldn't locate that address — it won't appear on the map. Try a more specific address.",
     "snackStatusFailed": "Failed to update status.",
