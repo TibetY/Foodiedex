@@ -1,33 +1,32 @@
 import { useState, useEffect } from 'react';
 import Dialog from '@mui/material/Dialog';
-import DialogContent from '@mui/material/DialogContent';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
-import Chip from '@mui/material/Chip';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
+import type SvgIcon from '@mui/material/SvgIcon';
 import Close from '@mui/icons-material/Close';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EventSeat from '@mui/icons-material/EventSeat';
+import EventSeatOutlined from '@mui/icons-material/EventSeatOutlined';
+import PlaceOutlined from '@mui/icons-material/PlaceOutlined';
 import Language from '@mui/icons-material/Language';
 import Facebook from '@mui/icons-material/Facebook';
 import Instagram from '@mui/icons-material/Instagram';
 import Twitter from '@mui/icons-material/Twitter';
-import EmailIcon from '@mui/icons-material/Email';
-import PhoneIcon from '@mui/icons-material/Phone';
+import MusicNote from '@mui/icons-material/MusicNote';
+import MailOutline from '@mui/icons-material/MailOutline';
+import PhoneOutlined from '@mui/icons-material/PhoneOutlined';
 import Favorite from '@mui/icons-material/Favorite';
 import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
 import AddIcon from '@mui/icons-material/Add';
+import Star from '@mui/icons-material/Star';
+import ChevronRight from '@mui/icons-material/ChevronRight';
 import { useTranslation } from 'react-i18next';
 import type { Restaurant, RestaurantRating } from '~/types/restaurant';
 import type { ListTokens } from '~/listTheme';
+import { decorate } from '~/utils/decorateRestaurant';
 import RestaurantThumb from '~/components/RestaurantThumb';
 import Bubbles, { BubbleInput } from '~/components/Bubbles';
-import { cuisineEmoji, placeTypeEmoji, dietEmoji, menuTypeEmoji } from '~/utils/cuisineEmoji';
 
 type Tokens = ListTokens;
 
@@ -36,6 +35,15 @@ function reservationLabel(platform: string): string {
   if (platform === 'opentable') return 'OpenTable';
   if (platform === 'walkin') return '';
   return platform;
+}
+
+/** "https://www.lecoucou.com/menus" → "lecoucou.com", for a link row's label. */
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
 }
 
 interface RestaurantDetailDialogProps {
@@ -59,6 +67,13 @@ interface RestaurantDetailDialogProps {
   onRate?: (restaurant: Restaurant, rating: number, note: string) => Promise<void> | void;
 }
 
+/**
+ * Everything about one place, read top to bottom on a phone: the photo, the
+ * name and its one-line summary, the rating, the one primary action (Reserve),
+ * the note, what everyone said, a few plain tags, then a single list of links —
+ * address, phone, email, website, socials. Sections with no data are simply
+ * absent; nothing renders an empty state.
+ */
 export default function RestaurantDetailDialog({
   open,
   restaurant,
@@ -79,17 +94,15 @@ export default function RestaurantDetailDialog({
   const muiTheme = useTheme();
   const fullScreen = useMediaQuery(muiTheme.breakpoints.down('sm'));
   const [activeLoc, setActiveLoc] = useState(0);
-  const [tab, setTab] = useState<'reservations' | 'hours' | 'instagram' | 'guides'>('reservations');
   // When a different restaurant is opened, default to the first location that
-  // actually takes bookings so the "Reserve" action is visible without having to
-  // hunt through tabs; fall back to the first location otherwise.
+  // actually takes bookings so the "Reserve" action is visible straight away;
+  // fall back to the first location otherwise.
   useEffect(() => {
     const locs = restaurant?.locations ?? [];
     const bookable = locs.findIndex(
       (l) => l.reservationUrl || l.reservationPlatform === 'walkin'
     );
     setActiveLoc(bookable >= 0 ? bookable : 0);
-    setTab('reservations');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restaurant?.id]);
   if (!restaurant) return null;
@@ -106,47 +119,39 @@ export default function RestaurantDetailDialog({
       ? ratings.reduce((sum, x) => sum + x.rating, 0) / ratings.length
       : null;
   const shownRating = groupAvg ?? r.rating ?? 0;
-  const rating = Math.round(shownRating);
   const myRating = currentUserId ? ratings.find((x) => x.userId === currentUserId) : undefined;
   const otherRatings = ratings.filter((x) => x.userId !== currentUserId);
   const isBeen = (r.status ?? 'want') === 'been';
   const statusInteractive = canEdit && onToggleStatus;
+  const meta = decorate(r).meta;
+  const stars = r.michelinStars ?? 0;
 
-  const sectionLabel = {
-    display: 'block',
-    color: t.muted,
-    fontSize: 12,
-    fontWeight: 600,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '.05em',
-    mb: '6px',
-  };
+  // Cuisine is already in the meta line, and "Restaurant" says nothing here.
+  const tags = [
+    ...(r.placeTypes ?? []).filter((p) => p !== 'Restaurant' && p !== r.cuisineType).map((p) => tr(`placeTypes.${p}`, p)),
+    ...(r.menuTypes ?? []).map((m) => tr(`menuTypes.${m}`, m)),
+    ...(r.dietaryTags ?? []).map((d) => tr(`dietary.${d}`, d)),
+  ];
 
-  const chipSx = {
-    background: t.searchBg,
-    border: `1px solid ${t.pillBorder}`,
-    color: t.muted,
-    fontSize: 12.5,
-  };
+  const links: { key: string; Icon: typeof SvgIcon; label: string; href: string; external?: boolean }[] = [];
+  if (loc.address) {
+    links.push({
+      key: 'address',
+      Icon: PlaceOutlined,
+      label: loc.address,
+      href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${r.name} ${loc.address}`)}`,
+      external: true,
+    });
+  }
+  if (loc.phone) links.push({ key: 'phone', Icon: PhoneOutlined, label: loc.phone, href: `tel:${loc.phone}` });
+  if (loc.email) links.push({ key: 'email', Icon: MailOutline, label: loc.email, href: `mailto:${loc.email}` });
+  if (r.url) links.push({ key: 'web', Icon: Language, label: hostOf(r.url), href: r.url, external: true });
+  if (r.socialMedia?.instagram) links.push({ key: 'ig', Icon: Instagram, label: 'Instagram', href: r.socialMedia.instagram, external: true });
+  if (r.socialMedia?.facebook) links.push({ key: 'fb', Icon: Facebook, label: 'Facebook', href: r.socialMedia.facebook, external: true });
+  if (r.socialMedia?.twitter) links.push({ key: 'x', Icon: Twitter, label: 'Twitter / X', href: r.socialMedia.twitter, external: true });
+  if (r.socialMedia?.tiktok) links.push({ key: 'tt', Icon: MusicNote, label: 'TikTok', href: r.socialMedia.tiktok, external: true });
 
-  const tabSx = {
-    minHeight: 40,
-    textTransform: 'none' as const,
-    color: t.muted,
-    fontSize: 13.5,
-    '&.Mui-selected': { color: t.ink },
-  };
-
-  const hasLinks = Boolean(
-    r.url || r.socialMedia?.facebook || r.socialMedia?.instagram || r.socialMedia?.twitter
-  );
-
-  /** Quiet empty state for a tab with no data yet (Hours/Guides, or no bookings). */
-  const emptyTab = (label: string) => (
-    <Box sx={{ py: '18px', textAlign: 'center', color: t.faint, fontSize: 13.5, fontStyle: 'italic' }}>
-      {label}
-    </Box>
-  );
+  const sectionLabel = { color: t.muted, fontSize: 12, fontWeight: 600, mb: '10px' };
 
   return (
     <Dialog
@@ -155,184 +160,196 @@ export default function RestaurantDetailDialog({
       maxWidth="sm"
       fullWidth
       fullScreen={fullScreen}
+      scroll="paper"
       aria-labelledby="restaurant-detail-title"
       PaperProps={{
-        sx: { background: t.cardBg, color: t.ink, borderRadius: fullScreen ? 0 : '22px', overflow: 'hidden' },
+        // The photo scrolls away with the content instead of pinning a third of
+        // a phone screen in place.
+        sx: { background: t.cardBg, color: t.ink, borderRadius: fullScreen ? 0 : '22px', overflowY: 'auto', border: 'none' },
       }}
     >
-      {/* Hero image / initial */}
-      <Box sx={{ position: 'relative' }}>
-        <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ borderRadius: 0 }} />
+      {/* Hero — a place with no photo gets no hero at all, just room for the
+          close button, instead of a large empty tile repeating its name. */}
+      <Box sx={{ position: 'relative', flex: 'none', minHeight: 60 }}>
+        {r.image && <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ borderRadius: 0 }} />}
         <IconButton
           onClick={onClose}
           aria-label={tr('form.close')}
           sx={{
             position: 'absolute',
-            top: 10,
-            right: 10,
-            background: 'rgba(0,0,0,0.45)',
-            color: '#fff',
-            '&:hover': { background: 'rgba(0,0,0,0.65)' },
+            top: 12,
+            right: 12,
+            width: 40,
+            height: 40,
+            background: r.image ? 'rgba(0,0,0,0.45)' : t.track,
+            color: r.image ? '#fff' : t.ink,
+            '&:hover': { background: r.image ? 'rgba(0,0,0,0.65)' : t.skeleton },
           }}
         >
           <Close fontSize="small" />
         </IconButton>
-        <Box
-          component={statusInteractive ? 'button' : 'span'}
-          type={statusInteractive ? 'button' : undefined}
-          onClick={statusInteractive ? () => onToggleStatus(r) : undefined}
-          title={statusInteractive ? tr('dashboard.toggleStatus') : undefined}
-          aria-label={
-            statusInteractive
-              ? tr('dashboard.markAs', {
-                  name: r.name,
-                  status: isBeen ? tr('dashboard.markWant') : tr('dashboard.markBeen'),
-                })
-              : undefined
-          }
-          sx={{
-            position: 'absolute',
-            top: 12,
-            left: 12,
-            border: 'none',
-            font: 'inherit',
-            background: isBeen ? t.beenBg : t.wantBg,
-            color: isBeen ? t.beenFg : t.wantFg,
-            fontSize: 12,
-            fontWeight: 600,
-            padding: '6px 12px',
-            borderRadius: '999px',
-            cursor: statusInteractive ? 'pointer' : 'default',
-          }}
-        >
-          {isBeen ? tr('dashboard.statusBeen') : tr('dashboard.statusWant')}
-        </Box>
       </Box>
 
-      <DialogContent sx={{ p: 3 }}>
-        {/* Name + price + favourite */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
-          <Box id="restaurant-detail-title" component="h2" sx={{ fontFamily: serifFont, fontSize: 30, m: 0, lineHeight: 1.1 }}>
+      <Box sx={{ padding: { xs: '20px 18px 28px', sm: '24px 28px 28px' }, pt: r.image ? undefined : '4px !important' }}>
+        {/* Name + favourite */}
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
+          <Box id="restaurant-detail-title" component="h2" sx={{ fontFamily: serifFont, fontSize: 28, fontWeight: 600, letterSpacing: '-.02em', m: 0, lineHeight: 1.15 }}>
             {r.name}
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 'none' }}>
-            {r.priceRange && (
-              <Box component="span" sx={{ color: t.cost, fontSize: 17, fontWeight: 600, letterSpacing: '.03em' }}>
-                {r.priceRange}
-              </Box>
-            )}
-            {canEdit && onToggleFavorite ? (
-              <IconButton
-                onClick={() => onToggleFavorite(r)}
-                aria-label={tr(r.favorite ? 'dashboard.unfavorite' : 'dashboard.favorite', { name: r.name })}
-                aria-pressed={r.favorite ?? false}
-                sx={{ color: r.favorite ? t.error : t.muted }}
-              >
-                {r.favorite ? <Favorite /> : <FavoriteBorder />}
-              </IconButton>
-            ) : r.favorite ? (
-              <Favorite role="img" aria-label={tr('dashboard.favorited')} sx={{ color: t.error }} />
-            ) : null}
-          </Box>
+          {canEdit && onToggleFavorite ? (
+            <IconButton
+              onClick={() => onToggleFavorite(r)}
+              aria-label={tr(r.favorite ? 'dashboard.unfavorite' : 'dashboard.favorite', { name: r.name })}
+              aria-pressed={r.favorite ?? false}
+              sx={{ color: r.favorite ? t.error : t.muted, mt: '-4px', mr: '-8px', flex: 'none' }}
+            >
+              {r.favorite ? <Favorite /> : <FavoriteBorder />}
+            </IconButton>
+          ) : r.favorite ? (
+            <Favorite role="img" aria-label={tr('dashboard.favorited')} sx={{ color: t.error, flex: 'none', mt: '4px' }} />
+          ) : null}
         </Box>
 
-        {/* Rating — group average, with the agreement line from the design */}
-        <Box sx={{ mt: '8px', minHeight: 20, display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {rating > 0 ? (
-            <>
-              <Bubbles value={shownRating} tokens={t} size={15} gap={6} />
-              <Box component="span" sx={{ color: t.faint, fontSize: 12.5 }}>
-                {ratings.length > 0
-                  ? tr('detail.ratingSummary', {
-                      rating: shownRating.toFixed(1),
-                      count: ratings.length,
-                    })
-                  : shownRating.toFixed(1)}
-              </Box>
-            </>
-          ) : (
-            <Box component="span" sx={{ color: t.faint, fontSize: 13, fontStyle: 'italic' }}>
-              {tr('detail.notRated')}
+        {meta && <Box sx={{ mt: '4px', color: t.muted, fontSize: 16 }}>{meta}</Box>}
+
+        {/* Rating — group average, with how many of us rated it */}
+        {shownRating > 0 && (
+          <Box sx={{ mt: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Bubbles value={shownRating} tokens={t} size={13} gap={5} />
+            <Box component="span" sx={{ color: t.muted, fontSize: 14 }}>
+              {ratings.length > 0
+                ? tr('detail.ratingSummary', { rating: shownRating.toFixed(1), count: ratings.length })
+                : shownRating.toFixed(1)}
             </Box>
-          )}
-        </Box>
+          </Box>
+        )}
 
-        {/* Times visited */}
-        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '6px', mt: '10px' }}>
-          <Box component="span" sx={{ color: t.muted, fontSize: 13.5 }}>
+        {/* Recognition */}
+        {(stars > 0 || r.bibGourmand) && (
+          <Box sx={{ mt: '10px', display: 'flex', alignItems: 'center', gap: '6px', color: t.accent, fontSize: 14, fontWeight: 600 }}>
+            <Star aria-hidden sx={{ fontSize: 16 }} />
+            {[stars > 0 ? tr('detail.michelin', { count: stars }) : null, r.bibGourmand ? tr('form.bibGourmand') : null]
+              .filter(Boolean)
+              .join(' · ')}
+          </Box>
+        )}
+
+        {/* Status + visits: the two things you update after a meal */}
+        <Box sx={{ mt: '16px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <Box
+            component={statusInteractive ? 'button' : 'span'}
+            type={statusInteractive ? 'button' : undefined}
+            onClick={statusInteractive ? () => onToggleStatus(r) : undefined}
+            title={statusInteractive ? tr('dashboard.toggleStatus') : undefined}
+            aria-label={
+              statusInteractive
+                ? tr('dashboard.markAs', {
+                    name: r.name,
+                    status: isBeen ? tr('dashboard.markWant') : tr('dashboard.markBeen'),
+                  })
+                : undefined
+            }
+            sx={{
+              border: 'none',
+              font: 'inherit',
+              background: isBeen ? t.beenBg : t.wantBg,
+              color: isBeen ? t.beenFg : t.wantFg,
+              fontSize: 14,
+              fontWeight: 600,
+              padding: '8px 14px',
+              borderRadius: '999px',
+              cursor: statusInteractive ? 'pointer' : 'default',
+            }}
+          >
+            {isBeen ? tr('dashboard.statusBeen') : tr('dashboard.statusWant')}
+          </Box>
+          <Box component="span" sx={{ color: t.muted, fontSize: 14 }}>
             {tr('detail.visitedTimes', { count: r.visitCount ?? 0 })}
           </Box>
           {canEdit && onAddVisit && (
             <IconButton
-              size="small"
               onClick={() => onAddVisit(r)}
               aria-label={tr('detail.addVisit')}
               title={tr('detail.addVisit')}
-              sx={{
-                color: t.accent,
-                border: `1px solid ${t.pillBorder}`,
-                // Comfortable touch target; the ring itself stays small.
-                width: 34,
-                height: 34,
-                p: 0,
-                '&:hover': { borderColor: t.accent, background: 'transparent' },
-              }}
+              sx={{ color: t.accent, border: `1px solid ${t.border}`, width: 36, height: 36, p: 0, ml: '-2px' }}
             >
-              <AddIcon sx={{ fontSize: 16 }} />
+              <AddIcon sx={{ fontSize: 18 }} />
             </IconButton>
           )}
         </Box>
 
-        {/* Recognition: Michelin stars + Bib Gourmand */}
-        {((r.michelinStars ?? 0) > 0 || r.bibGourmand) && (
-          <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap', mt: '14px' }}>
-            {(r.michelinStars ?? 0) > 0 && (
-              <Chip
-                size="small"
-                label={tr('detail.michelin', { count: r.michelinStars }) + ' ' + '⭐'.repeat(r.michelinStars ?? 0)}
-                sx={{ ...chipSx, background: t.pBg, color: t.pFg, fontWeight: 600 }}
-              />
-            )}
-            {r.bibGourmand && (
-              <Chip
-                size="small"
-                label={tr('form.bibGourmand')}
-                sx={{ ...chipSx, background: t.pBg, color: t.pFg, fontWeight: 600 }}
-              />
-            )}
+        {/* The location switcher sits above everything that depends on it. */}
+        {locations.length > 1 && (
+          <Box role="group" sx={{ mt: '20px', display: 'flex', gap: '2px', padding: '3px', background: t.track, borderRadius: '999px', width: 'fit-content', maxWidth: '100%', overflowX: 'auto' }}>
+            {locations.map((l, i) => (
+              <Box
+                key={i}
+                component="button"
+                type="button"
+                aria-pressed={safeIdx === i}
+                onClick={() => setActiveLoc(i)}
+                sx={{
+                  border: 0,
+                  cursor: 'pointer',
+                  font: 'inherit',
+                  fontSize: 14,
+                  fontWeight: safeIdx === i ? 600 : 400,
+                  padding: '7px 14px',
+                  borderRadius: '999px',
+                  whiteSpace: 'nowrap',
+                  background: safeIdx === i ? t.cardBg : 'transparent',
+                  color: safeIdx === i ? t.ink : t.muted,
+                  boxShadow: safeIdx === i ? t.shadow1 : 'none',
+                }}
+              >
+                {l.label?.trim() || tr('form.locationN', { n: i + 1 })}
+              </Box>
+            ))}
+          </Box>
+        )}
+
+        {/* The one primary action */}
+        {loc.reservationUrl ? (
+          <Button
+            variant="contained"
+            component="a"
+            href={loc.reservationUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            fullWidth
+            sx={{ mt: '20px' }}
+          >
+            {reservationLabel(loc.reservationPlatform || '')
+              ? tr('dashboard.reserveOn', { platform: reservationLabel(loc.reservationPlatform || '') })
+              : tr('dashboard.book')}
+          </Button>
+        ) : loc.reservationPlatform === 'walkin' ? (
+          <Box sx={{ mt: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: t.muted, fontSize: 14 }}>
+            <EventSeatOutlined sx={{ fontSize: 18 }} /> {tr('detail.walkinBadge')}
+          </Box>
+        ) : null}
+
+        {/* Note */}
+        {r.comment && (
+          <Box sx={{ mt: '24px', color: t.ink, fontSize: 16, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
+            {r.comment}
           </Box>
         )}
 
         {/* What everyone said — each member's own bubbles and note, with the
-            signed-in user's row editable in place (design 1g). */}
+            signed-in user's row editable in place. */}
         {(otherRatings.length > 0 || onRate) && (
-          <Box sx={{ mt: '18px' }}>
-            <Box component="span" sx={sectionLabel}>{tr('detail.everyoneSaid')}</Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '14px', mt: '10px' }}>
+          <Box sx={{ mt: '28px' }}>
+            <Box sx={sectionLabel}>{tr('detail.everyoneSaid')}</Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {onRate && currentUserId && (
-                <MyVerdict
-                  tokens={t}
-                  existing={myRating}
-                  onSave={(value, note) => onRate(r, value, note)}
-                />
+                <MyVerdict tokens={t} existing={myRating} onSave={(value, note) => onRate(r, value, note)} />
               )}
               {otherRatings.map((x) => (
-                <Box key={x.id} sx={{ display: 'flex', gap: '13px' }}>
+                <Box key={x.id} sx={{ display: 'flex', gap: '12px' }}>
                   <Box
                     aria-hidden
-                    sx={{
-                      width: 34,
-                      height: 34,
-                      flex: 'none',
-                      borderRadius: '50%',
-                      background: t.avatar3,
-                      color: t.ink,
-                      display: 'grid',
-                      placeItems: 'center',
-                      fontSize: 11.5,
-                      fontWeight: 600,
-                      overflow: 'hidden',
-                    }}
+                    sx={{ width: 32, height: 32, flex: 'none', borderRadius: '50%', background: t.avatar3, color: t.ink, display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 600, overflow: 'hidden' }}
                   >
                     {x.profile?.avatarUrl ? (
                       <Box component="img" src={x.profile.avatarUrl} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -342,13 +359,13 @@ export default function RestaurantDetailDialog({
                   </Box>
                   <Box sx={{ minWidth: 0 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: '9px', mb: '3px' }}>
-                      <Box component="span" sx={{ fontSize: 13.5, fontWeight: 600 }}>
+                      <Box component="span" sx={{ fontSize: 14, fontWeight: 600 }}>
                         {x.profile?.displayName || tr('detail.someone')}
                       </Box>
                       <Bubbles value={x.rating} tokens={t} size={8} gap={3} />
                     </Box>
                     {x.note && (
-                      <Box component="p" sx={{ m: 0, fontSize: 13, lineHeight: 1.5, color: t.muted }}>
+                      <Box component="p" sx={{ m: 0, fontSize: 14, lineHeight: 1.5, color: t.muted }}>
                         {x.note}
                       </Box>
                     )}
@@ -359,200 +376,60 @@ export default function RestaurantDetailDialog({
           </Box>
         )}
 
-        {/* Cuisine + place types */}
-        {(r.cuisineType || (r.placeTypes && r.placeTypes.length > 0)) && (
-          <Box sx={{ mt: '16px' }}>
-            <Box component="span" sx={sectionLabel}>{tr('detail.about')}</Box>
-            <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {r.cuisineType && (
-                <Chip
-                  size="small"
-                  label={`${cuisineEmoji(r.cuisineType)} ${tr(`cuisines.${r.cuisineType}`, r.cuisineType)}`}
-                  sx={chipSx}
-                />
-              )}
-              {r.placeTypes?.map((pt) => (
-                <Chip key={pt} size="small" label={`${placeTypeEmoji(pt)} ${tr(`placeTypes.${pt}`, pt)}`} sx={chipSx} />
-              ))}
-            </Box>
-          </Box>
-        )}
-
-        {/* Dietary */}
-        {r.dietaryTags && r.dietaryTags.length > 0 && (
-          <Box sx={{ mt: '16px' }}>
-            <Box component="span" sx={sectionLabel}>{tr('form.dietaryTags')}</Box>
-            <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {r.dietaryTags.map((tag) => (
-                <Chip key={tag} size="small" label={`${dietEmoji(tag)} ${tr(`dietary.${tag}`, tag)}`} sx={chipSx} />
-              ))}
-            </Box>
-          </Box>
-        )}
-
-        {/* Menu types */}
-        {r.menuTypes && r.menuTypes.length > 0 && (
-          <Box sx={{ mt: '16px' }}>
-            <Box component="span" sx={sectionLabel}>{tr('form.menuTypes')}</Box>
-            <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {r.menuTypes.map((m) => (
-                <Chip key={m} size="small" label={`${menuTypeEmoji(m)} ${tr(`menuTypes.${m}`, m)}`} sx={chipSx} />
-              ))}
-            </Box>
-          </Box>
-        )}
-
-        {/* Enrichment tabs — reservations · hours · instagram · guides */}
-        <Box sx={{ mt: '18px' }}>
-          <Tabs
-            value={tab}
-            onChange={(_, v: 'reservations' | 'hours' | 'instagram' | 'guides') => setTab(v)}
-            variant="scrollable"
-            scrollButtons="auto"
-            allowScrollButtonsMobile
-            aria-label={tr('detail.tabsLabel')}
-            sx={{ borderBottom: `1px solid ${t.border}`, minHeight: 40, '& .MuiTabs-indicator': { backgroundColor: t.accent } }}
-          >
-            <Tab value="reservations" label={tr('detail.tabReservations')} sx={tabSx} />
-            <Tab value="hours" label={tr('detail.tabHours')} sx={tabSx} />
-            <Tab value="instagram" label={tr('detail.tabInstagram')} sx={tabSx} />
-            <Tab value="guides" label={tr('detail.tabGuides')} sx={tabSx} />
-          </Tabs>
-
-          <Box sx={{ pt: '14px' }}>
-            {tab === 'reservations' && (
-              <Box>
-                {/* The location switcher lives OUTSIDE the has-details branch:
-                    selecting a detail-less branch must never remove the tabs
-                    (that trapped the user on the empty branch). */}
-                {locations.length > 1 && (
-                  <Tabs
-                    value={safeIdx}
-                    onChange={(_, v: number) => setActiveLoc(v)}
-                    variant="scrollable"
-                    scrollButtons="auto"
-                    sx={{ mb: '10px', minHeight: 36 }}
-                  >
-                    {locations.map((l, i) => (
-                      <Tab
-                        key={i}
-                        label={l.label?.trim() || tr('form.locationN', { n: i + 1 })}
-                        sx={{ minHeight: 36, textTransform: 'none', color: t.muted, '&.Mui-selected': { color: t.ink } }}
-                      />
-                    ))}
-                  </Tabs>
-                )}
-                {loc.address || loc.phone || loc.email || loc.reservationUrl || loc.reservationPlatform === 'walkin' ? (
-                <Box>
-                  {loc.address && (
-                    <Box sx={{ mb: '10px' }}>
-                      <Box component="span" sx={sectionLabel}>{tr('form.address')}</Box>
-                      <Box sx={{ color: t.ink, fontSize: 14 }}>{loc.address}</Box>
-                    </Box>
-                  )}
-                  {(loc.phone || loc.email) && (
-                    <Box sx={{ display: 'flex', gap: '4px' }}>
-                      {loc.phone && (
-                        <IconButton component="a" href={`tel:${loc.phone}`} aria-label={tr('detail.phone')} sx={{ color: t.muted }}>
-                          <PhoneIcon fontSize="small" />
-                        </IconButton>
-                      )}
-                      {loc.email && (
-                        <IconButton component="a" href={`mailto:${loc.email}`} aria-label={tr('detail.email')} sx={{ color: t.muted }}>
-                          <EmailIcon fontSize="small" />
-                        </IconButton>
-                      )}
-                    </Box>
-                  )}
-                  {loc.reservationUrl && (
-                    <Box sx={{ mt: '12px' }}>
-                      <Button
-                        variant="outlined"
-                        component="a"
-                        href={loc.reservationUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        startIcon={<EventSeat fontSize="small" />}
-                      >
-                        {tr('dashboard.reserveOn', { platform: reservationLabel(loc.reservationPlatform || '') })}
-                      </Button>
-                    </Box>
-                  )}
-                  {!loc.reservationUrl && loc.reservationPlatform === 'walkin' && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px', mt: '12px', color: t.muted, fontSize: 14 }}>
-                      <EventSeat fontSize="small" /> {tr('detail.walkinBadge')}
-                    </Box>
-                  )}
-                </Box>
-                ) : (
-                  emptyTab(tr('detail.reservationsEmpty'))
-                )}
+        {/* Tags — plain labels, one row */}
+        {tags.length > 0 && (
+          <Box sx={{ mt: '24px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {tags.map((tag) => (
+              <Box key={tag} component="span" sx={{ background: t.chip, color: t.muted, fontSize: 14, padding: '5px 10px', borderRadius: '8px' }}>
+                {tag}
               </Box>
-            )}
-
-            {tab === 'hours' && emptyTab(tr('detail.hoursEmpty'))}
-
-            {tab === 'instagram' &&
-              (hasLinks ? (
-                <Box sx={{ display: 'flex', gap: '4px' }}>
-                  {r.url && (
-                    <IconButton component="a" href={r.url} target="_blank" rel="noopener noreferrer" aria-label={tr('form.websiteUrl')} sx={{ color: t.muted }}>
-                      <Language fontSize="small" />
-                    </IconButton>
-                  )}
-                  {r.socialMedia?.instagram && (
-                    <IconButton component="a" href={r.socialMedia.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" sx={{ color: t.muted }}>
-                      <Instagram fontSize="small" />
-                    </IconButton>
-                  )}
-                  {r.socialMedia?.facebook && (
-                    <IconButton component="a" href={r.socialMedia.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook" sx={{ color: t.muted }}>
-                      <Facebook fontSize="small" />
-                    </IconButton>
-                  )}
-                  {r.socialMedia?.twitter && (
-                    <IconButton component="a" href={r.socialMedia.twitter} target="_blank" rel="noopener noreferrer" aria-label="Twitter / X" sx={{ color: t.muted }}>
-                      <Twitter fontSize="small" />
-                    </IconButton>
-                  )}
-                </Box>
-              ) : (
-                emptyTab(tr('detail.socialEmpty'))
-              ))}
-
-            {tab === 'guides' && emptyTab(tr('detail.guidesEmpty'))}
-          </Box>
-        </Box>
-
-        {/* Comment / notes — pull-quote treatment */}
-        {r.comment && (
-          <Box sx={{ mt: '18px', padding: '15px 17px', background: t.beenBg, borderRadius: '18px', color: t.ink, fontSize: 14, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
-            “{r.comment}”
+            ))}
           </Box>
         )}
 
-        {/* Actions */}
+        {/* Links — one list, each row a full-width tap target */}
+        {links.length > 0 && (
+          <Box sx={{ mt: '24px', borderTop: `1px solid ${t.border}` }}>
+            {links.map(({ key, Icon, label, href, external }) => (
+              <Box
+                key={key}
+                component="a"
+                href={href}
+                target={external ? '_blank' : undefined}
+                rel={external ? 'noopener noreferrer' : undefined}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '14px',
+                  minHeight: 52,
+                  padding: '10px 0',
+                  borderBottom: `1px solid ${t.border}`,
+                  color: t.ink,
+                  textDecoration: 'none',
+                  fontSize: 16,
+                  '&:hover': { color: t.accent },
+                }}
+              >
+                <Icon sx={{ fontSize: 20, color: t.muted, flex: 'none' }} />
+                <Box component="span" sx={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>{label}</Box>
+                <ChevronRight aria-hidden sx={{ fontSize: 20, color: t.faint, flex: 'none' }} />
+              </Box>
+            ))}
+          </Box>
+        )}
+
+        {/* Edit / delete — quiet, at the very end */}
         {canEdit && (
           <Box sx={{ display: 'flex', gap: '10px', mt: '24px' }}>
-            <Button
-              variant="contained"
-              startIcon={<EditIcon fontSize="small" />}
-              onClick={() => onEdit(r)}
-              sx={{ background: t.accent, color: t.accentText, '&:hover': { background: t.accent, filter: 'brightness(0.95)' } }}
-            >
+            <Button variant="outlined" onClick={() => onEdit(r)} sx={{ flex: 1 }}>
               {tr('detail.edit')}
             </Button>
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<DeleteIcon fontSize="small" />}
-              onClick={() => r.id && onDelete(r.id)}
-            >
+            <Button variant="text" color="error" onClick={() => r.id && onDelete(r.id)} sx={{ color: t.error }}>
               {tr('detail.delete')}
             </Button>
           </Box>
         )}
-      </DialogContent>
+      </Box>
     </Dialog>
   );
 }
@@ -583,62 +460,44 @@ function MyVerdict({
   }, [existing?.id, existing?.rating, existing?.note]);
 
   return (
-    <Box sx={{ display: 'flex', gap: '13px' }}>
-      <Box
-        aria-hidden
-        sx={{
-          width: 34,
-          height: 34,
-          flex: 'none',
-          borderRadius: '50%',
-          background: t.beenBg,
-          color: t.beenFg,
-          display: 'grid',
-          placeItems: 'center',
-          fontSize: 11.5,
-          fontWeight: 600,
-        }}
-      >
-        ★
-      </Box>
-      <Box sx={{ minWidth: 0, flex: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: '9px', mb: '5px', flexWrap: 'wrap' }}>
-          <Box component="span" sx={{ fontSize: 13.5, fontWeight: 600 }}>{tr('detail.yourBubbles')}</Box>
-          <BubbleInput
-            value={value}
-            onChange={(next) => {
-              setValue(next);
-              void onSave(next, note);
-            }}
-            tokens={t}
-            size={16}
-            gap={6}
-            ariaLabel={tr('detail.yourBubbles')}
-          />
-        </Box>
-        <Box
-          component="input"
-          value={note}
-          placeholder={tr('detail.yourNotePlaceholder')}
-          aria-label={tr('detail.yourNote')}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNote(e.target.value)}
-          onBlur={() => {
-            if ((existing?.note ?? '') !== note && value > 0) void onSave(value, note);
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', mb: '8px', flexWrap: 'wrap' }}>
+        <Box component="span" sx={{ fontSize: 14, fontWeight: 600 }}>{tr('detail.yourBubbles')}</Box>
+        <BubbleInput
+          value={value}
+          onChange={(next) => {
+            setValue(next);
+            void onSave(next, note);
           }}
-          sx={{
-            width: '100%',
-            font: 'inherit',
-            fontSize: 13,
-            color: t.ink,
-            background: t.field,
-            border: `1px solid ${t.fieldBorder}`,
-            borderRadius: '12px',
-            padding: '8px 12px',
-            '&::placeholder': { color: t.faint },
-            '&:focus': { outline: 'none', borderColor: t.accent },
-          }}
+          tokens={t}
+          size={20}
+          gap={8}
+          ariaLabel={tr('detail.yourBubbles')}
         />
       </Box>
+      <Box
+        component="input"
+        value={note}
+        placeholder={tr('detail.yourNotePlaceholder')}
+        aria-label={tr('detail.yourNote')}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNote(e.target.value)}
+        onBlur={() => {
+          if ((existing?.note ?? '') !== note && value > 0) void onSave(value, note);
+        }}
+        sx={{
+          width: '100%',
+          font: 'inherit',
+          // 16px so iOS doesn't zoom the page when the field takes focus.
+          fontSize: 16,
+          color: t.ink,
+          background: t.field,
+          border: `1px solid ${t.fieldBorder}`,
+          borderRadius: '10px',
+          padding: '10px 12px',
+          '&::placeholder': { color: t.faint },
+          '&:focus': { outline: 'none', borderColor: t.accent },
+        }}
+      />
     </Box>
   );
 }
