@@ -8,7 +8,9 @@ import FilterList from '@mui/icons-material/FilterList';
 import ArrowUpward from '@mui/icons-material/ArrowUpward';
 import ArrowDownward from '@mui/icons-material/ArrowDownward';
 import { useTranslation } from 'react-i18next';
+import type { ListView } from '~/types/restaurant';
 import type { ListTokens } from '~/listTheme';
+import SavedViewsBar from '~/components/SavedViewsBar';
 import { cuisineEmoji, placeTypeEmoji, dietEmoji, menuTypeEmoji } from '~/utils/cuisineEmoji';
 
 type Tokens = ListTokens;
@@ -42,6 +44,14 @@ interface FilterSheetProps {
   sortReversed: boolean;
   setSortReversed: (updater: boolean | ((prev: boolean) => boolean)) => void;
   onClear: () => void;
+  views: ListView[];
+  /** Canonical serialized current filter params, for the active-view highlight. */
+  currentParams: string;
+  hasActiveFilters: boolean;
+  onApplyView: (view: ListView) => void;
+  onSaveView: () => void;
+  onRenameView: (view: ListView) => void;
+  onDeleteView: (view: ListView) => void;
 }
 
 function toggle(arr: string[], value: string): string[] {
@@ -88,6 +98,25 @@ export default function FilterSheet(props: FilterSheetProps) {
 
   const content = (
     <Box sx={{ p: { xs: 2.5, sm: 2 }, width: { xs: 'auto', sm: 340 } }}>
+      {/* Saved views */}
+      {(props.views.length > 0 || props.hasActiveFilters) && (
+        <Box sx={{ mb: 2 }}>
+          <Box sx={{ fontSize: 12, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: t.faint, mb: 1 }}>
+            {tr('views.title')}
+          </Box>
+          <SavedViewsBar
+            tokens={t}
+            views={props.views}
+            currentParams={props.currentParams}
+            hasActiveFilters={props.hasActiveFilters}
+            onApply={props.onApplyView}
+            onSave={props.onSaveView}
+            onRename={props.onRenameView}
+            onDelete={props.onDeleteView}
+          />
+        </Box>
+      )}
+
       {/* Sort */}
       <Section tokens={t} label={tr('dashboard.sortLabel', 'Sort')}>
         {props.sortModes.map((m) => (
@@ -231,6 +260,7 @@ export default function FilterSheet(props: FilterSheetProps) {
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
+        aria-label={tr('filters.button')}
         onClick={(e: React.MouseEvent<HTMLButtonElement>) => setAnchor(e.currentTarget)}
         sx={{
           display: 'inline-flex',
@@ -246,8 +276,10 @@ export default function FilterSheet(props: FilterSheetProps) {
           cursor: 'pointer',
         }}
       >
-        <FilterList sx={{ fontSize: 17 }} />
-        {tr('filters.button')}
+        <FilterList sx={{ fontSize: 18 }} />
+        <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+          {tr('filters.button')}
+        </Box>
         {activeCount > 0 && (
           <Box component="span" sx={{ minWidth: 18, height: 18, px: '5px', borderRadius: '999px', background: activeCount ? t.pFg : t.accent, color: activeCount ? t.pBg : t.accentText, fontSize: 11, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
             {activeCount}

@@ -160,6 +160,7 @@
     "filterAll": "All",
     "filterBeen": "Been",
     "filterWant": "Want to try",
+    "filterWantShort": "Want",
     "cuisine": "Cuisine",
     "city": "City",
     "cost": "Cost",
@@ -340,6 +341,7 @@
     "done": "Done"
   },
   "views": {
+    "title": "Saved views",
     "save": "Save view",
     "saveTitle": "Save this view",
     "renameTitle": "Rename view",

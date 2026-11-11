@@ -25,8 +25,8 @@ interface SavedViewsBarProps {
 }
 
 /**
- * A calm row of the user's saved filter views, plus a "Save view" affordance when
- * there are active filters worth keeping. Applying a view is just applying its
+ * The user's saved filter views, plus a "Save view" affordance when there are
+ * active filters worth keeping. Lives at the top of the filter sheet. Applying a view is just applying its
  * stored querystring; the pill highlights when the current filters match it.
  */
 export default function SavedViewsBar({
@@ -45,7 +45,7 @@ export default function SavedViewsBar({
   if (views.length === 0 && !hasActiveFilters) return null;
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', mt: '18px' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
       {views.map((view) => {
         const active = view.params === currentParams;
         return (

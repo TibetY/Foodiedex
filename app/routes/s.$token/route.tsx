@@ -5,7 +5,15 @@ import { useLoaderData, Link, Form } from '@remix-run/react';
 import leafletStylesHref from 'leaflet/dist/leaflet.css?url';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 import Bookmark from '@mui/icons-material/Bookmark';
+import Search from '@mui/icons-material/Search';
+import SearchOff from '@mui/icons-material/SearchOff';
+import DarkModeOutlined from '@mui/icons-material/DarkModeOutlined';
+import LightModeOutlined from '@mui/icons-material/LightModeOutlined';
+import GridViewOutlined from '@mui/icons-material/GridViewOutlined';
+import ViewListOutlined from '@mui/icons-material/ViewListOutlined';
+import MapOutlined from '@mui/icons-material/MapOutlined';
 import { useTranslation } from 'react-i18next';
 import { createSupabaseServerClient } from '~/supabase.server';
 import { getSharedList, forkSharedList, type SharedList } from '~/services/sharedList.server';
@@ -14,9 +22,9 @@ import type { Restaurant } from '~/types/restaurant';
 import RestaurantThumb from '~/components/RestaurantThumb';
 import RestaurantDetailDialog from '~/components/RestaurantDetailDialog';
 import Bubbles from '~/components/Bubbles';
-import PlaceCard, { BookingPill } from '~/components/PlaceCard';
+import PlaceCard from '~/components/PlaceCard';
 import { LogoMark } from '~/components/Logo';
-import { useKanpaiTheme, type ListTokens } from '~/listTheme';
+import { useKanpaiTheme } from '~/listTheme';
 import type { RestaurantMapProps } from '~/components/RestaurantMap';
 
 const RestaurantMap = lazy<React.ComponentType<RestaurantMapProps>>(() =>
@@ -149,28 +157,11 @@ export default function SharedListPage() {
     setDetailOpen(true);
   };
 
-  const segBtn = (val: ViewMode) => ({
-    background: view === val ? t.segBg : 'transparent',
-    color: view === val ? t.segFg : t.segIdle,
-    border: 'none',
-    cursor: 'pointer',
-
-    fontSize: '13.5px',
-    fontWeight: 500,
-    padding: '7px 18px',
-    borderRadius: '999px',
-  });
-  const pill = (val: FilterMode) => ({
-    background: filter === val ? t.pBg : 'transparent',
-    color: filter === val ? t.pFg : t.pIdle,
-    border: `1px solid ${t.pillBorder}`,
-    cursor: 'pointer',
-
-    fontSize: '13px',
-    fontWeight: 500,
-    padding: '7px 15px',
-    borderRadius: '999px',
-  });
+  const viewOptions: { id: ViewMode; label: string; Icon: typeof GridViewOutlined }[] = [
+    { id: 'tile', label: tr('dashboard.viewTile'), Icon: GridViewOutlined },
+    { id: 'list', label: tr('dashboard.viewList'), Icon: ViewListOutlined },
+    { id: 'map', label: tr('dashboard.viewMap'), Icon: MapOutlined },
+  ];
 
   // ---- Unavailable (missing / revoked / expired) -------------------------
   if (!shared) {
@@ -228,12 +219,13 @@ export default function SharedListPage() {
             </Box>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <Box sx={{ display: 'flex', background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px', padding: '3px' }}>
-              <Box component="button" onClick={() => setMode('light')} aria-label={tr('dashboard.themeLight')} aria-pressed={mode === 'light'}
-                sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, background: mode === 'light' ? t.accent : 'transparent', color: mode === 'light' ? t.accentText : t.faint }}>☀</Box>
-              <Box component="button" onClick={() => setMode('dark')} aria-label={tr('dashboard.themeDark')} aria-pressed={mode === 'dark'}
-                sx={{ border: 'none', cursor: 'pointer', width: 30, height: 26, borderRadius: '999px', fontSize: 13, background: mode === 'dark' ? t.accent : 'transparent', color: mode === 'dark' ? t.accentText : t.faint }}>☾</Box>
-            </Box>
+            <IconButton
+              onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}
+              aria-label={mode === 'light' ? tr('dashboard.themeDark') : tr('dashboard.themeLight')}
+              sx={{ color: t.muted }}
+            >
+              {mode === 'light' ? <DarkModeOutlined sx={{ fontSize: 20 }} /> : <LightModeOutlined sx={{ fontSize: 20 }} />}
+            </IconButton>
           </Box>
         </Box>
 
@@ -273,52 +265,110 @@ export default function SharedListPage() {
             )}
           </Box>
 
-          {/* controls */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px', mt: '22px', flexWrap: 'wrap' }}>
+          {/* controls — same bar as the dashboard: search · status · sort · view */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: '8px', sm: '12px' }, mt: { xs: '20px', sm: '28px' }, flexWrap: 'wrap' }}>
             <Box
-              component="input"
-              value={searchQuery}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-              placeholder={tr('dashboard.searchPlaceholder')}
-              aria-label={tr('dashboard.searchLabel')}
+              component="label"
               sx={{
-                background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px',
-                padding: '8px 16px', color: t.ink,
-                // ≥16px on phones — iOS auto-zooms on smaller inputs.
-                fontSize: { xs: '16px', sm: '13.5px' },
-                outline: 'none', minWidth: { xs: '100%', sm: 200 }, '::placeholder': { color: t.faint },
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                flex: { xs: '1 1 100%', sm: '1 1 auto' },
+                maxWidth: { sm: 340 },
+                height: 40,
+                background: t.searchBg,
+                borderRadius: '10px',
+                padding: '0 12px',
+                cursor: 'text',
               }}
-            />
-            <Box role="group" aria-label={tr('dashboard.filterStatusLabel')} sx={{ display: 'flex', gap: '10px' }}>
-              <Box component="button" aria-pressed={filter === 'all'} onClick={() => setFilter('all')} sx={pill('all')}>{tr('dashboard.filterAll')}</Box>
-              <Box component="button" aria-pressed={filter === 'been'} onClick={() => setFilter('been')} sx={pill('been')}>{tr('dashboard.filterBeen')}</Box>
-              <Box component="button" aria-pressed={filter === 'want'} onClick={() => setFilter('want')} sx={pill('want')}>{tr('dashboard.filterWant')}</Box>
+            >
+              <Search aria-hidden sx={{ fontSize: 18, color: t.faint, flex: 'none' }} />
+              <Box
+                component="input"
+                value={searchQuery}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                placeholder={tr('dashboard.searchPlaceholder')}
+                aria-label={tr('dashboard.searchLabel')}
+                sx={{
+                  border: 'none',
+                  outline: 'none',
+                  background: 'transparent',
+                  color: t.ink,
+                  // ≥16px on phones — iOS auto-zooms on smaller inputs.
+                  fontSize: { xs: '16px', sm: '14px' },
+                  width: '100%',
+                  minWidth: 0,
+                  '::placeholder': { color: t.faint },
+                }}
+              />
+            </Box>
+            <Box role="group" aria-label={tr('dashboard.filterStatusLabel')} sx={{ display: 'flex', gap: '2px', padding: '3px', background: t.track, borderRadius: '999px' }}>
+              {(['all', 'been', 'want'] as FilterMode[]).map((f) => (
+                <Box
+                  key={f}
+                  component="button"
+                  aria-pressed={filter === f}
+                  onClick={() => setFilter(f)}
+                  sx={{
+                    border: 0,
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    fontWeight: filter === f ? 600 : 400,
+                    padding: { xs: '10px 12px', sm: '6px 14px' },
+                    borderRadius: '999px',
+                    background: filter === f ? t.cardBg : 'transparent',
+                    color: filter === f ? t.ink : t.muted,
+                    boxShadow: filter === f ? t.shadow1 : 'none',
+                  }}
+                >
+                  {tr(f === 'all' ? 'dashboard.filterAll' : f === 'been' ? 'dashboard.filterBeen' : 'dashboard.filterWantShort')}
+                </Box>
+              ))}
             </Box>
             <Box
               component="select"
               value={sort}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSort(e.target.value as SortMode)}
-              aria-label={tr('dashboard.sort_recent')}
-              sx={{
-                background: 'transparent', border: `1px solid ${t.pillBorder}`, borderRadius: '999px',
-                padding: '7px 14px', color: t.muted, fontSize: '13px', cursor: 'pointer',
-              }}
+              aria-label={tr('dashboard.sortLabel')}
+              sx={{ background: t.searchBg, border: 'none', borderRadius: '10px', height: 40, padding: '0 12px', color: t.muted, fontSize: 14, cursor: 'pointer' }}
             >
               {SORT_MODES.map((m) => (
                 <option key={m} value={m}>{tr(`dashboard.sort_${m}`)}</option>
               ))}
             </Box>
-            <Box sx={{ ml: { sm: 'auto' }, display: 'flex', background: t.searchBg, border: `1px solid ${t.border}`, borderRadius: '999px', padding: '4px' }}>
-              <Box component="button" aria-pressed={view === 'tile'} onClick={() => setView('tile')} sx={segBtn('tile')}>{tr('dashboard.viewTile')}</Box>
-              <Box component="button" aria-pressed={view === 'list'} onClick={() => setView('list')} sx={segBtn('list')}>{tr('dashboard.viewList')}</Box>
-              <Box component="button" aria-pressed={view === 'map'} onClick={() => setView('map')} sx={segBtn('map')}>{tr('dashboard.viewMap')}</Box>
+            <Box role="group" aria-label={tr('dashboard.viewLabel')} sx={{ ml: { sm: 'auto' }, display: 'flex', gap: '2px', padding: '3px', background: t.track, borderRadius: '999px' }}>
+              {viewOptions.map(({ id, label, Icon }) => (
+                <Box
+                  key={id}
+                  component="button"
+                  aria-pressed={view === id}
+                  aria-label={label}
+                  title={label}
+                  onClick={() => setView(id)}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 36,
+                    height: 30,
+                    border: 0,
+                    cursor: 'pointer',
+                    borderRadius: '999px',
+                    background: view === id ? t.cardBg : 'transparent',
+                    color: view === id ? t.ink : t.muted,
+                    boxShadow: view === id ? t.shadow1 : 'none',
+                  }}
+                >
+                  <Icon sx={{ fontSize: 19 }} />
+                </Box>
+              ))}
             </Box>
           </Box>
 
           {/* content */}
           {sorted.length === 0 ? (
             <Box sx={{ mt: '24px', mb: '40px', textAlign: 'center', py: { xs: 6, md: 10 }, px: 3, borderRadius: '16px', border: `1px solid ${t.border}`, background: t.cardBg }}>
-              <Box aria-hidden sx={{ fontSize: 44, lineHeight: 1, mb: 1.5 }}>🔍</Box>
+              <SearchOff aria-hidden sx={{ fontSize: 40, color: t.faint, mb: 1.5 }} />
               <Box sx={{ fontFamily: serif, fontSize: 30, mb: 1 }}>{tr('dashboard.noMatchesTitle')}</Box>
               <Box sx={{ color: t.muted, fontSize: 15 }}>{tr('dashboard.emptyTryFilter')}</Box>
             </Box>
@@ -337,42 +387,48 @@ export default function SharedListPage() {
                     sx={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderBottom: `1px solid ${t.borderSoft}`, cursor: 'pointer', '&:hover': { filter: 'brightness(0.98)' } }}>
                     <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 54, borderRadius: '8px' }} />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box sx={{ fontSize: 14, fontWeight: 500 }}>{r.name}</Box>
-                      <Box sx={{ color: t.muted, fontSize: 12 }}>{r.cuisine}</Box>
+                      <Box sx={{ fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</Box>
+                      {r.meta && <Box sx={{ color: t.muted, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.meta}</Box>}
                     </Box>
-                    <Box component="span" sx={{ color: t.cost, fontSize: 13, fontWeight: 600 }}>{r.costStr}</Box>
                   </Box>
                 ))}
               </Box>
             </Box>
           ) : view === 'list' ? (
-            <Box sx={{ padding: '24px 0 40px' }}>
-              <Box sx={{ border: `1px solid ${t.border}`, borderRadius: '16px', overflow: 'hidden' }}>
-                {sorted.map((r) => (
-                  <Box key={r.id} onClick={() => openDetail(r)}
-                    sx={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '13px 18px', borderBottom: `1px solid ${t.borderSoft}`, background: t.cardBg, cursor: 'pointer', '&:hover': { filter: 'brightness(0.98)' }, '&:last-of-type': { borderBottom: 'none' } }}>
-                    <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 60, borderRadius: '8px' }} />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box component="button" type="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); openDetail(r); }}
-                        sx={{ fontFamily: serif, fontSize: 18, border: 'none', background: 'transparent', p: 0, m: 0, color: 'inherit', textAlign: 'left', cursor: 'pointer', display: 'block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {r.name}
-                      </Box>
-                      <Box sx={{ color: t.muted, fontSize: 13, mt: '1px' }}>{r.meta}</Box>
+            <Box sx={{ padding: { xs: '12px 0 40px', sm: '16px 0 40px' } }}>
+              {sorted.map((r) => (
+                <Box
+                  key={r.id}
+                  onClick={() => openDetail(r)}
+                  sx={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px', margin: '0 -12px', borderRadius: '10px', cursor: 'pointer', '&:hover': { background: t.rowHover } }}
+                >
+                  <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: { xs: 72, sm: 96 }, borderRadius: '8px' }} />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box
+                      component="button"
+                      type="button"
+                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); openDetail(r); }}
+                      sx={{ fontSize: 16, fontWeight: 600, border: 'none', background: 'transparent', p: 0, m: 0, color: 'inherit', textAlign: 'left', cursor: 'pointer', display: 'block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                    >
+                      {r.name}
                     </Box>
-                    <Box sx={{ display: { xs: 'none', md: 'flex' }, flex: 'none' }}>
-                      <BookingPill locations={r.locations ?? []} tokens={t} />
-                    </Box>
-                    <Box sx={{ width: 90, color: t.cost, fontSize: 14, fontWeight: 600, display: { xs: 'none', sm: 'block' } }}>{r.costStr}</Box>
-                    <Box sx={{ width: 110, display: { xs: 'none', sm: 'block' } }}>
-                      {r.rated ? <Bubbles value={r.rating ?? 0} tokens={t} size={12} gap={5} /> : null}
-                    </Box>
-                    <StatusLabel been={r.isBeen} tokens={t} tr={tr} />
+                    {r.meta && <Box sx={{ color: t.muted, fontSize: 14, mt: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.meta}</Box>}
                   </Box>
-                ))}
-              </Box>
+                  {r.rated && (
+                    <Box sx={{ display: { xs: 'none', sm: 'block' }, flex: 'none' }}>
+                      <Bubbles value={r.rating ?? 0} tokens={t} size={10} gap={4} />
+                    </Box>
+                  )}
+                  {r.isWant && (
+                    <Box component="span" sx={{ flex: 'none', fontSize: 12, color: t.muted, width: { sm: 80 }, textAlign: 'right' }}>
+                      {tr('dashboard.statusWant')}
+                    </Box>
+                  )}
+                </Box>
+              ))}
             </Box>
           ) : (
-            <Box sx={{ padding: { xs: '16px 0 40px', sm: '24px 0 40px' } }}>
+            <Box sx={{ padding: { xs: '20px 0 56px', sm: '28px 0 56px' } }}>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(auto-fill, minmax(160px, 1fr))', sm: 'repeat(auto-fill, minmax(240px, 1fr))' }, gap: { xs: '22px 12px', sm: '32px 20px' } }}>
                 {sorted.map((r) => (
                   <PlaceCard key={r.id} r={r} tokens={t} onView={openDetail} />
@@ -395,13 +451,3 @@ export default function SharedListPage() {
       </Box>
   );
 }
-
-/** Non-interactive been/want label (the public view never toggles status). */
-function StatusLabel({ been, tokens: t, tr }: { been: boolean; tokens: ListTokens; tr: (k: string) => string }) {
-  return (
-    <Box component="span" sx={{ background: been ? t.beenBg : t.wantBg, color: been ? t.beenFg : t.wantFg, fontSize: '11.5px', fontWeight: 600, padding: '5px 11px', borderRadius: '999px', whiteSpace: 'nowrap' }}>
-      {been ? tr('dashboard.statusBeen') : tr('dashboard.statusWant')}
-    </Box>
-  );
-}
-

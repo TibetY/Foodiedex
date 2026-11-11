@@ -59,15 +59,18 @@ export default function ListSwitcher({
           p: 0,
           color: 'inherit',
           fontFamily: serifFont,
-          fontSize: { xs: 34, md: 44 },
+          fontSize: { xs: 16, sm: 20 },
           fontWeight: 600,
-          letterSpacing: '-.02em',
-          lineHeight: 1.05,
+          letterSpacing: '-.01em',
+          lineHeight: 1.2,
+          minWidth: 0,
           textAlign: 'left',
         }}
       >
-        {activeName}
-        <KeyboardArrowDown sx={{ fontSize: 28, opacity: 0.6, mb: '6px' }} />
+        <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: { xs: 200, sm: 280 } }}>
+          {activeName}
+        </Box>
+        <KeyboardArrowDown sx={{ fontSize: 20, opacity: 0.6, flex: 'none' }} />
       </Box>
 
       <Menu

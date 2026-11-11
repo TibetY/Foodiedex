@@ -1,31 +1,12 @@
 import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import EventSeat from '@mui/icons-material/EventSeat';
 import { useTranslation } from 'react-i18next';
-import type { Restaurant, RestaurantLocation } from '~/types/restaurant';
+import type { Restaurant } from '~/types/restaurant';
 import type { DecoratedRestaurant } from '~/utils/decorateRestaurant';
 import type { ListTokens } from '~/listTheme';
 import RestaurantThumb from '~/components/RestaurantThumb';
 import Bubbles from '~/components/Bubbles';
 
 type Tokens = ListTokens;
-
-function reservationLabel(platform: string): string {
-  if (platform === 'resy') return 'Resy';
-  if (platform === 'opentable') return 'OpenTable';
-  if (platform === 'walkin') return '';
-  return platform;
-}
-
-/** The one booking a card surfaces: the first reservable location, else the
- *  first explicit walk-in. Branch-by-branch detail lives in the detail dialog. */
-function primaryBooking(locations: RestaurantLocation[]): RestaurantLocation | null {
-  return (
-    locations.find((l) => l.reservationUrl) ??
-    locations.find((l) => l.reservationPlatform === 'walkin') ??
-    null
-  );
-}
 
 interface PlaceCardProps {
   r: DecoratedRestaurant;
@@ -132,98 +113,5 @@ export default function PlaceCard({ r, tokens: t, onView }: PlaceCardProps) {
         </Box>
       )}
     </Box>
-  );
-}
-
-/**
- * The card's single booking affordance (comp style): a compact filled accent
- * pill for the primary reservable location, a quiet walk-ins note, or nothing.
- * Also used by the list rows in both the dashboard and the shared view.
- */
-export function BookingPill({ locations, tokens: t }: { locations: RestaurantLocation[]; tokens: Tokens }) {
-  const { t: tr } = useTranslation();
-  const booking = primaryBooking(locations);
-  if (!booking) return null;
-  if (booking.reservationUrl) {
-    return (
-      <Box
-        component="a"
-        href={booking.reservationUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e: React.MouseEvent) => e.stopPropagation()}
-        aria-label={
-          reservationLabel(booking.reservationPlatform || '')
-            ? tr('dashboard.reserveOn', { platform: reservationLabel(booking.reservationPlatform || '') })
-            : undefined
-        }
-        sx={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          background: t.accent,
-          color: t.accentText,
-          borderRadius: '999px',
-          padding: '6px 12px',
-          fontSize: '12px',
-          fontWeight: 700,
-          textDecoration: 'none',
-          whiteSpace: 'nowrap',
-          // Long platform names (FR "Réserver · OpenTable") must never widen a
-          // narrow card — clip inside the pill instead.
-          maxWidth: '100%',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          '&:hover': { filter: 'brightness(1.05)' },
-        }}
-      >
-        {tr('dashboard.book')}
-      </Box>
-    );
-  }
-  return (
-    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: 12.5, color: t.muted, whiteSpace: 'nowrap' }}>
-      <EventSeat sx={{ fontSize: 15 }} /> {tr('dashboard.walkinBadge')}
-    </Box>
-  );
-}
-
-/** Small circular hover action button used on cards and list rows. */
-export function CardAction({
-  children,
-  label,
-  onClick,
-  tokens,
-  danger,
-  solid,
-}: {
-  children: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  tokens: Tokens;
-  danger?: boolean;
-  solid?: boolean;
-}) {
-  return (
-    <IconButton
-      size="small"
-      aria-label={label}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-      sx={{
-        width: 28,
-        height: 28,
-        background: solid ? tokens.searchBg : 'rgba(255,255,255,0.9)',
-        border: `1px solid ${tokens.border}`,
-        color: danger ? tokens.error : tokens.muted,
-        '&:hover': {
-          background: solid ? tokens.pillBorder : '#fff',
-          color: danger ? tokens.error : tokens.accent,
-        },
-      }}
-    >
-      {children}
-    </IconButton>
   );
 }
