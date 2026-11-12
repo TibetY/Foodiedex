@@ -7,6 +7,8 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
+import ListSubheader from '@mui/material/ListSubheader';
+import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
@@ -37,6 +39,13 @@ import type {
   SocialMediaLinks,
   PlaceCandidate,
 } from '~/types/restaurant';
+import {
+  DISTINCTIONS,
+  DISTINCTION_GROUPS,
+  applyDistinctionChange,
+  distinctionIds,
+  fieldsFromDistinctionIds,
+} from '~/utils/distinctions';
 import {
   cuisineTypes,
   dietaryTags,
@@ -99,7 +108,6 @@ const SOCIAL_PLATFORMS = ['facebook', 'instagram', 'twitter', 'tiktok'] as const
 const priceRanges = ['$', '$$', '$$$', '$$$$', '$$$$$'];
 const reservationPlatforms = ['resy', 'opentable', 'walkin', 'custom'] as const;
 const knownReservationPlatforms = ['resy', 'opentable', 'walkin'];
-const michelinStarOptions = [0, 1, 2, 3];
 
 /** Cuisine value isn't in the predefined list, so it's a custom "Other" entry. */
 function isCustomCuisine(cuisine: string | undefined): boolean {
@@ -149,6 +157,7 @@ const EMPTY_BRAND: Partial<Restaurant> = {
   menuTypes: [],
   michelinStars: 0,
   bibGourmand: false,
+  distinctions: [],
   visitCount: 0,
   favorite: false,
   status: 'want',
@@ -247,6 +256,7 @@ export default function RestaurantFormDialog({
         menuTypes: restaurant.menuTypes || [],
         michelinStars: restaurant.michelinStars || 0,
         bibGourmand: restaurant.bibGourmand || false,
+        distinctions: restaurant.distinctions || [],
         visitCount: restaurant.visitCount || 0,
         favorite: restaurant.favorite || false,
         status: restaurant.status || 'want',
@@ -685,6 +695,8 @@ export default function RestaurantFormDialog({
     });
   };
 
+  const selectedDistinctions = distinctionIds(formData);
+
   const handleSubmit = async () => {
     if (!formData.name?.trim()) {
       return;
@@ -716,6 +728,11 @@ export default function RestaurantFormDialog({
     try {
       // Keep been-status and visit count consistent regardless of edit path.
       const payload: Partial<Restaurant> = { ...formData, url: normalizedUrl, locations: normalizedLocations };
+      // Leave the field out unless there is something to store or to clear, so
+      // an ordinary save never depends on the distinctions column existing.
+      if (!payload.distinctions?.length && !restaurant?.distinctions?.length) {
+        delete payload.distinctions;
+      }
       if ((payload.visitCount ?? 0) >= 1) {
         payload.status = 'been';
       } else if (payload.status === 'been') {
@@ -1134,39 +1151,43 @@ export default function RestaurantFormDialog({
             </Box>
           </Grid>
 
-          {/* Recognition — Michelin stars + Bib Gourmand */}
-          <Grid item xs={12} sm={6}>
+          {/* Distinctions — Michelin tiers, Bib Gourmand and other guides, in one
+              multi-select. Stars/Bib still live in their own fields underneath. */}
+          <Grid item xs={12}>
             <TextField
               fullWidth
               select
-              label={t('form.michelinStars')}
-              value={formData.michelinStars ?? 0}
-              onChange={(e) =>
-                setFormData({ ...formData, michelinStars: Number(e.target.value) })
-              }
+              label={t('form.distinctions')}
+              value={selectedDistinctions}
+              onChange={(e) => {
+                const next = applyDistinctionChange(selectedDistinctions, e.target.value as unknown as string[]);
+                setFormData({ ...formData, ...fieldsFromDistinctionIds(next) });
+              }}
+              SelectProps={{
+                multiple: true,
+                displayEmpty: true,
+                renderValue: (value) => {
+                  const ids = value as string[];
+                  if (ids.length === 0) return t('form.none');
+                  return DISTINCTIONS.filter((d) => ids.includes(d.id)).map((d) => d.label).join(', ');
+                },
+                MenuProps: { PaperProps: { sx: { maxHeight: 420 } } },
+              }}
+              InputLabelProps={{ shrink: true }}
               sx={glowSx('michelin')}
             >
-              {michelinStarOptions.map((n) => (
-                <MenuItem key={n} value={n}>
-                  {n === 0 ? t('form.none') : t('detail.michelin', { count: n })}
-                </MenuItem>
-              ))}
+              {DISTINCTION_GROUPS.flatMap((group) => [
+                <ListSubheader key={group} sx={{ lineHeight: '36px', fontSize: 12, fontWeight: 600 }}>
+                  {group}
+                </ListSubheader>,
+                ...DISTINCTIONS.filter((d) => d.group === group).map((d) => (
+                  <MenuItem key={d.id} value={d.id} sx={{ minHeight: 44 }}>
+                    <Checkbox checked={selectedDistinctions.includes(d.id)} size="small" sx={{ p: '4px', mr: 1 }} />
+                    <ListItemText primary={d.label} />
+                  </MenuItem>
+                )),
+              ])}
             </TextField>
-          </Grid>
-          <Grid item xs={12} sm={6} sx={{ display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ ...glowBoxSx('michelin'), px: 1 }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={formData.bibGourmand ?? false}
-                    onChange={(e) =>
-                      setFormData({ ...formData, bibGourmand: e.target.checked })
-                    }
-                  />
-                }
-                label={t('form.bibGourmand')}
-              />
-            </Box>
           </Grid>
 
           {/* ============ Location & Booking ============ */}

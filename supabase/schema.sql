@@ -111,6 +111,10 @@ alter table public.restaurants
     check (michelin_stars between 0 and 3);
 alter table public.restaurants
   add column if not exists bib_gourmand boolean not null default false;
+-- Other recognitions (Canada's 100 Best, World's 50 Best, Gault&Millau, ...),
+-- stored by id; the list of ids lives in app/utils/distinctions.ts.
+alter table public.restaurants
+  add column if not exists distinctions text[] not null default '{}'::text[];
 -- Contact info, best-effort scraped from the restaurant's own website.
 alter table public.restaurants
   add column if not exists email text;
@@ -606,13 +610,13 @@ begin
   insert into public.restaurants (
     list_id, added_by, name, image, url, social_media, rating, price_range,
     comment, cuisine_type, dietary_tags, place_types, menu_types, michelin_stars,
-    bib_gourmand, favorite, status, visit_count, locations,
+    bib_gourmand, distinctions, favorite, status, visit_count, locations,
     reservation_platform, reservation_url, email, phone, address, latitude, longitude
   )
   select
     new_id, auth.uid(), name, image, url, social_media, rating, price_range,
     comment, cuisine_type, dietary_tags, place_types, menu_types, michelin_stars,
-    bib_gourmand, favorite, 'want', 0, locations,
+    bib_gourmand, distinctions, favorite, 'want', 0, locations,
     reservation_platform, reservation_url, email, phone, address, latitude, longitude
   from public.restaurants where list_id = src.id;
 

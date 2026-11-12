@@ -103,6 +103,8 @@ export interface Restaurant {
   menuTypes?: string[]; // e.g. Fine Dining, Tasting Menu — multi-select
   michelinStars?: number; // 0-3 Michelin stars
   bibGourmand?: boolean; // Michelin Bib Gourmand recognition
+  /** Other recognitions, by id — see app/utils/distinctions.ts. */
+  distinctions?: string[];
   status?: RestaurantStatus; // 'been' (visited) or 'want' (want to try)
   visitCount?: number; // How many times the user has visited
   favorite?: boolean; // Marked as a favourite

@@ -24,6 +24,8 @@ export interface RestaurantRow {
   menu_types: string[] | null;
   michelin_stars: number | null;
   bib_gourmand: boolean | null;
+  /** Absent on databases that haven't added the column yet. */
+  distinctions?: string[] | null;
   visit_count: number | null;
   favorite: boolean | null;
   reservation_platform: string | null;
@@ -98,6 +100,7 @@ export function rowToRestaurant(row: RestaurantRow): Restaurant {
     menuTypes: row.menu_types ?? undefined,
     michelinStars: row.michelin_stars ?? undefined,
     bibGourmand: row.bib_gourmand ?? undefined,
+    distinctions: row.distinctions ?? undefined,
     visitCount: row.visit_count ?? 0,
     favorite: row.favorite ?? false,
     status: row.status ?? 'want',
@@ -160,6 +163,9 @@ export function restaurantToRow(
     menu_types: data.menuTypes ?? [],
     michelin_stars: data.michelinStars ?? 0,
     bib_gourmand: data.bibGourmand ?? false,
+    // Only sent when there is something to say, so saving a place without
+    // distinctions keeps working on a database that predates the column.
+    ...(data.distinctions !== undefined ? { distinctions: data.distinctions } : {}),
     visit_count: data.visitCount ?? 0,
     favorite: data.favorite ?? false,
     status: data.status ?? 'want',

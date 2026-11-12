@@ -17,7 +17,7 @@ where table_schema = 'public'
   and column_name in (
     'address', 'latitude', 'longitude', 'status', 'added_by', 'list_id',
     'reservation_platform', 'reservation_url',
-    'dietary_tags', 'place_types', 'michelin_stars', 'bib_gourmand',
+    'dietary_tags', 'place_types', 'michelin_stars', 'bib_gourmand', 'distinctions',
     'email', 'phone', 'menu_types', 'locations',
     'visit_count', 'favorite'
   );

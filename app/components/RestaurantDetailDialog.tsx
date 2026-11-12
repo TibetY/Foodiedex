@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next';
 import type { Restaurant, RestaurantRating } from '~/types/restaurant';
 import type { ListTokens } from '~/listTheme';
 import { decorate } from '~/utils/decorateRestaurant';
+import { distinctionLabels } from '~/utils/distinctions';
 import RestaurantThumb from '~/components/RestaurantThumb';
 import Bubbles, { BubbleInput } from '~/components/Bubbles';
 
@@ -124,7 +125,7 @@ export default function RestaurantDetailDialog({
   const isBeen = (r.status ?? 'want') === 'been';
   const statusInteractive = canEdit && onToggleStatus;
   const meta = decorate(r).meta;
-  const stars = r.michelinStars ?? 0;
+  const honours = distinctionLabels(r);
 
   // Cuisine is already in the meta line, and "Restaurant" says nothing here.
   const tags = [
@@ -225,12 +226,10 @@ export default function RestaurantDetailDialog({
         )}
 
         {/* Recognition */}
-        {(stars > 0 || r.bibGourmand) && (
-          <Box sx={{ mt: '10px', display: 'flex', alignItems: 'center', gap: '6px', color: t.ink, fontSize: 14, fontWeight: 600 }}>
-            <Star aria-hidden sx={{ fontSize: 16 }} />
-            {[stars > 0 ? tr('detail.michelin', { count: stars }) : null, r.bibGourmand ? tr('form.bibGourmand') : null]
-              .filter(Boolean)
-              .join(' · ')}
+        {honours.length > 0 && (
+          <Box sx={{ mt: '10px', display: 'flex', alignItems: 'center', gap: '6px', color: t.ink, fontSize: 14, fontWeight: 600, lineHeight: 1.4 }}>
+            <Star aria-hidden sx={{ fontSize: 16, flex: 'none', alignSelf: 'flex-start', mt: '2px' }} />
+            <Box component="span" sx={{ minWidth: 0 }}>{honours.join(' · ')}</Box>
           </Box>
         )}
 
