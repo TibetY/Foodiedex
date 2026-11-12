@@ -262,7 +262,9 @@ function BarSection({
   longLabels?: boolean;
   emptyLabel?: string;
 }) {
-  const max = rows[0]?.count ?? 1;
+  // Scale to the largest row, wherever it sits: price tiers are ordered by
+  // tier, not by count, so the first row is not necessarily the biggest.
+  const max = Math.max(1, ...rows.map((r) => r.count));
   return (
     <Box>
       <SectionTitle tokens={t}>{title}</SectionTitle>

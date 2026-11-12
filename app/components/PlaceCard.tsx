@@ -5,6 +5,7 @@ import type { DecoratedRestaurant } from '~/utils/decorateRestaurant';
 import type { ListTokens } from '~/listTheme';
 import RestaurantThumb from '~/components/RestaurantThumb';
 import Bubbles from '~/components/Bubbles';
+import MichelinStars from '~/components/MichelinStars';
 
 type Tokens = ListTokens;
 
@@ -19,6 +20,7 @@ interface PlaceCardProps {
  * public shared view). It carries only what you scan a grid for:
  *
  *   photo            3:2, with a "Want to try" label when that's the status
+ *                    and its Michelin stars, if it has any, top right
  *   name             its own line, up to two
  *   meta             one quiet line — cuisine · city · price
  *   rating           only when the place has one
@@ -78,6 +80,16 @@ export default function PlaceCard({ r, tokens: t, onView }: PlaceCardProps) {
             }}
           >
             {tr('dashboard.statusWant')}
+          </Box>
+        )}
+        {/* Michelin stars are the one honour shown on the card; the rest are in the
+            detail view. White in both modes, so the red reads the same everywhere. */}
+        {(r.michelinStars ?? 0) > 0 && (
+          <Box
+            component="span"
+            sx={{ position: 'absolute', top: 8, right: 8, display: 'flex', background: '#fff', padding: '4px 7px', borderRadius: '999px' }}
+          >
+            <MichelinStars count={r.michelinStars ?? 0} size={14} />
           </Box>
         )}
       </Box>
