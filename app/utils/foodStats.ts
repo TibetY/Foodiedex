@@ -1,4 +1,5 @@
 import type { Restaurant } from '~/types/restaurant';
+import { distinctionLabels } from '~/utils/distinctions';
 
 /**
  * Aggregated stats for the "Your taste in food" recap. Everything here is derived
@@ -18,6 +19,8 @@ export interface FoodStats {
   /** Sum of Michelin stars across the list. */
   totalMichelinStars: number;
   bibGourmandCount: number;
+  /** How many places hold each distinction (Michelin tiers included), most common first. */
+  distinctions: LabelCount[];
   totalVisits: number;
   /** Breakdown by declared cuisine, most common first. */
   cuisines: LabelCount[];
@@ -53,6 +56,7 @@ function emptyStats(): FoodStats {
     michelinStarredCount: 0,
     totalMichelinStars: 0,
     bibGourmandCount: 0,
+    distinctions: [],
     totalVisits: 0,
     cuisines: [],
     priceTiers: [],
@@ -78,6 +82,7 @@ export function computeFoodStats(
   const cuisineTally = new Map<string, number>();
   const priceTally = new Map<string, number>();
   const cityTally = new Map<string, number>();
+  const distinctionTally = new Map<string, number>();
   const visited: VisitedPlace[] = [];
   let ratingSum = 0;
 
@@ -98,6 +103,7 @@ export function computeFoodStats(
       stats.totalMichelinStars += stars;
     }
     if (r.bibGourmand) stats.bibGourmandCount += 1;
+    for (const label of distinctionLabels(r)) increment(distinctionTally, label);
 
     const visits = r.visitCount ?? 0;
     stats.totalVisits += visits;
@@ -123,6 +129,7 @@ export function computeFoodStats(
     .map(([label, count]) => ({ label, count }))
     .sort((a, b) => a.label.length - b.label.length);
   stats.cities = sortedByCount(cityTally);
+  stats.distinctions = sortedByCount(distinctionTally);
   stats.topVisited = visited
     .sort((a, b) => b.visitCount - a.visitCount || a.name.localeCompare(b.name))
     .slice(0, Math.max(0, topVisitedLimit));

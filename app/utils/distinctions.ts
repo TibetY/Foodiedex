@@ -78,6 +78,36 @@ export function applyDistinctionChange(prev: string[], next: string[]): string[]
   return next;
 }
 
+/** The display name for one id, or the id itself if it is no longer listed. */
+export function distinctionLabel(id: string): string {
+  return DISTINCTIONS.find((d) => d.id === id)?.label ?? id;
+}
+
+/** What each non-tier distinction looks like when a website names it. */
+const AWARD_PATTERNS: [id: string, pattern: RegExp][] = [
+  ['michelin-green-star', /michelin[^;]*green star|green star[^;]*michelin/],
+  ['canadas-100-best', /canada['’]?s 100 best/],
+  ['enroute-best-new', /en\s?route[^;]*best new restaurant/],
+  ['gault-millau', /gault\s*(&|et|and|und)?\s*millau/],
+  ['repsol-sol', /\brepsol\b/],
+  ['aa-rosette', /\baa rosettes?\b/],
+  ['gambero-rosso', /gambero rosso/],
+  ['north-americas-50-best', /north america['’]?s 50 best/],
+  ['worlds-50-best', /world['’]?s 50 best/],
+  ['la-liste', /\bla liste\b/],
+  ['oad', /opinionated about dining|\boad\b/],
+  ['james-beard', /james beard/],
+];
+
+/**
+ * The non-Michelin-tier distinctions named in a piece of award text (a site's
+ * own structured "award" data). Only explicit names match — nothing is inferred.
+ */
+export function detectDistinctions(text: string): string[] {
+  const lower = text.toLowerCase();
+  return AWARD_PATTERNS.filter(([, pattern]) => pattern.test(lower)).map(([id]) => id);
+}
+
 /** Display names for what a place holds. An id no longer in the list is skipped. */
 export function distinctionLabels(r: Recognised): string[] {
   return distinctionIds(r)

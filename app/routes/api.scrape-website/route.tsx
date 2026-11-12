@@ -3,6 +3,7 @@ import { json } from '@remix-run/node';
 import { load } from 'cheerio';
 import { cuisineTypes } from '~/types/restaurant';
 import { isSafeExternalUrl } from '~/utils/safeUrl.server';
+import { detectDistinctions } from '~/utils/distinctions';
 
 const FETCH_TIMEOUT_MS = 6000;
 const MAX_BODY_BYTES = 1.5 * 1024 * 1024;
@@ -26,6 +27,8 @@ interface ScrapeResult {
   priceRange: string | null;
   michelinStars: number | null;
   bibGourmand: boolean | null;
+  /** Other recognitions the site names in its structured award data (ids). */
+  distinctions: string[] | null;
 }
 
 const EMPTY_RESULT: ScrapeResult = {
@@ -40,6 +43,7 @@ const EMPTY_RESULT: ScrapeResult = {
   priceRange: null,
   michelinStars: null,
   bibGourmand: null,
+  distinctions: null,
 };
 
 /**
@@ -104,6 +108,7 @@ function mergeMissing(primary: ScrapeResult, extra: ScrapeResult): ScrapeResult 
     priceRange: primary.priceRange ?? extra.priceRange,
     michelinStars: primary.michelinStars ?? extra.michelinStars,
     bibGourmand: primary.bibGourmand ?? extra.bibGourmand,
+    distinctions: primary.distinctions ?? extra.distinctions,
   };
 }
 
@@ -161,6 +166,7 @@ function scrapeHtml(html: string, baseUrl: string): ScrapeResult {
     priceRange: extractPriceRange(restaurantEntry),
     michelinStars: michelin.stars,
     bibGourmand: michelin.bib,
+    distinctions: michelin.distinctions,
   };
 }
 
@@ -348,8 +354,12 @@ function extractPriceRange(entry: JsonLdEntry | null): string | null {
 
 /** Conservative Michelin/Bib detection from JSON-LD award/credential text only
  *  (no full-page matching) so we never invent stars from stray "michelin" text. */
-function extractMichelin(entry: JsonLdEntry | null): { stars: number | null; bib: boolean | null } {
-  if (!entry) return { stars: null, bib: null };
+function extractMichelin(entry: JsonLdEntry | null): {
+  stars: number | null;
+  bib: boolean | null;
+  distinctions: string[] | null;
+} {
+  if (!entry) return { stars: null, bib: null, distinctions: null };
   const parts: string[] = [];
   const collect = (val: unknown) => {
     if (typeof val === 'string') parts.push(val);
@@ -363,7 +373,7 @@ function extractMichelin(entry: JsonLdEntry | null): { stars: number | null; bib
   collect(entry.awards);
   collect(entry.hasCredential);
   const text = parts.join(' ; ').toLowerCase();
-  if (!text) return { stars: null, bib: null };
+  if (!text) return { stars: null, bib: null, distinctions: null };
 
   const bib = /bib gourmand/.test(text) ? true : null;
   let stars: number | null = null;
@@ -372,5 +382,6 @@ function extractMichelin(entry: JsonLdEntry | null): { stars: number | null; bib
     else if (/\b(two|2)\b/.test(text)) stars = 2;
     else stars = 1;
   }
-  return { stars, bib };
+  const others = detectDistinctions(text);
+  return { stars, bib, distinctions: others.length > 0 ? others : null };
 }

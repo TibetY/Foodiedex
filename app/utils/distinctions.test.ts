@@ -3,6 +3,7 @@ import {
   DISTINCTIONS,
   DISTINCTION_GROUPS,
   applyDistinctionChange,
+  detectDistinctions,
   distinctionIds,
   distinctionLabels,
   fieldsFromDistinctionIds,
@@ -61,5 +62,29 @@ describe('distinctions', () => {
       '1 Michelin Star',
       "Canada's 100 Best",
     ]);
+  });
+});
+
+describe('detectDistinctions', () => {
+  it('finds lists a site names in its award text', () => {
+    expect(detectDistinctions("Canada's 100 Best 2025 ; The World’s 50 Best Restaurants")).toEqual([
+      'canadas-100-best',
+      'worlds-50-best',
+    ]);
+    expect(detectDistinctions('Gault & Millau 17/20 ; James Beard Award winner')).toEqual(['gault-millau', 'james-beard']);
+  });
+
+  it("does not read North America's 50 Best as the world list", () => {
+    expect(detectDistinctions("North America's 50 Best Restaurants 2025")).toEqual(['north-americas-50-best']);
+  });
+
+  it('only counts a green star when Michelin is named with it', () => {
+    expect(detectDistinctions('Michelin Green Star 2024')).toEqual(['michelin-green-star']);
+    expect(detectDistinctions('Green Star Energy partner')).toEqual([]);
+  });
+
+  it('finds nothing in unrelated text', () => {
+    expect(detectDistinctions('Best brunch in town ; TripAdvisor Travellers Choice')).toEqual([]);
+    expect(detectDistinctions('')).toEqual([]);
   });
 });

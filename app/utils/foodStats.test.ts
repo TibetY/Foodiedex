@@ -44,6 +44,10 @@ describe('computeFoodStats', () => {
     expect(s.michelinStarredCount).toBe(1);
     expect(s.totalMichelinStars).toBe(1);
     expect(s.bibGourmandCount).toBe(1);
+    expect(s.distinctions).toEqual([
+      { label: '1 Michelin Star', count: 1 },
+      { label: 'Bib Gourmand', count: 1 },
+    ]);
     expect(s.totalVisits).toBe(3);
     expect(s.cuisines).toEqual([{ label: 'Seafood', count: 1 }]);
     expect(s.priceTiers).toEqual([{ label: '$$$', count: 1 }]);

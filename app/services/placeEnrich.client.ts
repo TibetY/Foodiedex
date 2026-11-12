@@ -33,6 +33,7 @@ type ScrapeData = {
   priceRange?: string | null;
   michelinStars?: number | null;
   bibGourmand?: boolean | null;
+  distinctions?: string[] | null;
 };
 
 type LookupData = ScrapeData & {
@@ -117,6 +118,7 @@ export async function buildEnrichedRestaurant(seed: PlaceSeed): Promise<Partial<
       if (scrape.priceRange) payload.priceRange = scrape.priceRange;
       if (scrape.michelinStars) payload.michelinStars = scrape.michelinStars;
       if (scrape.bibGourmand) payload.bibGourmand = true;
+      if (scrape.distinctions?.length) payload.distinctions = scrape.distinctions;
       if (!location.reservationUrl && scrape.reservationUrl) {
         location.reservationUrl = scrape.reservationUrl;
       }

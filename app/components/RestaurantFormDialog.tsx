@@ -94,6 +94,7 @@ type ScrapeData = {
   priceRange?: string | null;
   michelinStars?: number | null;
   bibGourmand?: boolean | null;
+  distinctions?: string[] | null;
 };
 
 /** Shape returned by /api/lookup-place (overlaps ScrapeData; adds these). */
@@ -448,6 +449,15 @@ export default function RestaurantFormDialog({
     }
     if (data.bibGourmand && !fresh.bibGourmand) {
       setFormData((prev) => ({ ...prev, bibGourmand: true }));
+      filled.push('michelin');
+    }
+    // Other distinctions the site names — added to, never replacing, the user's.
+    const foundDistinctions = (data.distinctions ?? []).filter((id) => !(fresh.distinctions ?? []).includes(id));
+    if (foundDistinctions.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        distinctions: [...(prev.distinctions ?? []), ...foundDistinctions.filter((id) => !(prev.distinctions ?? []).includes(id))],
+      }));
       filled.push('michelin');
     }
 

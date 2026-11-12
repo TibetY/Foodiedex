@@ -191,6 +191,9 @@ export default function StatsPage() {
                 <BarSection tokens={t} title={tr('stats.topCuisines')} rows={stats.cuisines.slice(0, 6)} />
                 <BarSection tokens={t} title={tr('stats.cities')} rows={stats.cities.slice(0, 6)} emptyLabel={tr('stats.noCities')} />
                 <BarSection tokens={t} title={tr('stats.priceRange')} rows={stats.priceTiers} mono />
+                {stats.distinctions.length > 0 && (
+                  <BarSection tokens={t} title={tr('form.distinctions')} rows={stats.distinctions.slice(0, 6)} longLabels />
+                )}
                 <MostVisited tokens={t} title={tr('stats.mostVisited')} rows={stats.topVisited} visitsLabel={(n) => tr('dashboard.visitsCount', { count: n })} emptyLabel={tr('stats.noVisits')} />
               </Box>
 
@@ -248,12 +251,15 @@ function BarSection({
   title,
   rows,
   mono,
+  longLabels,
   emptyLabel,
 }: {
   tokens: Tokens;
   title: string;
   rows: LabelCount[];
   mono?: boolean;
+  /** Names too long for one short line (distinctions): a wider label that wraps instead of cutting off. */
+  longLabels?: boolean;
   emptyLabel?: string;
 }) {
   const max = rows[0]?.count ?? 1;
@@ -266,7 +272,7 @@ function BarSection({
         ) : (
           rows.map((r) => (
             <Box key={r.label} sx={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Box sx={{ width: 120, flex: 'none', fontWeight: mono ? 600 : 400, fontSize: mono ? 14 : 16, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <Box sx={{ width: longLabels ? { xs: 190, sm: 240 } : 120, flex: 'none', fontWeight: mono ? 600 : 400, fontSize: mono ? 14 : 16, lineHeight: 1.3, color: t.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: longLabels ? 'normal' : 'nowrap' }}>
                 {r.label}
               </Box>
               <Box sx={{ flex: 1, height: 10, borderRadius: '999px', background: t.skeleton, overflow: 'hidden' }}>

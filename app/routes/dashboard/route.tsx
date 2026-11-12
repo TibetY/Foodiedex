@@ -64,6 +64,7 @@ import type {
 } from '~/types/restaurant';
 import { decorate, type DecoratedRestaurant } from '~/utils/decorateRestaurant';
 import { defaultViewFor } from '~/utils/defaultView';
+import { DISTINCTIONS, distinctionIds } from '~/utils/distinctions';
 import {
   FILTER_PARAM_KEYS,
   serializeFilterParams,
@@ -382,9 +383,11 @@ export default function Dashboard() {
   const placeParam = searchParams.get('place');
   const dietParam = searchParams.get('diet');
   const menuParam = searchParams.get('menu');
+  const awardParam = searchParams.get('award');
   const placeFilter = useMemo(() => parseCsv(placeParam), [placeParam]);
   const dietFilter = useMemo(() => parseCsv(dietParam), [dietParam]);
   const menuFilter = useMemo(() => parseCsv(menuParam), [menuParam]);
+  const awardFilter = useMemo(() => parseCsv(awardParam), [awardParam]);
   const sort: SortMode = ((): SortMode => {
     const s = searchParams.get('sort');
     return SORT_MODES.includes(s as SortMode) ? (s as SortMode) : 'recent';
@@ -434,6 +437,7 @@ export default function Dashboard() {
   const setPlaceFilter = makeCsvSetter('place');
   const setDietFilter = makeCsvSetter('diet');
   const setMenuFilter = makeCsvSetter('menu');
+  const setAwardFilter = makeCsvSetter('award');
   const setSortReversed = (next: boolean | ((prev: boolean) => boolean)) =>
     updateFilterParams((p) => {
       const prev = p.get('rev') === '1';
@@ -544,6 +548,11 @@ export default function Dashboard() {
     () => Array.from(new Set(restaurants.flatMap((r) => r.dietaryTags ?? []))).sort(),
     [restaurants]
   );
+  // Distinctions held by at least one place here, in pick-list order.
+  const awardOptions = useMemo(() => {
+    const present = new Set(restaurants.flatMap((r) => distinctionIds(r)));
+    return DISTINCTIONS.map((d) => d.id).filter((id) => present.has(id));
+  }, [restaurants]);
   const menuOptions = useMemo(
     () => Array.from(new Set(restaurants.flatMap((r) => r.menuTypes ?? []))).sort(),
     [restaurants]
@@ -569,6 +578,8 @@ export default function Dashboard() {
       const matchesPlace = placeFilter.every((v) => (r.placeTypes ?? []).includes(v));
       const matchesDiet = dietFilter.every((v) => (r.dietaryTags ?? []).includes(v));
       const matchesMenu = menuFilter.every((v) => (r.menuTypes ?? []).includes(v));
+      const held = awardFilter.length > 0 ? distinctionIds(r) : [];
+      const matchesAward = awardFilter.every((v) => held.includes(v));
       return (
         matchesStatus &&
         matchesSearch &&
@@ -578,10 +589,11 @@ export default function Dashboard() {
         matchesRating &&
         matchesPlace &&
         matchesDiet &&
-        matchesMenu
+        matchesMenu &&
+        matchesAward
       );
     });
-  }, [decorated, filter, searchQuery, cuisineFilter, cityFilter, costFilter, ratingFilter, placeFilter, dietFilter, menuFilter]);
+  }, [decorated, filter, searchQuery, cuisineFilter, cityFilter, costFilter, ratingFilter, placeFilter, dietFilter, menuFilter, awardFilter]);
 
   // Apply the chosen sort to the filtered set (order-independent metrics like
   // counts still read from `filtered`).
@@ -632,6 +644,7 @@ export default function Dashboard() {
     placeFilter.length > 0 ||
     dietFilter.length > 0 ||
     menuFilter.length > 0 ||
+    awardFilter.length > 0 ||
     sort !== 'recent' ||
     sortReversed;
 
@@ -1319,6 +1332,7 @@ export default function Dashboard() {
                   placeOptions={placeOptions}
                   dietOptions={dietOptions}
                   menuOptions={menuOptions}
+                  awardOptions={awardOptions}
                   sortModes={SORT_MODES}
                   cuisineFilter={cuisineFilter}
                   setCuisineFilter={setCuisineFilter}
@@ -1334,6 +1348,8 @@ export default function Dashboard() {
                   setDietFilter={setDietFilter}
                   menuFilter={menuFilter}
                   setMenuFilter={setMenuFilter}
+                  awardFilter={awardFilter}
+                  setAwardFilter={setAwardFilter}
                   sort={sort}
                   setSort={(v) => setSort(v as SortMode)}
                   sortReversed={sortReversed}

@@ -6,6 +6,23 @@ import {
   type RestaurantRow,
 } from './restaurantMap';
 
+/**
+ * True when a write failed only because the database has no `distinctions`
+ * column yet (the schema update has not been run). The write is then retried
+ * without it, so a place still saves — minus those distinctions — instead of
+ * failing outright because a website happened to list an award.
+ */
+function isMissingDistinctionsColumn(error: { code?: string; message?: string } | null): boolean {
+  return !!error && error.code === 'PGRST204' && /distinctions/.test(error.message ?? '');
+}
+
+function withoutDistinctions<T extends { distinctions?: unknown }>(row: T): Omit<T, 'distinctions'> {
+  const { distinctions, ...rest } = row;
+  void distinctions;
+  console.warn('restaurants.distinctions column is missing; saved without distinctions. Run supabase/schema.sql.');
+  return rest;
+}
+
 /** Create a restaurant in `listId`, added by `userId`. Returns the saved record. */
 export async function createRestaurant(
   data: Partial<Restaurant>,
@@ -13,11 +30,15 @@ export async function createRestaurant(
   userId: string
 ): Promise<Restaurant> {
   const supabase = getSupabaseBrowserClient();
-  const { data: row, error } = await supabase
-    .from('restaurants')
-    .insert(restaurantToRow(data, listId, userId))
-    .select()
-    .single();
+  const payload = restaurantToRow(data, listId, userId);
+  let { data: row, error } = await supabase.from('restaurants').insert(payload).select().single();
+  if (isMissingDistinctionsColumn(error)) {
+    ({ data: row, error } = await supabase
+      .from('restaurants')
+      .insert(withoutDistinctions(payload))
+      .select()
+      .single());
+  }
 
   if (error) throw error;
   return rowToRestaurant(row as RestaurantRow);
@@ -35,12 +56,15 @@ export async function updateRestaurant(
   const { list_id, added_by, ...payload } = restaurantToRow(data, listId, userId);
   void list_id;
   void added_by;
-  const { data: row, error } = await supabase
-    .from('restaurants')
-    .update(payload)
-    .eq('id', id)
-    .select()
-    .single();
+  let { data: row, error } = await supabase.from('restaurants').update(payload).eq('id', id).select().single();
+  if (isMissingDistinctionsColumn(error)) {
+    ({ data: row, error } = await supabase
+      .from('restaurants')
+      .update(withoutDistinctions(payload))
+      .eq('id', id)
+      .select()
+      .single());
+  }
 
   if (error) throw error;
   return rowToRestaurant(row as RestaurantRow);

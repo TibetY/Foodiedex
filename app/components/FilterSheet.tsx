@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import type { ListView } from '~/types/restaurant';
 import type { ListTokens } from '~/listTheme';
 import SavedViewsBar from '~/components/SavedViewsBar';
+import { distinctionLabel } from '~/utils/distinctions';
 
 type Tokens = ListTokens;
 type MultiSetter = (updater: string[] | ((prev: string[]) => string[])) => void;
@@ -23,6 +24,8 @@ interface FilterSheetProps {
   placeOptions: string[];
   dietOptions: string[];
   menuOptions: string[];
+  /** Distinction ids present in this list (see app/utils/distinctions.ts). */
+  awardOptions: string[];
   sortModes: readonly string[];
   cuisineFilter: string;
   setCuisineFilter: (v: string) => void;
@@ -38,6 +41,8 @@ interface FilterSheetProps {
   setDietFilter: MultiSetter;
   menuFilter: string[];
   setMenuFilter: MultiSetter;
+  awardFilter: string[];
+  setAwardFilter: MultiSetter;
   sort: string;
   setSort: (v: string) => void;
   sortReversed: boolean;
@@ -79,6 +84,7 @@ export default function FilterSheet(props: FilterSheetProps) {
     (props.placeFilter.length ? 1 : 0) +
     (props.dietFilter.length ? 1 : 0) +
     (props.menuFilter.length ? 1 : 0) +
+    (props.awardFilter.length ? 1 : 0) +
     (props.sort !== 'recent' ? 1 : 0) +
     (props.sortReversed ? 1 : 0);
 
@@ -218,6 +224,17 @@ export default function FilterSheet(props: FilterSheetProps) {
           {props.menuOptions.map((m) => (
             <Box component="button" key={m} type="button" aria-pressed={props.menuFilter.includes(m)} onClick={() => props.setMenuFilter((prev) => toggle(prev, m))} sx={pillSx(props.menuFilter.includes(m))}>
               {tr(`menuTypes.${m}`, m)}
+            </Box>
+          ))}
+        </Section>
+      )}
+
+      {/* Distinctions */}
+      {props.awardOptions.length > 0 && (
+        <Section tokens={t} label={tr('form.distinctions')}>
+          {props.awardOptions.map((a) => (
+            <Box component="button" key={a} type="button" aria-pressed={props.awardFilter.includes(a)} onClick={() => props.setAwardFilter((prev) => toggle(prev, a))} sx={pillSx(props.awardFilter.includes(a))}>
+              {distinctionLabel(a)}
             </Box>
           ))}
         </Section>

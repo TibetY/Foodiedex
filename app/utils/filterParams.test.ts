@@ -19,6 +19,18 @@ describe('serializeFilterParams', () => {
   });
 });
 
+describe('the distinctions filter', () => {
+  it('is part of a saved view, between menu and sort', () => {
+    const p = new URLSearchParams('sort=name&award=canadas-100-best&menu=Casual&list=abc');
+    expect(serializeFilterParams(p)).toBe('menu=Casual&award=canadas-100-best&sort=name');
+  });
+
+  it('leaves views saved before it existed unchanged', () => {
+    const p = new URLSearchParams('status=want&cost=%24%24%24%24');
+    expect(serializeFilterParams(p)).toBe('status=want&cost=%24%24%24%24');
+  });
+});
+
 describe('applyViewParams', () => {
   it('swaps filter params while preserving non-filter keys like list', () => {
     const current = new URLSearchParams('list=abc&cuisine=Thai&rating=5');

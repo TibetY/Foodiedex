@@ -14,6 +14,7 @@ export const FILTER_PARAM_KEYS = [
   'place',
   'diet',
   'menu',
+  'award',
   'sort',
   'rev',
 ] as const;
