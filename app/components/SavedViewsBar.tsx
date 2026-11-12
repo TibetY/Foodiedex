@@ -54,7 +54,7 @@ export default function SavedViewsBar({
             sx={{
               display: 'inline-flex',
               alignItems: 'center',
-              border: `1px solid ${active ? t.accent : t.pillBorder}`,
+              border: `1px solid ${active ? t.pBg : t.pillBorder}`,
               background: active ? t.pBg : 'transparent',
               borderRadius: '999px',
               overflow: 'hidden',
@@ -104,10 +104,10 @@ export default function SavedViewsBar({
             gap: '6px',
             border: `1px dashed ${t.pillBorder}`,
             background: 'transparent',
-            color: t.accent,
+            color: t.ink,
             borderRadius: '10px',
             fontSize: '14px',
-            fontWeight: 700,
+            fontWeight: 600,
             padding: '7px 14px',
             cursor: 'pointer',
           }}

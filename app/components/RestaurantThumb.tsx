@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import { type SxProps, type Theme } from '@mui/material/styles';
+import RestaurantOutlined from '@mui/icons-material/RestaurantOutlined';
 import type { ListTokens } from '~/listTheme';
 import { RESTAURANT_IMAGE_BUCKET } from '~/supabaseConfig';
 
@@ -8,7 +9,7 @@ type Tokens = ListTokens;
 
 interface RestaurantThumbProps {
   image?: string;
-  /** The place's name: the image's alt text, and the placeholder's label. */
+  /** The place's name — the image's alt text. */
   name: string;
   tokens: Tokens;
   /** Size it by width (default 100%); the height always follows the ratio. */
@@ -48,7 +49,8 @@ const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : us
  * Restaurant thumbnail used by every card, row, popup and dialog: one aspect
  * ratio, lazy-loaded, faded in. A place with no usable photo — none saved, a
  * dead link, or a legacy image that fails the checks above — gets the same
- * flat neutral tile with its name set quietly on it.
+ * flat neutral tile with a small, quiet mark. The name is not repeated on it:
+ * it always sits right beside or below the tile.
  */
 export default function RestaurantThumb({ image, name, tokens: t, sx, className }: RestaurantThumbProps) {
   const imgRef = useRef<HTMLImageElement>(null);
@@ -117,28 +119,16 @@ export default function RestaurantThumb({ image, name, tokens: t, sx, className 
           }}
         />
       ) : (
-        <Box
-          component="span"
+        <RestaurantOutlined
+          aria-hidden
           sx={{
-            px: '10cqw',
             color: t.faint,
-            fontSize: 'clamp(12px, 7cqw, 20px)',
-            fontWeight: 500,
-            letterSpacing: '-.01em',
-            lineHeight: 1.25,
-            textAlign: 'center',
-            textWrap: 'balance',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            // Row-sized thumbs sit right beside the name already; a tile that
-            // small stays plain.
+            opacity: 0.55,
+            fontSize: 'clamp(20px, 14cqw, 40px)',
+            // Row-sized thumbs stay plain.
             '@container (max-width: 96px)': { display: 'none' },
           }}
-        >
-          {name}
-        </Box>
+        />
       )}
     </Box>
   );

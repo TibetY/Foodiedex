@@ -278,7 +278,10 @@ export function getListTokens(mode: ListMode, accent: AccentName): ListTokens {
   const peach = DECORATIVE.peach[mode];
 
   return {
-    pageBg: b.canvas,
+    // Light mode puts the page on the same warm paper as the header, so the two
+    // read as one surface and photos get more contrast. Dark keeps its deeper
+    // canvas under the panels.
+    pageBg: mode === 'light' ? b.paper : b.canvas,
     panelBg: b.paper,
     cardBg: b.card,
     footerBg: b.paper,
@@ -316,8 +319,10 @@ export function getListTokens(mode: ListMode, accent: AccentName): ListTokens {
     segBg: b.track,
     segFg: b.ink,
     segIdle: b.ink60,
-    pBg: a.deep,
-    pFg: b.onAcc,
+    // Selected pills are ink, not accent: the accent is kept for the one primary
+    // action on a screen and the rating bubbles.
+    pBg: b.ink,
+    pFg: b.paper,
     pIdle: b.ink60,
     ring: hexToRgba(a.deep, 0.22),
     glow: hexToRgba(a.deep, 0.32),

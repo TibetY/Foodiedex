@@ -63,6 +63,7 @@ import type {
   RestaurantRating,
 } from '~/types/restaurant';
 import { decorate, type DecoratedRestaurant } from '~/utils/decorateRestaurant';
+import { defaultViewFor } from '~/utils/defaultView';
 import {
   FILTER_PARAM_KEYS,
   serializeFilterParams,
@@ -323,7 +324,9 @@ export default function Dashboard() {
   // The Leaflet map is client-only; render it after mount.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  const [view, setView] = useState<ViewMode>('tile');
+  // Until the user picks a view, a list short on photos opens as rows.
+  const [chosenView, setView] = useState<ViewMode | null>(null);
+  const view: ViewMode = chosenView ?? defaultViewFor(restaurants);
   // Phones fold the search into an icon; this is whether it is expanded.
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -1513,8 +1516,13 @@ export default function Dashboard() {
                           )}
                         </Box>
                         {r.rated && (
-                          <Box sx={{ display: { xs: 'none', sm: 'block' }, flex: 'none' }}>
-                            <Bubbles value={r.rating ?? 0} tokens={t} size={10} gap={4} />
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 'none' }}>
+                            {/* Phones get one bubble and the number; wider rows the full five. */}
+                            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+                              <Bubbles value={r.rating ?? 0} tokens={t} size={10} gap={4} />
+                            </Box>
+                            <Box aria-hidden sx={{ display: { xs: 'block', sm: 'none' }, width: 9, height: 9, borderRadius: '50%', background: t.rating }} />
+                            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' }, fontSize: 14, color: t.muted }}>{(r.rating ?? 0).toFixed(1)}</Box>
                           </Box>
                         )}
                         {r.isWant && (

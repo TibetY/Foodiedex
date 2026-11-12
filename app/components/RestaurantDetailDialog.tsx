@@ -226,7 +226,7 @@ export default function RestaurantDetailDialog({
 
         {/* Recognition */}
         {(stars > 0 || r.bibGourmand) && (
-          <Box sx={{ mt: '10px', display: 'flex', alignItems: 'center', gap: '6px', color: t.accent, fontSize: 14, fontWeight: 600 }}>
+          <Box sx={{ mt: '10px', display: 'flex', alignItems: 'center', gap: '6px', color: t.ink, fontSize: 14, fontWeight: 600 }}>
             <Star aria-hidden sx={{ fontSize: 16 }} />
             {[stars > 0 ? tr('detail.michelin', { count: stars }) : null, r.bibGourmand ? tr('form.bibGourmand') : null]
               .filter(Boolean)
@@ -275,7 +275,7 @@ export default function RestaurantDetailDialog({
               aria-label={tr('detail.addVisit')}
               title={tr('detail.addVisit')}
               sx={{
-                color: t.accent,
+                color: t.ink,
                 border: `1px solid ${t.border}`,
                 width: 36,
                 height: 36,

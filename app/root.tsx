@@ -74,7 +74,7 @@ export const meta: MetaFunction = () => {
     { title: m.title },
     { name: "description", content: m.description },
     { name: "viewport", content: "width=device-width,initial-scale=1" },
-    { name: "theme-color", content: "#F0EDE6" },
+    { name: "theme-color", content: "#FDFBF7" },
   ];
 };
 

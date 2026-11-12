@@ -83,7 +83,7 @@ export default function FilterSheet(props: FilterSheetProps) {
     (props.sortReversed ? 1 : 0);
 
   const pillSx = (selected: boolean) => ({
-    border: `1px solid ${selected ? t.accent : t.pillBorder}`,
+    border: `1px solid ${selected ? t.pBg : t.pillBorder}`,
     background: selected ? t.pBg : 'transparent',
     color: selected ? t.pFg : t.muted,
     borderRadius: '999px',
@@ -259,7 +259,7 @@ export default function FilterSheet(props: FilterSheetProps) {
           display: 'inline-flex',
           alignItems: 'center',
           gap: '7px',
-          border: `1px solid ${activeCount ? t.accent : t.pillBorder}`,
+          border: `1px solid ${activeCount ? t.pBg : t.pillBorder}`,
           background: activeCount ? t.pBg : 'transparent',
           color: activeCount ? t.pFg : t.muted,
           borderRadius: '10px',

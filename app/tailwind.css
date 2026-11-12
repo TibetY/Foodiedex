@@ -5,7 +5,7 @@
 /* Custom properties — fallback values only; brandCssVars() (listTheme.ts)
    drives the live --bg/--accent/etc. everywhere the app actually renders. */
 :root {
-  --color-bg: #F0EDE6;
+  --color-bg: #FDFBF7;
   --color-surface: #FFFFFF;
   --color-accent: #5B6E48;
   --color-accent-hover: #8FA477;

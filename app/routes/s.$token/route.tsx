@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { createSupabaseServerClient } from '~/supabase.server';
 import { getSharedList, forkSharedList, type SharedList } from '~/services/sharedList.server';
 import { decorate } from '~/utils/decorateRestaurant';
+import { defaultViewFor } from '~/utils/defaultView';
 import type { Restaurant } from '~/types/restaurant';
 import RestaurantThumb from '~/components/RestaurantThumb';
 import RestaurantDetailDialog from '~/components/RestaurantDetailDialog';
@@ -102,7 +103,9 @@ export default function SharedListPage() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const [view, setView] = useState<ViewMode>('tile');
+  // Until the visitor picks a view, a list short on photos opens as rows.
+  const [chosenView, setView] = useState<ViewMode | null>(null);
+  const view: ViewMode = chosenView ?? defaultViewFor(shared?.restaurants ?? []);
   const [filter, setFilter] = useState<FilterMode>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sort, setSort] = useState<SortMode>('recent');
@@ -415,8 +418,13 @@ export default function SharedListPage() {
                     {r.meta && <Box sx={{ color: t.muted, fontSize: 14, mt: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.meta}</Box>}
                   </Box>
                   {r.rated && (
-                    <Box sx={{ display: { xs: 'none', sm: 'block' }, flex: 'none' }}>
-                      <Bubbles value={r.rating ?? 0} tokens={t} size={10} gap={4} />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 'none' }}>
+                      {/* Phones get one bubble and the number; wider rows the full five. */}
+                      <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+                        <Bubbles value={r.rating ?? 0} tokens={t} size={10} gap={4} />
+                      </Box>
+                      <Box aria-hidden sx={{ display: { xs: 'block', sm: 'none' }, width: 9, height: 9, borderRadius: '50%', background: t.rating }} />
+                      <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' }, fontSize: 14, color: t.muted }}>{(r.rating ?? 0).toFixed(1)}</Box>
                     </Box>
                   )}
                   {r.isWant && (
