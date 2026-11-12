@@ -12,6 +12,7 @@ import type { ListView } from '~/types/restaurant';
 import type { ListTokens } from '~/listTheme';
 import SavedViewsBar from '~/components/SavedViewsBar';
 import { distinctionLabel } from '~/utils/distinctions';
+import { DEFAULT_SORT } from '~/utils/sortPlaces';
 
 type Tokens = ListTokens;
 type MultiSetter = (updater: string[] | ((prev: string[]) => string[])) => void;
@@ -85,7 +86,7 @@ export default function FilterSheet(props: FilterSheetProps) {
     (props.dietFilter.length ? 1 : 0) +
     (props.menuFilter.length ? 1 : 0) +
     (props.awardFilter.length ? 1 : 0) +
-    (props.sort !== 'recent' ? 1 : 0) +
+    (props.sort !== DEFAULT_SORT ? 1 : 0) +
     (props.sortReversed ? 1 : 0);
 
   const pillSx = (selected: boolean) => ({

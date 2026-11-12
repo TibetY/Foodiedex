@@ -64,6 +64,7 @@ import type {
 } from '~/types/restaurant';
 import { decorate, type DecoratedRestaurant } from '~/utils/decorateRestaurant';
 import { defaultViewFor } from '~/utils/defaultView';
+import { DEFAULT_SORT, SORT_MODES, parseSortMode, sortPlaces, type SortMode } from '~/utils/sortPlaces';
 import { DISTINCTIONS, distinctionIds } from '~/utils/distinctions';
 import {
   FILTER_PARAM_KEYS,
@@ -275,8 +276,6 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
 
 type ViewMode = 'tile' | 'list' | 'table' | 'map';
 type FilterMode = 'all' | 'been' | 'want';
-type SortMode = 'recent' | 'rating' | 'name' | 'price' | 'visits' | 'favorite';
-const SORT_MODES: SortMode[] = ['recent', 'rating', 'name', 'price', 'visits', 'favorite'];
 
 /** Parse a comma-joined multi-select param into a clean string[] ('' → []). */
 function parseCsv(raw: string | null): string[] {
@@ -390,7 +389,7 @@ export default function Dashboard() {
   const awardFilter = useMemo(() => parseCsv(awardParam), [awardParam]);
   const sort: SortMode = ((): SortMode => {
     const s = searchParams.get('sort');
-    return SORT_MODES.includes(s as SortMode) ? (s as SortMode) : 'recent';
+    return parseSortMode(s);
   })();
   // Flip whatever the chosen sort's natural order is (e.g. Name Z→A, oldest
   // first, lowest rated first). Kept separate from `sort` so the dropdown still
@@ -424,7 +423,7 @@ export default function Dashboard() {
   const setRatingFilter = (v: number) =>
     updateFilterParams((p) => setOrDelete(p, 'rating', v ? String(v) : ''));
   const setSort = (v: SortMode) =>
-    updateFilterParams((p) => setOrDelete(p, 'sort', v === 'recent' ? '' : v));
+    updateFilterParams((p) => setOrDelete(p, 'sort', v === DEFAULT_SORT ? '' : v));
   // Array setters accept a value or a functional updater (mirroring useState),
   // reading prev from the params being mutated so rapid toggles never go stale.
   const makeCsvSetter =
@@ -597,37 +596,7 @@ export default function Dashboard() {
 
   // Apply the chosen sort to the filtered set (order-independent metrics like
   // counts still read from `filtered`).
-  const sorted = useMemo(() => {
-    const arr = [...filtered];
-    const dir = sortReversed ? -1 : 1;
-    switch (sort) {
-      case 'rating':
-        arr.sort((a, b) => dir * ((b.rating ?? 0) - (a.rating ?? 0)));
-        break;
-      case 'name':
-        arr.sort((a, b) => dir * a.name.localeCompare(b.name));
-        break;
-      case 'price':
-        arr.sort((a, b) => dir * ((a.priceRange?.length ?? 0) - (b.priceRange?.length ?? 0)));
-        break;
-      case 'visits':
-        arr.sort((a, b) => dir * ((b.visitCount ?? 0) - (a.visitCount ?? 0)));
-        break;
-      case 'favorite':
-        arr.sort(
-          (a, b) =>
-            dir *
-            (Number(b.favorite ?? false) - Number(a.favorite ?? false) ||
-              a.name.localeCompare(b.name))
-        );
-        break;
-      case 'recent':
-      default:
-        arr.sort((a, b) => dir * (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
-        break;
-    }
-    return arr;
-  }, [filtered, sort, sortReversed]);
+  const sorted = useMemo(() => sortPlaces(filtered, sort, sortReversed), [filtered, sort, sortReversed]);
 
   const showSearch = searchOpen || !!searchQuery;
   useEffect(() => {
@@ -645,7 +614,7 @@ export default function Dashboard() {
     dietFilter.length > 0 ||
     menuFilter.length > 0 ||
     awardFilter.length > 0 ||
-    sort !== 'recent' ||
+    sort !== DEFAULT_SORT ||
     sortReversed;
 
   // Drop every filter/sort param in a single history entry (leaves list/… intact).

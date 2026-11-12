@@ -19,6 +19,7 @@ import { createSupabaseServerClient } from '~/supabase.server';
 import { getSharedList, forkSharedList, type SharedList } from '~/services/sharedList.server';
 import { decorate } from '~/utils/decorateRestaurant';
 import { defaultViewFor } from '~/utils/defaultView';
+import { DEFAULT_SORT, sortPlaces, type SortMode } from '~/utils/sortPlaces';
 import type { Restaurant } from '~/types/restaurant';
 import RestaurantThumb from '~/components/RestaurantThumb';
 import RestaurantDetailDialog from '~/components/RestaurantDetailDialog';
@@ -92,8 +93,8 @@ const activateOnKey = (fn: () => void) => (e: React.KeyboardEvent) => {
 
 type ViewMode = 'tile' | 'list' | 'map';
 type FilterMode = 'all' | 'been' | 'want';
-type SortMode = 'recent' | 'rating' | 'name' | 'price';
-const SORT_MODES: SortMode[] = ['recent', 'rating', 'name', 'price'];
+// The public page offers the orders that make sense without an account's data.
+const SHARE_SORT_MODES: SortMode[] = ['name', 'recent', 'rating', 'rating_asc', 'price', 'price_desc'];
 
 export default function SharedListPage() {
   const { token, signedIn, shared } = useLoaderData<LoaderData>();
@@ -108,7 +109,7 @@ export default function SharedListPage() {
   const view: ViewMode = chosenView ?? defaultViewFor(shared?.restaurants ?? []);
   const [filter, setFilter] = useState<FilterMode>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [sort, setSort] = useState<SortMode>('recent');
+  const [sort, setSort] = useState<SortMode>(DEFAULT_SORT);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selected, setSelected] = useState<Restaurant | null>(null);
 
@@ -132,24 +133,7 @@ export default function SharedListPage() {
     });
   }, [decorated, filter, searchQuery]);
 
-  const sorted = useMemo(() => {
-    const arr = [...filtered];
-    switch (sort) {
-      case 'rating':
-        arr.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
-        break;
-      case 'name':
-        arr.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'price':
-        arr.sort((a, b) => (a.priceRange?.length ?? 0) - (b.priceRange?.length ?? 0));
-        break;
-      default:
-        arr.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
-        break;
-    }
-    return arr;
-  }, [filtered, sort]);
+  const sorted = useMemo(() => sortPlaces(filtered, sort), [filtered, sort]);
 
   const total = decorated.length;
   const beenCount = decorated.filter((r) => r.isBeen).length;
@@ -335,7 +319,7 @@ export default function SharedListPage() {
               aria-label={tr('dashboard.sortLabel')}
               sx={{ background: t.searchBg, border: 'none', borderRadius: '10px', height: 40, padding: '0 12px', color: t.muted, fontSize: 14, cursor: 'pointer' }}
             >
-              {SORT_MODES.map((m) => (
+              {SHARE_SORT_MODES.map((m) => (
                 <option key={m} value={m}>{tr(`dashboard.sort_${m}`)}</option>
               ))}
             </Box>
