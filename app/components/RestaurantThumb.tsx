@@ -1,23 +1,23 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import { type SxProps, type Theme } from '@mui/material/styles';
-import RestaurantOutlined from '@mui/icons-material/RestaurantOutlined';
 import type { ListTokens } from '~/listTheme';
 import { RESTAURANT_IMAGE_BUCKET } from '~/supabaseConfig';
+import { monogram } from '~/utils/decorateRestaurant';
 
 type Tokens = ListTokens;
 
 interface RestaurantThumbProps {
   image?: string;
-  /** The place's name — the image's alt text. */
+  /** The place's name — the image's alt text, and the source of its monogram. */
   name: string;
   tokens: Tokens;
-  /** Size it by width (default 100%); the height always follows the ratio. */
+  /** Size it by width (default 100%); the height follows the ratio. */
   sx?: SxProps<Theme>;
   className?: string;
 }
 
-/** The one shape a place photo takes, everywhere: cards, rows, the detail hero. */
+/** The shape a place photo takes on cards and in the detail hero. */
 export const THUMB_ASPECT = '3 / 2';
 
 // Photos saved before the save-time gate existed are still hotlinked from
@@ -46,15 +46,14 @@ function isUsable(img: HTMLImageElement, src: string): boolean {
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 /**
- * Restaurant thumbnail used by every card, row, popup and dialog: one aspect
- * ratio, lazy-loaded, faded in. A place with no usable photo — none saved, a
- * dead link, or a legacy image that fails the checks above — gets the same
- * flat neutral tile with a small, quiet mark. The name is not repeated on it:
- * it always sits right beside or below the tile.
+ * Whether a place's photo can be shown, for anything that lays itself out
+ * differently with and without one (the card, the detail hero). `show` turns
+ * false when there is no image, the link is dead, or a legacy image fails the
+ * checks above; spread `imgProps` on the <img>.
  */
-export default function RestaurantThumb({ image, name, tokens: t, sx, className }: RestaurantThumbProps) {
-  const imgRef = useRef<HTMLImageElement>(null);
-  // Both are keyed by src, so a new `image` prop starts from a clean slate.
+export function usePlacePhoto(image?: string) {
+  const ref = useRef<HTMLImageElement>(null);
+  // Both are keyed by src, so a new `image` starts from a clean slate.
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const [pendingSrc, setPendingSrc] = useState<string | null>(null);
 
@@ -62,13 +61,62 @@ export default function RestaurantThumb({ image, name, tokens: t, sx, className 
   // React never replays those events, so `onError` alone leaves the browser's
   // broken-image icon on screen. Read the element's real state once mounted.
   useIsomorphicLayoutEffect(() => {
-    const img = imgRef.current;
+    const img = ref.current;
     if (!image || !img) return;
     if (!img.complete) setPendingSrc(image);
     else if (!isUsable(img, image)) setFailedSrc(image);
   }, [image]);
 
-  const showImage = !!image && failedSrc !== image;
+  return {
+    show: !!image && failedSrc !== image,
+    pending: pendingSrc === image,
+    imgProps: {
+      ref,
+      src: image,
+      loading: 'lazy' as const,
+      decoding: 'async' as const,
+      onLoad: (e: React.SyntheticEvent<HTMLImageElement>) => {
+        if (image && isUsable(e.currentTarget, image)) setPendingSrc(null);
+        else setFailedSrc(image ?? null);
+      },
+      onError: () => setFailedSrc(image ?? null),
+    },
+  };
+}
+
+/** How a photo fills its frame and fades in once it has loaded. */
+export function photoSx(pending: boolean) {
+  return {
+    position: 'absolute',
+    inset: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    objectPosition: 'center',
+    display: 'block',
+    // Hide the alt text and outline browsers draw while (or instead of) loading.
+    color: 'transparent',
+    opacity: pending ? 0 : 1,
+    transition: 'opacity .25s ease',
+    '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+  } as const;
+}
+
+/** The fill behind a monogram: a raised tile with the accent glowing in from one corner. */
+export function haloSx(t: Tokens, base: string = t.cardBg) {
+  return {
+    backgroundColor: base,
+    backgroundImage: `radial-gradient(120% 100% at 100% 0%, ${t.halo} 0%, transparent 62%)`,
+  } as const;
+}
+
+/**
+ * Restaurant thumbnail used by rows, popups and pickers: lazy-loaded, faded
+ * in. A place with no usable photo — none saved, a dead link, or a legacy
+ * image that fails the checks above — gets its monogram on a softly lit tile.
+ */
+export default function RestaurantThumb({ image, name, tokens: t, sx, className }: RestaurantThumbProps) {
+  const photo = usePlacePhoto(image);
 
   return (
     <Box
@@ -80,55 +128,32 @@ export default function RestaurantThumb({ image, name, tokens: t, sx, className 
           aspectRatio: THUMB_ASPECT,
           flex: 'none',
           overflow: 'hidden',
-          borderRadius: '14px',
-          background: t.skeleton,
+          borderRadius: '16px',
           containerType: 'inline-size',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          ...haloSx(t, t.raised),
         },
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}
     >
-      {showImage ? (
-        <Box
-          component="img"
-          ref={imgRef}
-          src={image}
-          alt={name}
-          loading="lazy"
-          decoding="async"
-          onLoad={(e: React.SyntheticEvent<HTMLImageElement>) => {
-            if (isUsable(e.currentTarget, image)) setPendingSrc(null);
-            else setFailedSrc(image);
-          }}
-          onError={() => setFailedSrc(image)}
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'center',
-            display: 'block',
-            // Hide the alt text and outline browsers draw while (or instead of) loading.
-            color: 'transparent',
-            opacity: pendingSrc === image ? 0 : 1,
-            transition: 'opacity .2s ease',
-            '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
-          }}
-        />
+      {photo.show ? (
+        <Box component="img" alt={name} {...photo.imgProps} sx={photoSx(photo.pending)} />
       ) : (
-        <RestaurantOutlined
+        <Box
+          component="span"
           aria-hidden
           sx={{
-            color: t.faint,
-            opacity: 0.55,
-            fontSize: 'clamp(20px, 14cqw, 40px)',
-            // Row-sized thumbs stay plain.
-            '@container (max-width: 96px)': { display: 'none' },
+            color: t.accent,
+            fontWeight: 300,
+            letterSpacing: '-.04em',
+            lineHeight: 1,
+            fontSize: 'clamp(15px, 34cqw, 72px)',
           }}
-        />
+        >
+          {monogram(name)}
+        </Box>
       )}
     </Box>
   );

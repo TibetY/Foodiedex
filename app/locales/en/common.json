@@ -158,6 +158,7 @@
     "viewList": "List",
     "viewMap": "Map",
     "filterAll": "All",
+    "allPlaces": "All places",
     "filterBeen": "Been",
     "filterWant": "Want to try",
     "filterWantShort": "Want",
@@ -336,6 +337,12 @@
     "addRestaurant": "Add Restaurant"
   },
   "filters": {
+    "title": "Filter & sort",
+    "clear": "Clear",
+    "show_one": "Show {{count}} place",
+    "show_other": "Show {{count}} places",
+    "activeCount_one": "{{count}} filter on",
+    "activeCount_other": "{{count}} filters on",
     "button": "Filters",
     "done": "Done"
   },
@@ -370,6 +377,8 @@
   },
   "stats": {
     "menuItem": "Your taste in food",
+    "navLabel": "Stats",
+    "heroLine": "{{been}} been · {{want}} want to try · {{favorites}} favourites",
     "back": "Back to dashboard",
     "eyebrow": "{{name}} · your taste in food",
     "spotsWord": "spots",
@@ -480,6 +489,11 @@
     "visitedTimes_one": "Visited {{count}} time",
     "visitedTimes_other": "Visited {{count}} times",
     "addVisit": "+1 visit",
+    "noteLabel": "Note",
+    "actionReserve": "Reserve",
+    "actionDirections": "Directions",
+    "actionCall": "Call",
+    "actionWebsite": "Website",
     "everyoneSaid": "What everyone said",
     "yourBubbles": "Your bubbles",
     "yourNote": "Your note",
@@ -552,6 +566,8 @@
     "nearMe": "Center on my location"
   },
   "accents": {
+    "ember": "Ember",
+    "emberNote": "warm ember glow",
     "matcha": "Matcha",
     "matchaNote": "soft matcha green",
     "sakura": "Sakura",

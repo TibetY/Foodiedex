@@ -2,8 +2,6 @@ import Box from '@mui/material/Box';
 import { type SxProps, type Theme } from '@mui/material/styles';
 import { distinctionLabel } from '~/utils/distinctions';
 
-/** The guide's red, the one fixed colour here: it is what makes the mark read as Michelin. */
-const MICHELIN_RED = '#C4161C';
 
 // Six round petals about a centre — our own drawing of the guide's
 // flower-shaped star, not their artwork. The petals only just touch, so the
@@ -18,11 +16,13 @@ interface MichelinStarsProps {
   count: number;
   /** Height of one star in px. */
   size?: number;
+  /** Fill colour; defaults to the text colour around it. */
+  color?: string;
   sx?: SxProps<Theme>;
 }
 
 /** One to three Michelin stars in a row, announced as e.g. "2 Michelin Stars". */
-export default function MichelinStars({ count, size = 13, sx }: MichelinStarsProps) {
+export default function MichelinStars({ count, size = 13, color = 'currentColor', sx }: MichelinStarsProps) {
   if (!Number.isInteger(count) || count < 1 || count > 3) return null;
   return (
     <Box
@@ -32,7 +32,7 @@ export default function MichelinStars({ count, size = 13, sx }: MichelinStarsPro
       sx={[{ display: 'inline-flex', alignItems: 'center', gap: '2px', lineHeight: 0 }, ...(Array.isArray(sx) ? sx : [sx])]}
     >
       {Array.from({ length: count }, (_, i) => (
-        <svg key={i} width={size} height={size} viewBox="0 0 24 24" fill={MICHELIN_RED} aria-hidden>
+        <svg key={i} width={size} height={size} viewBox="0 0 24 24" fill={color} aria-hidden>
           <circle cx="12" cy="12" r="6" />
           {PETALS.map((p, j) => (
             <circle key={j} cx={p.cx.toFixed(2)} cy={p.cy.toFixed(2)} r="4.1" />

@@ -23,30 +23,31 @@ describe('modeFromCookieHeader', () => {
     expect(modeFromCookieHeader(`lng=en; ${THEME_COOKIE_KEY}=dark`)).toBe('dark');
   });
 
-  it('defaults to light when absent, empty, or unparseable', () => {
-    expect(modeFromCookieHeader(null)).toBe('light');
-    expect(modeFromCookieHeader('')).toBe('light');
-    expect(modeFromCookieHeader('lng=fr; sb-token=xyz')).toBe('light');
-    expect(modeFromCookieHeader(`${THEME_COOKIE_KEY}=neon`)).toBe('light');
+  it('defaults to dark when absent, empty, or unparseable', () => {
+    expect(modeFromCookieHeader(null)).toBe('dark');
+    expect(modeFromCookieHeader('')).toBe('dark');
+    expect(modeFromCookieHeader('lng=fr; sb-token=xyz')).toBe('dark');
+    expect(modeFromCookieHeader(`${THEME_COOKIE_KEY}=neon`)).toBe('dark');
   });
 
   it('does not match a cookie whose name merely ends with the key', () => {
-    expect(modeFromCookieHeader(`not_${THEME_COOKIE_KEY}=dark`)).toBe('light');
+    expect(modeFromCookieHeader(`not_${THEME_COOKIE_KEY}=light`)).toBe('dark');
   });
 });
 
 describe('accentFromCookieHeader', () => {
   it('reads each accent, alone or among other cookies', () => {
+    expect(accentFromCookieHeader(`${ACCENT_COOKIE_KEY}=ember`)).toBe('ember');
     expect(accentFromCookieHeader(`${ACCENT_COOKIE_KEY}=matcha`)).toBe('matcha');
     expect(accentFromCookieHeader(`${ACCENT_COOKIE_KEY}=sakura`)).toBe('sakura');
     expect(accentFromCookieHeader(`lng=fr; ${ACCENT_COOKIE_KEY}=peach; sb-token=xyz`)).toBe('peach');
   });
 
-  it('defaults to matcha when absent, empty, or unparseable', () => {
-    expect(accentFromCookieHeader(null)).toBe('matcha');
-    expect(accentFromCookieHeader('')).toBe('matcha');
-    expect(accentFromCookieHeader(`${ACCENT_COOKIE_KEY}=chartreuse`)).toBe('matcha');
-    expect(accentFromCookieHeader(`not_${ACCENT_COOKIE_KEY}=sakura`)).toBe('matcha');
+  it('defaults to ember when absent, empty, or unparseable', () => {
+    expect(accentFromCookieHeader(null)).toBe('ember');
+    expect(accentFromCookieHeader('')).toBe('ember');
+    expect(accentFromCookieHeader(`${ACCENT_COOKIE_KEY}=chartreuse`)).toBe('ember');
+    expect(accentFromCookieHeader(`not_${ACCENT_COOKIE_KEY}=sakura`)).toBe('ember');
   });
 
   it('reads mode and accent independently from one header', () => {

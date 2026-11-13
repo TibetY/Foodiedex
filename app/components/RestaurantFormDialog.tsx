@@ -790,9 +790,7 @@ export default function RestaurantFormDialog({
   const sectionHeadingSx = {
     fontWeight: 600,
     color: 'text.secondary',
-    textTransform: 'uppercase',
-    fontSize: '0.75rem',
-    letterSpacing: '0.05em',
+    fontSize: 13,
   } as const;
 
   /** A labeled divider between field groups — breaks the long form into
@@ -821,7 +819,9 @@ export default function RestaurantFormDialog({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          fontWeight: 700,
+          fontWeight: 600,
+          fontSize: 24,
+          letterSpacing: '-.03em',
           pb: 1,
         }}
       >
@@ -834,7 +834,7 @@ export default function RestaurantFormDialog({
           <Close />
         </IconButton>
       </DialogTitle>
-      <DialogContent dividers sx={{ borderColor: 'divider' }}>
+      <DialogContent sx={{ pt: '8px !important' }}>
         {choosing ? (
           /* Step 1 of adding: search (or nearby) seeds the form; manual entry is
              the explicit fallback. The full field set stays hidden until then. */
@@ -917,7 +917,7 @@ export default function RestaurantFormDialog({
             <Box
               role="group"
               aria-label={t('form.statusLabel')}
-              sx={{ display: 'flex', gap: '4px', padding: '4px', background: tokens.track, borderRadius: '999px', width: 'max-content' }}
+              sx={{ display: 'flex', gap: '4px', padding: '4px', background: tokens.cardBg, borderRadius: '999px', width: 'max-content' }}
             >
               {(['want', 'been'] as RestaurantStatus[]).map((value) => {
                 const on = (formData.status || 'want') === value;
@@ -947,7 +947,7 @@ export default function RestaurantFormDialog({
                       fontWeight: on ? 600 : 400,
                       padding: '8px 18px',
                       borderRadius: '999px',
-                      background: on ? tokens.cardBg : 'transparent',
+                      background: on ? tokens.raised : 'transparent',
                       color: on ? tokens.ink : tokens.muted,
                       boxShadow: on ? tokens.shadow1 : 'none',
                     }}
@@ -1073,7 +1073,7 @@ export default function RestaurantFormDialog({
                       setFormData({ ...formData, priceRange: on ? '' : range });
                     }}
                     sx={{
-                      border: on ? '1px solid transparent' : `1px solid ${tokens.pillBorder}`,
+                      border: '1px solid transparent',
                       cursor: 'pointer',
                       font: 'inherit',
                       fontSize: '14px',
@@ -1081,8 +1081,8 @@ export default function RestaurantFormDialog({
                       letterSpacing: '.04em',
                       padding: '8px 16px',
                       borderRadius: '999px',
-                      background: on ? tokens.accent : tokens.cardBg,
-                      color: on ? tokens.accentText : tokens.muted,
+                      background: on ? tokens.pBg : tokens.cardBg,
+                      color: on ? tokens.pFg : tokens.ink,
                     }}
                   >
                     {range}
@@ -1656,15 +1656,15 @@ function TagChip({
       aria-pressed={selected}
       onClick={onClick}
       sx={{
-        border: selected ? '1px solid transparent' : `1px solid ${tokens.pillBorder}`,
+        border: '1px solid transparent',
         cursor: 'pointer',
         font: 'inherit',
-        fontSize: '12px',
+        fontSize: '14px',
         fontWeight: selected ? 600 : 400,
-        padding: '7px 15px',
+        padding: '9px 15px',
         borderRadius: '999px',
-        background: selected ? tokens.accent : tokens.cardBg,
-        color: selected ? tokens.accentText : tokens.muted,
+        background: selected ? tokens.pBg : tokens.cardBg,
+        color: selected ? tokens.pFg : tokens.ink,
         transition: 'background .12s ease, color .12s ease',
       }}
     >

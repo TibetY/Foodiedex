@@ -211,7 +211,7 @@ export default function Onboarding({
       {/* city starter packs */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', my: 3.5 }}>
         <Box sx={{ flex: 1, height: '1px', background: t.divider }} />
-        <Box sx={{ color: t.faint, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em' }}>
+        <Box sx={{ color: t.muted, fontSize: 13, fontWeight: 600 }}>
           {tr('onboarding.orStarter')}
         </Box>
         <Box sx={{ flex: 1, height: '1px', background: t.divider }} />

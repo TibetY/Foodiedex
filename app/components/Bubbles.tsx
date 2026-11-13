@@ -7,8 +7,9 @@ export function snapToHalf(value: number, max = 5): number {
 }
 
 /**
- * How one bubble in the row should paint for a given rating: solid, half, or
- * empty. Shared by the read-only row and the picker so they can never drift.
+ * How one bubble in the PICKER should paint for a given rating: solid, half, or
+ * an outlined empty one — the outline is the control's boundary, so it is held
+ * to 3:1.
  */
 function bubbleSx(fill: 'full' | 'half' | 'empty', size: number, t: ListTokens) {
   return {
@@ -29,6 +30,21 @@ function bubbleSx(fill: 'full' | 'half' | 'empty', size: number, t: ListTokens) 
   };
 }
 
+/** A read-only dot: lit, half lit, or a faint ghost of the same colour. */
+function dotSx(fill: 'full' | 'half' | 'empty', size: number, color: string) {
+  return {
+    position: 'relative' as const,
+    width: size,
+    height: size,
+    flex: 'none',
+    borderRadius: '50%',
+    overflow: 'hidden',
+    // The ghost: the dot's own colour at low strength, on any background.
+    '&::before': { content: '""', position: 'absolute', inset: 0, background: color, opacity: fill === 'full' ? 1 : 0.22 },
+    '&::after': fill === 'half' ? { content: '""', position: 'absolute', inset: '0 50% 0 0', background: color } : undefined,
+  };
+}
+
 /** Which of the `max` bubbles are full, which single one is half. */
 function fillFor(index: number, snapped: number): 'full' | 'half' | 'empty' {
   if (index + 1 <= snapped) return 'full';
@@ -44,11 +60,13 @@ interface BubblesProps {
   size?: number;
   gap?: number;
   max?: number;
+  /** Override the dot colour — for dots laid over a photograph. */
+  color?: string;
 }
 
-/** Read-only bubble rating: `max` small circles — solid, half-filled, or
- *  outlined — to the nearest half. */
-export default function Bubbles({ value, tokens: t, size = 12, gap = 5, max = 5 }: BubblesProps) {
+/** Read-only rating: `max` small dots — lit, half lit, or ghosted — to the
+ *  nearest half. */
+export default function Bubbles({ value, tokens: t, size = 7, gap = 4, max = 5, color }: BubblesProps) {
   const snapped = snapToHalf(value, max);
   return (
     <Box
@@ -57,7 +75,7 @@ export default function Bubbles({ value, tokens: t, size = 12, gap = 5, max = 5 
       sx={{ display: 'inline-flex', alignItems: 'center', gap: `${gap}px`, verticalAlign: 'middle' }}
     >
       {Array.from({ length: max }, (_, i) => (
-        <Box key={i} aria-hidden sx={bubbleSx(fillFor(i, snapped), size, t)} />
+        <Box key={i} aria-hidden sx={dotSx(fillFor(i, snapped), size, color ?? t.rating)} />
       ))}
     </Box>
   );

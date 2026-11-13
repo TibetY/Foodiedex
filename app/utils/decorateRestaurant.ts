@@ -19,6 +19,18 @@ export type DecoratedRestaurant = Restaurant & {
 };
 
 /**
+ * The mark that stands in for a place with no photo: its leading number
+ * ("88 Lanterns" → "88", "1909 Oyster" → "1909") or its first letter, with a
+ * leading "The" ignored.
+ */
+export function monogram(name: string): string {
+  const base = name.trim().replace(/^The\s+/i, '');
+  const digits = base.match(/^\d{1,4}/);
+  if (digits) return digits[0];
+  return (Array.from(base)[0] ?? '?').toUpperCase();
+}
+
+/**
  * Derive the presentational fields (initial, cuisine, city, status). Bubble
  * display is handled by <Bubbles> from the raw `rating`, so no glyph string is
  * precomputed here (that rounding is what dropped fractional scores).
@@ -41,7 +53,7 @@ export function decorate(r: Restaurant, groupRatings?: { rating: number }[]): De
   return {
     ...r,
     rating,
-    initial: (r.name.replace(/^The /i, '')[0] || '?').toUpperCase(),
+    initial: monogram(r.name),
     costStr: r.priceRange || '',
     rated: (rating ?? 0) > 0,
     cuisine,

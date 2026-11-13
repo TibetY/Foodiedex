@@ -25,7 +25,7 @@ interface ShareCardOptions {
   };
 }
 
-const SANS = '"Archivo", system-ui, sans-serif';
+const SANS = '"Manrope", system-ui, sans-serif';
 
 /** Best-effort: make sure the brand font is ready before we rasterize text. */
 async function ensureFonts(): Promise<void> {

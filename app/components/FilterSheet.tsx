@@ -4,7 +4,8 @@ import Popover from '@mui/material/Popover';
 import Drawer from '@mui/material/Drawer';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
-import FilterList from '@mui/icons-material/FilterList';
+import Tune from '@mui/icons-material/Tune';
+import Close from '@mui/icons-material/Close';
 import ArrowUpward from '@mui/icons-material/ArrowUpward';
 import ArrowDownward from '@mui/icons-material/ArrowDownward';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +20,8 @@ type MultiSetter = (updater: string[] | ((prev: string[]) => string[])) => void;
 
 interface FilterSheetProps {
   tokens: Tokens;
+  /** How many places the current filters leave, for the sheet's main button. */
+  resultCount: number;
   cuisineOptions: string[];
   cityOptions: string[];
   costOptions: string[];
@@ -64,9 +67,9 @@ function toggle(arr: string[], value: string): string[] {
 }
 
 /**
- * Collapses the old overflowing chip row into one Filters button. On desktop it
- * opens a popover; on mobile a bottom sheet. All the facet controls live inside,
- * grouped, so the toolbar stays calm. Reads/writes the same URL-backed filter
+ * One Filters button. On a phone it opens a glass sheet from the bottom; on
+ * wider screens a popover. All the facet controls live inside, grouped, so the
+ * toolbar stays calm. Reads/writes the same URL-backed filter
  * state the dashboard owns (setters passed in), so views stay linkable.
  */
 export default function FilterSheet(props: FilterSheetProps) {
@@ -90,24 +93,48 @@ export default function FilterSheet(props: FilterSheetProps) {
     (props.sortReversed ? 1 : 0);
 
   const pillSx = (selected: boolean) => ({
-    border: `1px solid ${selected ? t.pBg : t.pillBorder}`,
-    background: selected ? t.pBg : 'transparent',
-    color: selected ? t.pFg : t.muted,
+    display: 'inline-flex',
+    alignItems: 'center',
+    height: 44,
+    padding: '0 16px',
+    border: 'none',
     borderRadius: '999px',
-    padding: '6px 13px',
-    fontSize: '14px',
+    background: selected ? t.pBg : t.cardBg,
+    color: selected ? t.pFg : t.ink,
+    font: 'inherit',
+    fontSize: 15,
+    fontWeight: 600,
     cursor: 'pointer',
-    lineHeight: 1.4,
+    whiteSpace: 'nowrap' as const,
     transition: 'transform .12s ease',
     '&:active': { transform: 'scale(.96)' },
   });
 
   const content = (
-    <Box sx={{ p: { xs: 2.5, sm: 2 }, width: { xs: 'auto', sm: 340 } }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0, maxHeight: 'inherit', width: { xs: 'auto', sm: 400 } }}>
+      <Box sx={{ flex: 'none', padding: { xs: '10px 20px 0', sm: '20px 20px 0' } }}>
+        <Box aria-hidden sx={{ display: { sm: 'none' }, width: 36, height: 5, borderRadius: '3px', background: t.divider, mx: 'auto', mb: '10px' }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+          <Box component="h2" sx={{ m: 0, fontSize: 26, fontWeight: 600, letterSpacing: '-.04em', lineHeight: 1.1 }}>
+            {tr('filters.title')}
+          </Box>
+          <Box
+            component="button"
+            type="button"
+            aria-label={tr('form.close')}
+            onClick={() => setAnchor(null)}
+            sx={{ display: 'grid', placeItems: 'center', flex: 'none', width: 44, height: 44, p: 0, border: 'none', borderRadius: '50%', background: t.cardBg, color: t.ink, cursor: 'pointer' }}
+          >
+            <Close sx={{ fontSize: 18 }} />
+          </Box>
+        </Box>
+      </Box>
+
+      <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 20px 4px' }}>
       {/* Saved views */}
       {(props.views.length > 0 || props.hasActiveFilters) && (
-        <Box sx={{ mb: 2 }}>
-          <Box sx={{ fontSize: 12, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: t.faint, mb: 1 }}>
+        <Box sx={{ mb: '18px' }}>
+          <Box sx={{ fontSize: 13, fontWeight: 600, color: t.muted, mb: '10px' }}>
             {tr('views.title')}
           </Box>
           <SavedViewsBar
@@ -137,9 +164,9 @@ export default function FilterSheet(props: FilterSheetProps) {
           aria-pressed={props.sortReversed}
           aria-label={tr('dashboard.sortReverse')}
           title={tr('dashboard.sortReverse')}
-          sx={{ ...pillSx(props.sortReversed), display: 'inline-flex', alignItems: 'center', padding: '6px 10px' }}
+          sx={{ ...pillSx(props.sortReversed), justifyContent: 'center', width: 44, padding: 0 }}
         >
-          {props.sortReversed ? <ArrowUpward sx={{ fontSize: 15 }} /> : <ArrowDownward sx={{ fontSize: 15 }} />}
+          {props.sortReversed ? <ArrowUpward sx={{ fontSize: 17 }} /> : <ArrowDownward sx={{ fontSize: 17 }} />}
         </Box>
       </Section>
 
@@ -162,7 +189,7 @@ export default function FilterSheet(props: FilterSheetProps) {
             {tr('dashboard.anyCost')}
           </Box>
           {props.costOptions.map((c) => (
-            <Box component="button" key={c} type="button" onClick={() => props.setCostFilter(c)} sx={{ ...pillSx(props.costFilter === c), fontWeight: 600 }}>
+            <Box component="button" key={c} type="button" onClick={() => props.setCostFilter(c)} sx={pillSx(props.costFilter === c)}>
               {c}
             </Box>
           ))}
@@ -241,28 +268,44 @@ export default function FilterSheet(props: FilterSheetProps) {
         </Section>
       )}
 
-      {/* footer */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2.5, pt: 2, borderTop: `1px solid ${t.border}` }}>
-        <Box
-          component="button"
-          type="button"
-          onClick={props.onClear}
-          disabled={activeCount === 0}
-          sx={{ border: 'none', background: 'transparent', color: activeCount === 0 ? t.faint : t.muted, fontSize: '14px', cursor: activeCount === 0 ? 'default' : 'pointer' }}
-        >
-          {tr('dashboard.clearFilters')}
-        </Box>
+      </Box>
+
+      {/* footer — the one accent button says what you'll get */}
+      <Box sx={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '8px', padding: { xs: '12px 20px calc(20px + env(safe-area-inset-bottom))', sm: '12px 20px 20px' } }}>
+        {activeCount > 0 && (
+          <Box
+            component="button"
+            type="button"
+            onClick={props.onClear}
+            sx={{ flex: 'none', height: 56, padding: '0 18px', border: 'none', borderRadius: '999px', background: 'transparent', color: t.muted, font: 'inherit', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
+          >
+            {tr('filters.clear')}
+          </Box>
+        )}
         <Box
           component="button"
           type="button"
           onClick={() => setAnchor(null)}
-          sx={{ border: 'none', background: t.accent, color: t.accentText, fontWeight: 600, fontSize: '14px', padding: '10px 18px', borderRadius: '10px', cursor: 'pointer', transition: 'transform .12s ease', '&:active': { transform: 'scale(.96)' } }}
+          sx={{ flex: 1, height: 56, border: 'none', borderRadius: '999px', background: t.accent, color: t.accentText, font: 'inherit', fontSize: 16, fontWeight: 700, cursor: 'pointer', transition: 'transform .12s ease', '&:active': { transform: 'scale(.98)' } }}
         >
-          {tr('filters.done')}
+          {tr('filters.show', { count: props.resultCount })}
         </Box>
       </Box>
     </Box>
   );
+
+  // Glass: a translucent surface with the page blurred behind it.
+  const glassPaper = {
+    background: t.glass,
+    backgroundImage: 'none',
+    color: t.ink,
+    backdropFilter: 'blur(30px) saturate(1.2)',
+    WebkitBackdropFilter: 'blur(30px) saturate(1.2)',
+    boxShadow: `0 0 0 1px ${t.border}, 0 24px 60px rgba(0,0,0,.35)`,
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+  } as const;
 
   return (
     <>
@@ -274,28 +317,38 @@ export default function FilterSheet(props: FilterSheetProps) {
         aria-label={tr('filters.button')}
         onClick={(e: React.MouseEvent<HTMLButtonElement>) => setAnchor(e.currentTarget)}
         sx={{
+          position: 'relative',
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '7px',
-          border: `1px solid ${activeCount ? t.pBg : t.pillBorder}`,
-          background: activeCount ? t.pBg : 'transparent',
-          color: activeCount ? t.pFg : t.muted,
-          borderRadius: '10px',
-          height: 40,
-          padding: '0 14px',
-          fontSize: '14px',
-          fontWeight: 500,
+          justifyContent: 'center',
+          gap: '8px',
+          flex: 'none',
+          // A round button on a phone, a labelled pill beyond.
+          width: { xs: 48, sm: 'auto' },
+          height: { xs: 48, sm: 50 },
+          padding: { xs: 0, sm: '0 18px' },
+          border: 'none',
+          borderRadius: '999px',
+          background: t.cardBg,
+          color: t.ink,
+          font: 'inherit',
+          fontSize: 15,
+          fontWeight: 600,
           cursor: 'pointer',
         }}
       >
-        <FilterList sx={{ fontSize: 18 }} />
+        <Tune sx={{ fontSize: 20 }} />
         <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
           {tr('filters.button')}
         </Box>
+        {/* An ember dot is the whole "filters are on" signal; the count is for screen readers. */}
         {activeCount > 0 && (
-          <Box component="span" sx={{ minWidth: 18, height: 18, px: '5px', borderRadius: '999px', background: activeCount ? t.pFg : t.accent, color: activeCount ? t.pBg : t.accentText, fontSize: 12, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-            {activeCount}
-          </Box>
+          <Box
+            component="span"
+            role="img"
+            aria-label={tr('filters.activeCount', { count: activeCount })}
+            sx={{ position: { xs: 'absolute', sm: 'static' }, top: 9, right: 10, width: 8, height: 8, borderRadius: '50%', background: t.accent }}
+          />
         )}
       </Box>
 
@@ -304,7 +357,7 @@ export default function FilterSheet(props: FilterSheetProps) {
           anchor="bottom"
           open={open}
           onClose={() => setAnchor(null)}
-          PaperProps={{ sx: { background: t.panelBg, borderRadius: '22px 22px 0 0', maxHeight: '82vh' } }}
+          PaperProps={{ sx: { ...glassPaper, margin: '0 8px calc(8px + env(safe-area-inset-bottom))', borderRadius: '36px', maxHeight: 'calc(100dvh - 68px)' } }}
         >
           {content}
         </Drawer>
@@ -315,7 +368,7 @@ export default function FilterSheet(props: FilterSheetProps) {
           onClose={() => setAnchor(null)}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
           transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-          slotProps={{ paper: { sx: { mt: 1, background: t.panelBg, border: `1px solid ${t.border}`, borderRadius: '18px' } } }}
+          slotProps={{ paper: { sx: { ...glassPaper, mt: 1, borderRadius: '28px', maxHeight: 'min(720px, calc(100dvh - 120px))' } } }}
         >
           {content}
         </Popover>
@@ -326,8 +379,8 @@ export default function FilterSheet(props: FilterSheetProps) {
 
 function Section({ tokens: t, label, children }: { tokens: Tokens; label: string; children: React.ReactNode }) {
   return (
-    <Box sx={{ mb: 2 }}>
-      <Box sx={{ fontSize: 12, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: t.faint, mb: 1 }}>
+    <Box sx={{ mb: '18px' }}>
+      <Box sx={{ fontSize: 13, fontWeight: 600, color: t.muted, mb: '10px' }}>
         {label}
       </Box>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>{children}</Box>

@@ -82,7 +82,7 @@ export default function NearbyAdds({ tokens: t, serifFont, onPick, disabled }: N
   };
 
   const heading = (
-    <Box sx={{ fontSize: 12, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: t.faint, mb: 1 }}>
+    <Box sx={{ fontSize: 13, fontWeight: 600, color: t.muted, mb: 1 }}>
       {tr('nearby.title')}
     </Box>
   );

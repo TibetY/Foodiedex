@@ -59,18 +59,21 @@ export default function ListSwitcher({
           p: 0,
           color: 'inherit',
           fontFamily: serifFont,
-          fontSize: { xs: 16, sm: 20 },
+          // The list's name is the page title.
+          fontSize: { xs: 30, sm: 34, lg: 44 },
           fontWeight: 600,
-          letterSpacing: '-.01em',
-          lineHeight: 1.2,
+          letterSpacing: '-.04em',
+          lineHeight: 1.1,
+          minHeight: 44,
           minWidth: 0,
+          maxWidth: '100%',
           textAlign: 'left',
         }}
       >
-        <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: { xs: 200, sm: 280 } }}>
+        <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
           {activeName}
         </Box>
-        <KeyboardArrowDown sx={{ fontSize: 20, opacity: 0.6, flex: 'none' }} />
+        <KeyboardArrowDown sx={{ fontSize: 24, opacity: 0.6, flex: 'none' }} />
       </Box>
 
       <Menu

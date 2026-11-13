@@ -26,6 +26,9 @@ import {
   makeListTheme,
   brandCssVars,
   KanpaiThemeProvider,
+  DEFAULT_MODE,
+  DEFAULT_ACCENT,
+  getListTokens,
   modeFromCookieHeader,
   accentFromCookieHeader,
   type ListMode,
@@ -44,7 +47,7 @@ import tailwindHref from "~/tailwind.css?url";
 /** Error boundary only — the app shell itself uses KanpaiThemeProvider, but a
  *  thrown loader/render error replaces the whole document before that ever
  *  mounts, so the boundary needs its own static fallback theme. */
-const errorTheme = makeListTheme('light', 'matcha');
+const errorTheme = makeListTheme(DEFAULT_MODE, DEFAULT_ACCENT);
 
 export const links: LinksFunction = () => [
   // SVG favicon (evergreen browsers) — the same Marker pin used in the
@@ -63,18 +66,20 @@ export const links: LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Manrope:wght@300..700&display=swap",
   },
 ];
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const m = resources[fallbackLng].common.meta;
+  // The browser chrome takes the page colour of whichever mode was rendered.
+  const mode = (data as { mode?: ListMode } | undefined)?.mode ?? DEFAULT_MODE;
   return [
     { charSet: "utf-8" },
     { title: m.title },
     { name: "description", content: m.description },
     { name: "viewport", content: "width=device-width,initial-scale=1" },
-    { name: "theme-color", content: "#FDFBF7" },
+    { name: "theme-color", content: getListTokens(mode, DEFAULT_ACCENT).pageBg },
   ];
 };
 
@@ -85,7 +90,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   } = await supabase.auth.getUser();
   const ENV = getServerSupabaseEnv();
   // Theme preference rides cookies so the server paints the user's own look on
-  // the very first byte — no light/matcha flash before hydration.
+  // the very first byte — no flash of the default look before hydration.
   const cookieHeader = request.headers.get("Cookie");
   const mode = modeFromCookieHeader(cookieHeader);
   const accent = accentFromCookieHeader(cookieHeader);
