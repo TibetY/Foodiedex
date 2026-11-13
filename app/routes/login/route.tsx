@@ -17,6 +17,9 @@ import { safeRedirect } from "~/utils/safeRedirect";
 import { getSiteUrl } from "~/utils/siteUrl.server";
 import { getFixedT } from "~/i18n.server";
 import GoogleButton from "~/components/GoogleButton";
+import Captcha from "~/components/Captcha";
+import { captchaRequired } from "~/supabaseConfig";
+import { isCaptchaError, readCaptchaToken } from "~/utils/captcha";
 import Logo from "~/components/Logo";
 import { useKanpaiTheme } from "~/listTheme";
 
@@ -64,6 +67,14 @@ export const action: ActionFunction = async ({ request }) => {
   const { supabase, headers } = createSupabaseServerClient(request);
   const t = await getFixedT();
 
+  const captchaToken = readCaptchaToken(formData);
+  if (captchaRequired() && !captchaToken) {
+    return json<ActionData>({
+      error: t("auth.captchaFailed"),
+      ...(intent === "resend" ? { unconfirmed: true, email } : {}),
+    });
+  }
+
   // Re-send the confirmation email for an unconfirmed account.
   if (intent === "resend") {
     const { error } = await supabase.auth.resend({
@@ -71,17 +82,22 @@ export const action: ActionFunction = async ({ request }) => {
       email,
       options: {
         emailRedirectTo: `${getSiteUrl(request)}/auth/confirm?next=${encodeURIComponent(next)}`,
+        captchaToken,
       },
     });
     if (error) {
       console.error("Resend confirmation error:", error.message);
-      return json<ActionData>({ error: t("login.resendFailed"), unconfirmed: true, email });
+      return json<ActionData>({
+        error: isCaptchaError(error) ? t("auth.captchaFailed") : t("login.resendFailed"),
+        unconfirmed: true,
+        email,
+      });
     }
     return json<ActionData>({ resent: true });
   }
 
   const password = formData.get("password") as string;
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } });
 
   if (error) {
     console.error("Login error:", error.message);
@@ -90,7 +106,7 @@ export const action: ActionFunction = async ({ request }) => {
     if (isEmailNotConfirmed(error)) {
       return json<ActionData>({ error: t("login.emailNotConfirmed"), unconfirmed: true, email });
     }
-    return json<ActionData>({ error: error.message });
+    return json<ActionData>({ error: isCaptchaError(error) ? t("auth.captchaFailed") : error.message });
   }
 
   return redirect(next, { headers });
@@ -170,6 +186,7 @@ export default function LoginPage() {
               <input type="hidden" name="intent" value="resend" />
               <input type="hidden" name="email" value={actionData.email ?? ""} />
               <input type="hidden" name="next" value={next} />
+              <Captcha resetKey={actionData} />
               <Button type="submit" variant="text" size="small" sx={{ px: 0, fontWeight: 600 }}>
                 {t("login.resendConfirmation")}
               </Button>
@@ -218,6 +235,7 @@ export default function LoginPage() {
               ),
             }}
           />
+          <Captcha resetKey={actionData} />
           <Button
             type="submit"
             variant="contained"

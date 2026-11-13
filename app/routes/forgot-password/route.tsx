@@ -12,6 +12,9 @@ import Alert from '@mui/material/Alert';
 import { createSupabaseServerClient } from "~/supabase.server";
 import { getSiteUrl } from "~/utils/siteUrl.server";
 import { getFixedT } from "~/i18n.server";
+import Captcha from "~/components/Captcha";
+import { captchaRequired } from "~/supabaseConfig";
+import { isCaptchaError, readCaptchaToken } from "~/utils/captcha";
 
 type ActionData = {
   error?: string;
@@ -33,7 +36,14 @@ export const action: ActionFunction = async ({ request }) => {
   const { supabase, headers } = createSupabaseServerClient(request);
   const origin = getSiteUrl(request);
 
+  const captchaToken = readCaptchaToken(formData);
+  if (captchaRequired() && !captchaToken) {
+    const t = await getFixedT();
+    return json<ActionData>({ error: t("auth.captchaFailed") });
+  }
+
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    captchaToken,
     // /auth/confirm verifies the recovery token (setting a session) then forwards
     // here so the user can choose a new password.
     redirectTo: `${origin}/auth/confirm?next=${encodeURIComponent(
@@ -44,7 +54,7 @@ export const action: ActionFunction = async ({ request }) => {
   if (error) {
     console.error("Password reset request error:", error.message);
     const t = await getFixedT();
-    return json<ActionData>({ error: t("forgot.error") }, { headers });
+    return json<ActionData>({ error: t(isCaptchaError(error) ? "auth.captchaFailed" : "forgot.error") }, { headers });
   }
 
   // Always report success regardless of whether the address has an account, so
@@ -117,6 +127,7 @@ export default function ForgotPasswordPage() {
               autoComplete="email"
               sx={{ mb: 3 }}
             />
+            <Captcha resetKey={actionData} />
             <Button
               type="submit"
               variant="contained"
