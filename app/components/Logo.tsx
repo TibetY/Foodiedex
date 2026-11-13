@@ -37,7 +37,7 @@ export function LogoMark({ size = 26 }: { size?: MarkSize }) {
   return (
     <Box aria-hidden sx={{ position: 'relative', width: size, height: size, flex: 'none' }}>
       <Box sx={dot(0, 3 / 26, 17 / 26, tokens.accent)} />
-      <Box sx={dot(9 / 26, 0, 12 / 26, tokens.wantBg)} />
+      <Box sx={dot(9 / 26, 0, 12 / 26, tokens.markDot)} />
       <Box sx={dot(13 / 26, 12 / 26, 8 / 26, tokens.avatar2)} />
     </Box>
   );

@@ -37,7 +37,7 @@ export default function PlaceRow({ r, tokens: t, onView }: PlaceRowProps) {
         gap: '14px',
         width: '100%',
         minWidth: 0,
-        padding: '10px',
+        padding: '10px 16px 10px 10px',
         m: 0,
         border: 'none',
         borderRadius: '22px',
@@ -51,7 +51,7 @@ export default function PlaceRow({ r, tokens: t, onView }: PlaceRowProps) {
         '@media (hover: hover)': { '&:hover': { backgroundColor: t.rowHover } },
       }}
     >
-      <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 66, aspectRatio: '1' }} />
+      <RestaurantThumb image={r.image} name={r.name} alt="" tokens={t} sx={{ width: 66, aspectRatio: '1' }} />
       <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>
         <Box component="span" sx={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.02em', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {r.name}
@@ -75,11 +75,11 @@ export default function PlaceRow({ r, tokens: t, onView }: PlaceRowProps) {
           </Box>
         )}
       </Box>
-      {r.isWant && (
-        <BookmarkBorder role="img" aria-label={tr('dashboard.statusWant')} sx={{ flex: 'none', fontSize: 20, color: t.muted, mr: '10px' }} />
-      )}
-      {r.favorite && (
-        <Favorite role="img" aria-label={tr('dashboard.favorited')} sx={{ flex: 'none', fontSize: 18, color: t.accent, mr: '10px' }} />
+      {(r.isWant || r.favorite) && (
+        <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 'none' }}>
+          {r.isWant && <BookmarkBorder role="img" aria-label={tr('dashboard.statusWant')} sx={{ fontSize: 20, color: t.muted }} />}
+          {r.favorite && <Favorite role="img" aria-label={tr('dashboard.favorited')} sx={{ fontSize: 18, color: t.accent }} />}
+        </Box>
       )}
     </Box>
   );

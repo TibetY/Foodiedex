@@ -70,7 +70,8 @@ export default function ListSwitcher({
           textAlign: 'left',
         }}
       >
-        <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+        {/* Two lines before it is cut, so a phone shows more than "Toro…". */}
+        <Box component="span" sx={{ minWidth: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflowWrap: 'break-word' }}>
           {activeName}
         </Box>
         <KeyboardArrowDown sx={{ fontSize: 24, opacity: 0.6, flex: 'none' }} />

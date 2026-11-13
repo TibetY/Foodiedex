@@ -117,7 +117,7 @@ export default function SharedListPage() {
   const serif = FONT;
   /** One option in a pill-shaped segmented control. */
   const segmentSx = (selected: boolean) => ({
-    height: 40,
+    height: 44,
     padding: '0 14px',
     border: 0,
     borderRadius: '999px',
@@ -126,9 +126,8 @@ export default function SharedListPage() {
     fontSize: 15,
     fontWeight: 600,
     whiteSpace: 'nowrap',
-    background: selected ? t.raised : 'transparent',
-    color: selected ? t.ink : t.muted,
-    boxShadow: selected ? t.shadow1 : 'none',
+    background: selected ? t.pBg : 'transparent',
+    color: selected ? t.pFg : t.muted,
   });
 
   const decorated = useMemo(() => (shared?.restaurants ?? []).map((r) => decorate(r)), [shared]);
@@ -226,7 +225,7 @@ export default function SharedListPage() {
             <IconButton
               onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}
               aria-label={mode === 'light' ? tr('dashboard.themeDark') : tr('dashboard.themeLight')}
-              sx={{ width: 44, height: 44, background: t.cardBg, color: t.ink, '&:hover': { background: t.raised } }}
+              sx={{ width: 44, height: 44, background: t.cardBg, color: t.ink, '@media (hover: hover)': { '&:hover': { background: t.raised } } }}
             >
               {mode === 'light' ? <DarkModeOutlined sx={{ fontSize: 20 }} /> : <LightModeOutlined sx={{ fontSize: 20 }} />}
             </IconButton>
@@ -309,7 +308,7 @@ export default function SharedListPage() {
                 }}
               />
             </Box>
-            <Box role="group" aria-label={tr('dashboard.filterStatusLabel')} sx={{ flex: { xs: '1 1 100%', md: 'none' }, ml: { md: 'auto' }, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', padding: '4px', background: t.cardBg, borderRadius: '999px' }}>
+            <Box role="group" aria-label={tr('dashboard.filterStatusLabel')} sx={{ flex: { xs: '1 1 100%', md: 'none' }, ml: { md: 'auto' }, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', padding: '2px', background: t.cardBg, borderRadius: '999px' }}>
               {(['all', 'been', 'want'] as FilterMode[]).map((f) => (
                 <Box key={f} component="button" type="button" aria-pressed={filter === f} onClick={() => setFilter(f)} sx={segmentSx(filter === f)}>
                   {tr(f === 'all' ? 'dashboard.filterAll' : f === 'been' ? 'dashboard.filterBeen' : 'dashboard.filterWantShort')}
@@ -321,13 +320,13 @@ export default function SharedListPage() {
               value={sort}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSort(e.target.value as SortMode)}
               aria-label={tr('dashboard.sortLabel')}
-              sx={{ flex: { xs: 1, md: 'none' }, minWidth: 0, background: t.cardBg, border: 'none', borderRadius: '999px', height: 48, padding: '0 16px', color: t.ink, font: 'inherit', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
+              sx={{ flex: { xs: 1, md: 'none' }, minWidth: 0, background: t.cardBg, border: 'none', borderRadius: '999px', height: 48, padding: '0 16px', color: t.ink, font: 'inherit', fontSize: 16, fontWeight: 600, cursor: 'pointer' }}
             >
               {SHARE_SORT_MODES.map((m) => (
                 <option key={m} value={m}>{tr(`dashboard.sort_${m}`)}</option>
               ))}
             </Box>
-            <Box role="group" aria-label={tr('dashboard.viewLabel')} sx={{ flex: 'none', display: 'flex', padding: '4px', background: t.cardBg, borderRadius: '999px' }}>
+            <Box role="group" aria-label={tr('dashboard.viewLabel')} sx={{ flex: 'none', display: 'flex', padding: '2px', background: t.cardBg, borderRadius: '999px' }}>
               {viewOptions.map(({ id, label, Icon }) => (
                 <Box
                   key={id}
@@ -364,8 +363,8 @@ export default function SharedListPage() {
               <Box sx={{ width: { xs: '100%', md: 340 }, flex: 'none', height: { md: 540 }, overflowY: { md: 'auto' }, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {sorted.map((r) => (
                   <Box key={r.id} role="button" tabIndex={0} aria-label={r.name} onClick={() => openDetail(r)} onKeyDown={activateOnKey(() => openDetail(r))}
-                    sx={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', borderRadius: '18px', background: t.cardBg, cursor: 'pointer' }}>
-                    <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 48, aspectRatio: '1', borderRadius: '12px' }} />
+                    sx={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', borderRadius: '22px', background: t.cardBg, cursor: 'pointer' }}>
+                    <RestaurantThumb image={r.image} name={r.name} alt="" tokens={t} sx={{ width: 48, aspectRatio: '1', borderRadius: '16px' }} />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box sx={{ fontSize: 15, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</Box>
                       {r.meta && <Box sx={{ color: t.muted, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.meta}</Box>}

@@ -160,7 +160,10 @@ export default function RestaurantDetailDialog({
     height: 44,
     flex: 'none',
     ...(onPhoto ? glassOnPhotoSx : { background: t.cardBg, color: t.ink }),
-    '&:hover': onPhoto ? { background: 'rgba(20,17,15,.65)' } : { background: t.raised },
+    '@media (hover: hover)': { '&:hover': onPhoto ? { background: 'rgba(20,17,15,.85)' } : { background: t.raised } },
+    // The accent ring vanishes on a bright photo; a light ring with a dark
+    // halo shows on anything.
+    ...(onPhoto ? { '&.Mui-focusVisible': { outline: '2px solid #F6F0EA', outlineOffset: '2px', boxShadow: '0 0 0 5px rgba(10,8,7,.75)' } } : {}),
   };
   const honourPillSx = {
     display: 'inline-flex',
@@ -220,7 +223,7 @@ export default function RestaurantDetailDialog({
           flexDirection: 'column',
           justifyContent: 'space-between',
           gap: '28px',
-          minHeight: onPhoto ? { xs: 420, sm: 360 } : 0,
+          minHeight: onPhoto ? { xs: 440, sm: 360 } : 0,
           // 28px of the hero sits under the sheet's rounded top edge.
           padding: { xs: '16px 16px 52px', sm: '16px 16px 52px' },
           color: onPhoto ? ON_PHOTO.ink : t.ink,
@@ -230,7 +233,7 @@ export default function RestaurantDetailDialog({
         {r.image && photo.show && (
           <>
             <Box component="img" alt="" {...photo.imgProps} sx={photoSx(photo.pending)} />
-            <Box aria-hidden sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(10,8,7,.35) 0%, rgba(10,8,7,0) 30%, rgba(10,8,7,.78) 100%)' }} />
+            <Box aria-hidden sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(10,8,7,.45) 0%, rgba(10,8,7,0) 26%, rgba(10,8,7,.58) 58%, rgba(10,8,7,.86) 100%)' }} />
           </>
         )}
         <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'space-between' }}>
@@ -278,7 +281,7 @@ export default function RestaurantDetailDialog({
               })}
             </Box>
           )}
-          <Box id="restaurant-detail-title" component="h2" sx={{ fontFamily: serifFont, fontSize: { xs: 36, sm: 40 }, fontWeight: 600, letterSpacing: '-.045em', m: 0, lineHeight: 1.02, textWrap: 'balance' }}>
+          <Box id="restaurant-detail-title" component="h2" sx={{ fontFamily: serifFont, fontSize: 40, fontWeight: 600, letterSpacing: '-.045em', m: 0, lineHeight: 1.02, textWrap: 'balance', overflowWrap: 'anywhere' }}>
             {r.name}
           </Box>
         </Box>
@@ -321,7 +324,7 @@ export default function RestaurantDetailDialog({
 
         {/* The location switcher sits above everything that depends on it. */}
         {locations.length > 1 && (
-          <Box role="group" sx={{ display: 'flex', padding: '4px', background: t.cardBg, borderRadius: '999px', width: 'fit-content', maxWidth: '100%', overflowX: 'auto' }}>
+          <Box role="group" sx={{ display: 'flex', padding: '2px', background: t.cardBg, borderRadius: '999px', width: 'fit-content', maxWidth: '100%', overflowX: 'auto' }}>
             {locations.map((l, i) => (
               <Box
                 key={i}
@@ -335,12 +338,12 @@ export default function RestaurantDetailDialog({
                   font: 'inherit',
                   fontSize: 15,
                   fontWeight: 600,
-                  height: 40,
+                  height: 44,
                   padding: '0 16px',
                   borderRadius: '999px',
                   whiteSpace: 'nowrap',
-                  background: safeIdx === i ? t.raised : 'transparent',
-                  color: safeIdx === i ? t.ink : t.muted,
+                  background: safeIdx === i ? t.pBg : 'transparent',
+                  color: safeIdx === i ? t.pFg : t.muted,
                 }}
               >
                 {l.label?.trim() || tr('form.locationN', { n: i + 1 })}
@@ -380,8 +383,8 @@ export default function RestaurantDetailDialog({
         )}
 
         {/* Status + visits: the two things you update after a meal */}
-        <Box sx={{ ...blockSx, padding: '10px 10px 10px 18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Box component="span" sx={{ flex: 1, minWidth: 0, color: t.muted, fontSize: 15 }}>
+        <Box sx={{ ...blockSx, padding: '10px 10px 10px 18px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
+          <Box component="span" sx={{ flex: '1 1 120px', minWidth: 0, color: t.muted, fontSize: 15 }}>
             {tr('detail.visitedTimes', { count: r.visitCount ?? 0 })}
           </Box>
           {canEdit && onAddVisit && (

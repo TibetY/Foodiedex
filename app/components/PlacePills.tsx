@@ -15,9 +15,10 @@ import MichelinStars from '~/components/MichelinStars';
 export const ON_PHOTO = {
   ink: '#F6F0EA',
   soft: 'rgba(246,240,234,.85)',
-  glass: 'rgba(20,17,15,.5)',
-  /** Bottom-weighted scrim that keeps a name readable on any photo. */
-  scrim: 'linear-gradient(180deg, rgba(10,8,7,0) 35%, rgba(10,8,7,.82) 100%)',
+  glass: 'rgba(20,17,15,.7)',
+  /** Darkens the top (where the pills sit) and the lower half (name and meta),
+   *  so text stays readable on even a white photo. */
+  scrim: 'linear-gradient(180deg, rgba(10,8,7,.4) 0%, rgba(10,8,7,0) 24%, rgba(10,8,7,0) 34%, rgba(10,8,7,.62) 60%, rgba(10,8,7,.88) 100%)',
 } as const;
 
 /** Frosted fill for pills and round buttons that sit on a photograph. */

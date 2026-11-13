@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import Popover from '@mui/material/Popover';
 import Drawer from '@mui/material/Drawer';
@@ -78,6 +78,7 @@ export default function FilterSheet(props: FilterSheetProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const showRef = useRef<HTMLButtonElement>(null);
   const open = Boolean(anchor);
 
   const activeCount =
@@ -95,17 +96,23 @@ export default function FilterSheet(props: FilterSheetProps) {
   const pillSx = (selected: boolean) => ({
     display: 'inline-flex',
     alignItems: 'center',
-    height: 44,
-    padding: '0 16px',
+    minHeight: 44,
+    maxWidth: '100%',
+    padding: '10px 16px',
     border: 'none',
-    borderRadius: '999px',
-    background: selected ? t.pBg : t.cardBg,
+    borderRadius: '22px',
+    background: selected ? t.pBg : t.raised,
     color: selected ? t.pFg : t.ink,
     font: 'inherit',
     fontSize: 15,
     fontWeight: 600,
+    lineHeight: 1.3,
+    textAlign: 'left' as const,
     cursor: 'pointer',
-    whiteSpace: 'nowrap' as const,
+    // Long names ("enRoute Canada's Best New Restaurants") wrap instead of
+    // pushing the sheet sideways on a small phone.
+    whiteSpace: 'normal' as const,
+    overflowWrap: 'anywhere' as const,
     transition: 'transform .12s ease',
     '&:active': { transform: 'scale(.96)' },
   });
@@ -123,14 +130,14 @@ export default function FilterSheet(props: FilterSheetProps) {
             type="button"
             aria-label={tr('form.close')}
             onClick={() => setAnchor(null)}
-            sx={{ display: 'grid', placeItems: 'center', flex: 'none', width: 44, height: 44, p: 0, border: 'none', borderRadius: '50%', background: t.cardBg, color: t.ink, cursor: 'pointer' }}
+            sx={{ display: 'grid', placeItems: 'center', flex: 'none', width: 44, height: 44, p: 0, border: 'none', borderRadius: '50%', background: t.raised, color: t.ink, cursor: 'pointer' }}
           >
             <Close sx={{ fontSize: 18 }} />
           </Box>
         </Box>
       </Box>
 
-      <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 20px 4px' }}>
+      <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', padding: '16px 20px 4px' }}>
       {/* Saved views */}
       {(props.views.length > 0 || props.hasActiveFilters) && (
         <Box sx={{ mb: '18px' }}>
@@ -276,7 +283,10 @@ export default function FilterSheet(props: FilterSheetProps) {
           <Box
             component="button"
             type="button"
-            onClick={props.onClear}
+            onClick={() => {
+              props.onClear();
+              showRef.current?.focus();
+            }}
             sx={{ flex: 'none', height: 56, padding: '0 18px', border: 'none', borderRadius: '999px', background: 'transparent', color: t.muted, font: 'inherit', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
           >
             {tr('filters.clear')}
@@ -285,6 +295,7 @@ export default function FilterSheet(props: FilterSheetProps) {
         <Box
           component="button"
           type="button"
+          ref={showRef}
           onClick={() => setAnchor(null)}
           sx={{ flex: 1, height: 56, border: 'none', borderRadius: '999px', background: t.accent, color: t.accentText, font: 'inherit', fontSize: 16, fontWeight: 700, cursor: 'pointer', transition: 'transform .12s ease', '&:active': { transform: 'scale(.98)' } }}
         >
@@ -314,7 +325,8 @@ export default function FilterSheet(props: FilterSheetProps) {
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={tr('filters.button')}
+        // The whole name, so "filters on" reaches screen readers too.
+        aria-label={activeCount > 0 ? `${tr('filters.button')}, ${tr('filters.activeCount', { count: activeCount })}` : tr('filters.button')}
         onClick={(e: React.MouseEvent<HTMLButtonElement>) => setAnchor(e.currentTarget)}
         sx={{
           position: 'relative',
@@ -345,8 +357,7 @@ export default function FilterSheet(props: FilterSheetProps) {
         {activeCount > 0 && (
           <Box
             component="span"
-            role="img"
-            aria-label={tr('filters.activeCount', { count: activeCount })}
+            aria-hidden
             sx={{ position: { xs: 'absolute', sm: 'static' }, top: 9, right: 10, width: 8, height: 8, borderRadius: '50%', background: t.accent }}
           />
         )}

@@ -171,7 +171,7 @@ const MODE_BASE: Record<
     paper: '#F3EFEA',
     card: '#FFFFFF',
     raised: '#EDE7E0',
-    glass: 'rgba(255,255,255,.78)',
+    glass: 'rgba(255,255,255,.9)',
     canvas: '#F3EFEA',
     rule: 'rgba(27,23,20,.14)',
     hair: 'rgba(27,23,20,.10)',
@@ -194,7 +194,7 @@ const MODE_BASE: Record<
     paper: '#0E0C0B',
     card: '#1A1715',
     raised: '#2A2522',
-    glass: 'rgba(26,23,21,.72)',
+    glass: 'rgba(26,23,21,.88)',
     canvas: '#0E0C0B',
     rule: 'rgba(246,240,234,.16)',
     hair: 'rgba(246,240,234,.12)',
@@ -208,9 +208,13 @@ const MODE_BASE: Record<
   },
 };
 
-/** A fixed decorative fill (independent of the chosen accent) for the second
- *  avatar in a stack. */
+/** Fixed decorative fills, independent of the chosen accent: the logo's second
+ *  dot, and the second avatar in a stack. */
 const DECORATIVE = {
+  sakura: {
+    light: { bg: '#E7A9A9', fg: '#8A4040' },
+    dark: { bg: '#C98A8A', fg: '#EEB9B9' },
+  },
   peach: {
     light: { bg: '#F6DCC8', fg: '#8A5A32' },
     dark: { bg: '#47372B', fg: '#EDC49F' },
@@ -233,6 +237,8 @@ export interface ListTokens {
   /** The accent as drawn over a photograph, which is always dark-scrimmed:
    *  the dark-mode accent, whichever mode the page is in. */
   onPhotoAccent: string;
+  /** The logo mark's second dot — decorative and fixed, never a status colour. */
+  markDot: string;
   footerBg: string;
   ink: string;
   muted: string;
@@ -308,6 +314,7 @@ export function getListTokens(mode: ListMode, accent: AccentName): ListTokens {
     glass: b.glass,
     halo: hexToRgba(a.deep, mode === 'dark' ? 0.16 : 0.1),
     onPhotoAccent: ACCENTS[accent].dark.deep,
+    markDot: DECORATIVE.sakura[mode].bg,
     footerBg: b.paper,
     ink: b.ink,
     muted: b.ink60,
@@ -548,10 +555,11 @@ export function makeListTheme(mode: ListMode, accent: AccentName): Theme {
           },
           outlined: {
             // The quiet button is a filled surface pill, not an outline.
-            border: 'none',
+            border: '1px solid transparent',
             backgroundColor: t.cardBg,
             color: t.ink,
-            '&:hover': { border: 'none', backgroundColor: t.raised },
+            '&:hover': { borderColor: 'transparent', backgroundColor: t.raised },
+            '&.Mui-disabled': { borderColor: 'transparent' },
           },
           text: {
             color: t.accent,
@@ -697,6 +705,7 @@ export function KanpaiThemeProvider({
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', mode);
     document.documentElement.setAttribute('data-accent', accent);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', getListTokens(mode, accent).pageBg);
   }, [mode, accent]);
 
   const setMode = (m: ListMode) => {

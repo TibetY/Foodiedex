@@ -238,18 +238,17 @@ export default function ProfilePage() {
                   : t('profile.darkModeOffNote', 'Charcoal on cream, the daytime default')}
               </Box>
             </Box>
-            <Box sx={{ ml: 'auto', display: 'flex', gap: '4px', padding: '4px', background: tk.track, borderRadius: '999px', flex: 'none' }}>
+            <Box sx={{ ml: 'auto', display: 'flex', gap: '2px', padding: '2px', background: tk.raised, borderRadius: '999px', flex: 'none' }}>
               <Box
                 component="button"
                 type="button"
                 onClick={() => setMode('light')}
                 aria-pressed={mode === 'light'}
                 sx={{
-                  border: 'none', cursor: 'pointer', fontWeight: mode === 'light' ? 600 : 400, fontSize: 12,
-                  padding: '7px 15px', borderRadius: '999px',
-                  background: mode === 'light' ? tk.cardBg : 'transparent',
-                  color: mode === 'light' ? tk.ink : tk.muted,
-                  boxShadow: mode === 'light' ? tk.shadow1 : 'none',
+                  border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 14,
+                  minHeight: 44, padding: '0 16px', borderRadius: '999px',
+                  background: mode === 'light' ? tk.pBg : 'transparent',
+                  color: mode === 'light' ? tk.pFg : tk.muted,
                 }}
               >
                 {t('dashboard.themeLight')}
@@ -260,11 +259,10 @@ export default function ProfilePage() {
                 onClick={() => setMode('dark')}
                 aria-pressed={mode === 'dark'}
                 sx={{
-                  border: 'none', cursor: 'pointer', fontWeight: mode === 'dark' ? 600 : 400, fontSize: 12,
-                  padding: '7px 15px', borderRadius: '999px',
-                  background: mode === 'dark' ? tk.cardBg : 'transparent',
-                  color: mode === 'dark' ? tk.ink : tk.muted,
-                  boxShadow: mode === 'dark' ? tk.shadow1 : 'none',
+                  border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 14,
+                  minHeight: 44, padding: '0 16px', borderRadius: '999px',
+                  background: mode === 'dark' ? tk.pBg : 'transparent',
+                  color: mode === 'dark' ? tk.pFg : tk.muted,
                 }}
               >
                 {t('dashboard.themeDark')}

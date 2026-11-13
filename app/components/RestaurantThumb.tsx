@@ -11,6 +11,8 @@ interface RestaurantThumbProps {
   image?: string;
   /** The place's name — the image's alt text, and the source of its monogram. */
   name: string;
+  /** Override the alt text: "" where the name is already read out beside it. */
+  alt?: string;
   tokens: Tokens;
   /** Size it by width (default 100%); the height follows the ratio. */
   sx?: SxProps<Theme>;
@@ -107,7 +109,7 @@ export function photoSx(pending: boolean) {
  * in. A place with no usable photo — none saved, a dead link, or a legacy
  * image that fails the checks above — gets its monogram on a softly lit tile.
  */
-export default function RestaurantThumb({ image, name, tokens: t, sx, className }: RestaurantThumbProps) {
+export default function RestaurantThumb({ image, name, alt, tokens: t, sx, className }: RestaurantThumbProps) {
   const photo = usePlacePhoto(image);
 
   return (
@@ -131,7 +133,7 @@ export default function RestaurantThumb({ image, name, tokens: t, sx, className 
       ]}
     >
       {photo.show ? (
-        <Box component="img" alt={name} {...photo.imgProps} sx={photoSx(photo.pending)} />
+        <Box component="img" alt={alt ?? name} {...photo.imgProps} sx={photoSx(photo.pending)} />
       ) : (
         <Box
           component="span"

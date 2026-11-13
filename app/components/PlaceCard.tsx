@@ -23,6 +23,7 @@ const nameSx = {
   WebkitLineClamp: 2,
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
+  overflowWrap: 'anywhere',
 } as const;
 
 /**

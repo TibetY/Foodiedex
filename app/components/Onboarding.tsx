@@ -265,7 +265,7 @@ export default function Onboarding({
                 cursor: busy ? 'default' : 'pointer',
                 transition: 'transform .12s ease, background-color .15s ease',
                 '&:active': busy ? {} : { transform: 'scale(.97)' },
-                '&:hover': busy ? {} : { background: t.searchBg },
+                '&:hover': busy ? {} : { background: t.raised },
               }}
             >
               <Add sx={{ fontSize: 17 }} /> {tr('onboarding.addThese')}

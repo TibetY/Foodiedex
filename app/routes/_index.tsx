@@ -146,7 +146,7 @@ export default function Index() {
                   sx={{
                     width: 26, height: 26, borderRadius: "50%", ml: i === 0 ? 0 : "-8px",
                     border: `2px solid ${tk.cardBg}`,
-                    background: i === 0 ? tk.avatar3 : i === 1 ? tk.wantBg : tk.avatar2,
+                    background: i === 0 ? tk.avatar3 : i === 1 ? tk.markDot : tk.avatar2,
                     color: tk.ink, fontSize: 12, fontWeight: 600,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}

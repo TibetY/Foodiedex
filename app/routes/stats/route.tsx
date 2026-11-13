@@ -121,13 +121,13 @@ export default function StatsPage() {
           component="header"
           sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: 980, mx: 'auto', padding: { xs: '14px 20px 0', md: '24px 40px 0' }, gap: 2 }}
         >
-          <IconButton component={Link} to={backHref} aria-label={tr('stats.back')} sx={{ width: 44, height: 44, background: t.cardBg, color: t.ink, '&:hover': { background: t.raised } }}>
+          <IconButton component={Link} to={backHref} aria-label={tr('stats.back')} sx={{ width: 44, height: 44, background: t.cardBg, color: t.ink, '@media (hover: hover)': { '&:hover': { background: t.raised } } }}>
             <ChevronLeft />
           </IconButton>
           <IconButton
             onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}
             aria-label={mode === 'light' ? tr('dashboard.themeDark') : tr('dashboard.themeLight')}
-            sx={{ width: 44, height: 44, background: t.cardBg, color: t.ink, '&:hover': { background: t.raised } }}
+            sx={{ width: 44, height: 44, background: t.cardBg, color: t.ink, '@media (hover: hover)': { '&:hover': { background: t.raised } } }}
           >
             {mode === 'light' ? <DarkModeOutlined sx={{ fontSize: 20 }} /> : <LightModeOutlined sx={{ fontSize: 20 }} />}
           </IconButton>

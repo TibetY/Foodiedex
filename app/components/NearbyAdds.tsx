@@ -164,7 +164,7 @@ export default function NearbyAdds({ tokens: t, serifFont, onPick, disabled }: N
               cursor: disabled ? 'default' : 'pointer',
               opacity: disabled ? 0.55 : 1,
               borderBottom: i === results.length - 1 ? 'none' : `1px solid ${t.borderSoft}`,
-              '&:hover': disabled ? {} : { background: t.searchBg },
+              '&:hover': disabled ? {} : { background: t.raised },
             }}
           >
             <Box sx={{ flex: 1, minWidth: 0 }}>
