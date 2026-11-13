@@ -65,7 +65,20 @@ describe('distinctions', () => {
   });
 });
 
+describe('distinctionIds ignores unknown ids', () => {
+  it('drops ids that are not on the list', () => {
+    expect(distinctionIds({ distinctions: ['canadas-100-best', '3 Michelin Stars ✓ Verified'] })).toEqual(['canadas-100-best']);
+  });
+});
+
 describe('detectDistinctions', () => {
+  it('stays fast on hostile award text', () => {
+    const started = Date.now();
+    detectDistinctions('gault' + ' '.repeat(200_000));
+    detectDistinctions('michelin '.repeat(20_000));
+    expect(Date.now() - started).toBeLessThan(200);
+  });
+
   it('finds lists a site names in its award text', () => {
     expect(detectDistinctions("Canada's 100 Best 2025 ; The World’s 50 Best Restaurants")).toEqual([
       'canadas-100-best',

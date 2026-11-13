@@ -50,8 +50,10 @@ export function distinctionIds(r: Recognised): string[] {
   const stars = r.michelinStars ?? 0;
   if (stars >= 1 && stars <= 3) ids.push(`michelin-${stars}`);
   if (r.bibGourmand) ids.push(BIB_ID);
+  // Only ids on the list: the column accepts any text through the API, and an
+  // unknown one would otherwise show as a made-up badge.
   for (const id of r.distinctions ?? []) {
-    if (!MICHELIN_TIER_IDS.includes(id) && !ids.includes(id)) ids.push(id);
+    if (ORDER.has(id) && !MICHELIN_TIER_IDS.includes(id) && !ids.includes(id)) ids.push(id);
   }
   return ids.sort((a, b) => (ORDER.get(a) ?? 999) - (ORDER.get(b) ?? 999));
 }
@@ -85,10 +87,11 @@ export function distinctionLabel(id: string): string {
 
 /** What each non-tier distinction looks like when a website names it. */
 const AWARD_PATTERNS: [id: string, pattern: RegExp][] = [
-  ['michelin-green-star', /michelin[^;]*green star|green star[^;]*michelin/],
+  // Gaps are bounded so a long run of one keyword can't make matching slow.
+  ['michelin-green-star', /michelin[^;]{0,60}green star|green star[^;]{0,60}michelin/],
   ['canadas-100-best', /canada['’]?s 100 best/],
-  ['enroute-best-new', /en\s?route[^;]*best new restaurant/],
-  ['gault-millau', /gault\s*(&|et|and|und)?\s*millau/],
+  ['enroute-best-new', /en\s?route[^;]{0,60}best new restaurant/],
+  ['gault-millau', /gault\s{0,3}(?:&|et|and|und)?\s{0,3}millau/],
   ['repsol-sol', /\brepsol\b/],
   ['aa-rosette', /\baa rosettes?\b/],
   ['gambero-rosso', /gambero rosso/],
@@ -104,7 +107,7 @@ const AWARD_PATTERNS: [id: string, pattern: RegExp][] = [
  * own structured "award" data). Only explicit names match — nothing is inferred.
  */
 export function detectDistinctions(text: string): string[] {
-  const lower = text.toLowerCase();
+  const lower = text.slice(0, 2000).toLowerCase();
   return AWARD_PATTERNS.filter(([, pattern]) => pattern.test(lower)).map(([id]) => id);
 }
 
