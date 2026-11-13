@@ -4,9 +4,13 @@ import { load } from 'cheerio';
 import { cuisineTypes } from '~/types/restaurant';
 import { isSafeExternalUrl } from '~/utils/safeUrl.server';
 import { detectDistinctions } from '~/utils/distinctions';
+import { createSupabaseServerClient } from '~/supabase.server';
 
 const FETCH_TIMEOUT_MS = 6000;
 const MAX_BODY_BYTES = 1.5 * 1024 * 1024;
+const MAX_REDIRECTS = 4;
+/** Award text past this length is not a real award list; it is cut before matching. */
+const MAX_AWARD_TEXT = 2000;
 
 type SocialLinks = {
   facebook: string | null;
@@ -54,6 +58,14 @@ const EMPTY_RESULT: ScrapeResult = {
  * to save.
  */
 export async function loader({ request }: LoaderFunctionArgs) {
+  // Only the add/edit form and onboarding call this, always signed in. Without
+  // the check, anyone could use the server to fetch arbitrary pages.
+  const { supabase, headers } = createSupabaseServerClient(request);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return json(EMPTY_RESULT, { status: 401, headers });
+
   const params = new URL(request.url).searchParams;
   const targetUrl = params.get('url');
   if (!targetUrl || !isSafeExternalUrl(targetUrl)) {
@@ -112,13 +124,31 @@ function mergeMissing(primary: ScrapeResult, extra: ScrapeResult): ScrapeResult 
   };
 }
 
+/**
+ * Fetch a page, following redirects by hand so the SSRF guard runs on every
+ * hop: a public site must not be able to bounce the server to an internal
+ * address. Returns '' for anything unusable.
+ */
 async function fetchWithLimits(targetUrl: string): Promise<string> {
-  const response = await fetch(targetUrl, {
-    redirect: 'follow',
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    headers: { 'User-Agent': 'TheFoodiedex-LinkPreview/1.0' },
-  });
-  if (!response.ok || !response.body) return '';
+  let current = targetUrl;
+  let response: Response | null = null;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    if (!isSafeExternalUrl(current)) return '';
+    const res = await fetch(current, {
+      redirect: 'manual',
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      headers: { 'User-Agent': 'TheFoodiedex-LinkPreview/1.0' },
+    });
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get('location');
+      if (!location) return '';
+      current = new URL(location, current).toString();
+      continue;
+    }
+    response = res;
+    break;
+  }
+  if (!response || !response.ok || !response.body) return '';
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -372,7 +402,8 @@ function extractMichelin(entry: JsonLdEntry | null): {
   collect(entry.award);
   collect(entry.awards);
   collect(entry.hasCredential);
-  const text = parts.join(' ; ').toLowerCase();
+  // The site controls this text; cap it so the patterns below stay cheap.
+  const text = parts.join(' ; ').slice(0, MAX_AWARD_TEXT).toLowerCase();
   if (!text) return { stars: null, bib: null, distinctions: null };
 
   const bib = /bib gourmand/.test(text) ? true : null;

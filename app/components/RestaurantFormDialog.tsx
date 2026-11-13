@@ -971,7 +971,7 @@ export default function RestaurantFormDialog({
                   onChange={(e) =>
                     setFormData({ ...formData, favorite: e.target.checked })
                   }
-                  sx={{ color: 'text.secondary', '&.Mui-checked': { color: 'error.main' } }}
+                  sx={{ color: 'text.secondary', '&.Mui-checked': { color: tokens.accent } }}
                 />
               }
               label={t('form.favorite')}

@@ -55,7 +55,8 @@ export default function SavedViewsBar({
               display: 'inline-flex',
               alignItems: 'center',
               height: 44,
-              border: `1px solid ${active ? t.pBg : t.divider}`,
+              maxWidth: '100%',
+              border: `1px solid ${active ? t.pBg : t.hair}`,
               background: active ? t.pBg : 'transparent',
               borderRadius: '999px',
               overflow: 'hidden',
@@ -77,18 +78,19 @@ export default function SavedViewsBar({
                 fontSize: 15,
                 fontWeight: 600,
                 padding: '0 4px 0 16px',
+                minWidth: 0,
                 cursor: 'pointer',
               }}
             >
               {active ? <Bookmark sx={{ fontSize: 15 }} /> : <BookmarkBorder sx={{ fontSize: 15 }} />}
-              {view.name}
+              <Box component="span" sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{view.name}</Box>
             </Box>
             <Box
               component="button"
               type="button"
               aria-label={tr('views.options', { name: view.name })}
               onClick={(e: React.MouseEvent<HTMLButtonElement>) => setMenu({ anchor: e.currentTarget, view })}
-              sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: 40, border: 'none', background: 'transparent', color: active ? t.pFg : t.muted, cursor: 'pointer', p: 0 }}
+              sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: 44, flex: 'none', border: 'none', background: 'transparent', color: active ? t.pFg : t.muted, cursor: 'pointer', p: 0 }}
             >
               <MoreVert sx={{ fontSize: 16 }} />
             </Box>
@@ -106,7 +108,7 @@ export default function SavedViewsBar({
             alignItems: 'center',
             gap: '6px',
             height: 44,
-            border: `1px dashed ${t.borderStrong}`,
+            border: `1px dashed ${t.divider}`,
             background: 'transparent',
             color: t.accent,
             borderRadius: '999px',

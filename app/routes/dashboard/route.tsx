@@ -111,7 +111,7 @@ export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: leafletStylesHref },
 ];
 import { useTranslation } from 'react-i18next';
-import { useKanpaiTheme, FONT } from '~/listTheme';
+import { useKanpaiTheme, FONT, haloSx } from '~/listTheme';
 
 /**
  * Turn whatever was thrown into a human-readable message. Supabase/PostgREST
@@ -1009,8 +1009,9 @@ export default function Dashboard() {
   /** A bare round (or pill) icon button. */
   const roundSx = { display: 'grid', placeItems: 'center', flex: 'none', p: 0, border: 'none', borderRadius: '50%', cursor: 'pointer' } as const;
   /** One option in a pill-shaped segmented control. */
+  // Selected is an ink pill, so the state shows by more than a faint fill.
   const segmentSx = (selected: boolean) => ({
-    height: { xs: 40, md: 42 },
+    height: 44,
     padding: { xs: '0 10px', md: '0 18px' },
     border: 0,
     borderRadius: '999px',
@@ -1019,9 +1020,8 @@ export default function Dashboard() {
     fontSize: 15,
     fontWeight: 600,
     whiteSpace: 'nowrap',
-    background: selected ? t.raised : 'transparent',
-    color: selected ? t.ink : t.muted,
-    boxShadow: selected ? t.shadow1 : 'none',
+    background: selected ? t.pBg : 'transparent',
+    color: selected ? t.pFg : t.muted,
   });
   /** One row in the side panel. */
   const sideItemSx = (selected: boolean) => ({
@@ -1039,9 +1039,9 @@ export default function Dashboard() {
     fontSize: 15,
     fontWeight: 600,
     textAlign: 'left' as const,
-    background: selected ? t.raised : 'transparent',
-    color: selected ? t.ink : t.muted,
-    '@media (hover: hover)': { '&:hover': { color: t.ink } },
+    background: selected ? t.pBg : 'transparent',
+    color: selected ? t.pFg : t.muted,
+    '@media (hover: hover)': { '&:hover': { color: selected ? t.pFg : t.ink } },
   });
 
   const renderAvatar = (m: ListMember, idx: number) => {
@@ -1059,9 +1059,12 @@ export default function Dashboard() {
           width: 36,
           height: 36,
           borderRadius: '50%',
-          background: m.profile?.avatarUrl ? `center/cover url(${m.profile.avatarUrl})` : bg,
+          background: bg,
           color: fg,
-          display: 'flex',
+          overflow: 'hidden',
+          // A phone shows only the first face (plus a count), so the list's
+          // name keeps the room.
+          display: { xs: idx === 0 ? 'flex' : 'none', sm: 'flex' },
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: 12,
@@ -1070,7 +1073,11 @@ export default function Dashboard() {
           ml: idx === 0 ? 0 : '-10px',
         }}
       >
-        {!m.profile?.avatarUrl && initial}
+        {m.profile?.avatarUrl ? (
+          <Box component="img" src={m.profile.avatarUrl} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        ) : (
+          initial
+        )}
       </Box>
     );
   };
@@ -1136,7 +1143,7 @@ export default function Dashboard() {
               height: 'calc(100dvh - 32px)',
               overflowY: 'auto',
               borderRadius: '28px',
-              background: t.cardBg,
+              ...haloSx(t),
               padding: '28px 20px 20px',
             }}
           >
@@ -1161,7 +1168,7 @@ export default function Dashboard() {
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <Box sx={{ fontSize: 13, fontWeight: 600, color: t.muted, padding: '0 14px 6px' }}>{tr('views.title')}</Box>
                 {views.map((v) => (
-                  <Box key={v.id} component="button" type="button" aria-pressed={v.params === currentViewParams} onClick={() => handleApplyView(v)} sx={{ ...sideItemSx(v.params === currentViewParams), color: t.ink }}>
+                  <Box key={v.id} component="button" type="button" aria-pressed={v.params === currentViewParams} onClick={() => handleApplyView(v)} sx={sideItemSx(v.params === currentViewParams)}>
                     <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.name}</Box>
                   </Box>
                 ))}
@@ -1221,7 +1228,7 @@ export default function Dashboard() {
                   onClick={(e: React.MouseEvent<HTMLButtonElement>) => setMenuAnchor(e.currentTarget)}
                   aria-label={tr('dashboard.accountMenu')}
                   aria-haspopup="true"
-                  sx={{ display: 'flex', alignItems: 'center', minHeight: 44, border: 'none', background: 'transparent', cursor: 'pointer', p: 0 }}
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 44, minWidth: 44, border: 'none', background: 'transparent', cursor: 'pointer', p: 0 }}
                 >
                   {shownMembers.length > 0
                     ? shownMembers.map((m, i) => renderAvatar(m, i))
@@ -1230,8 +1237,13 @@ export default function Dashboard() {
                         {(profile?.displayName?.[0] ?? '?').toUpperCase()}
                       </Box>
                     )}
+                  {members.length > 1 && (
+                    <Box sx={{ width: 36, height: 36, borderRadius: '50%', background: t.raised, color: t.muted, display: { xs: 'flex', sm: 'none' }, alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, border: `2px solid ${t.pageBg}`, ml: '-10px' }}>
+                      +{members.length - 1}
+                    </Box>
+                  )}
                   {extraMembers > 0 && (
-                    <Box sx={{ width: 36, height: 36, borderRadius: '50%', background: t.raised, color: t.muted, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, border: `2px solid ${t.pageBg}`, ml: '-10px' }}>
+                    <Box sx={{ width: 36, height: 36, borderRadius: '50%', background: t.raised, color: t.muted, display: { xs: 'none', sm: 'flex' }, alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, border: `2px solid ${t.pageBg}`, ml: '-10px' }}>
                       +{extraMembers}
                     </Box>
                   )}
@@ -1336,7 +1348,7 @@ export default function Dashboard() {
                 <Box
                   role="group"
                   aria-label={tr('dashboard.filterStatusLabel')}
-                  sx={{ flex: { xs: 1, md: 'none' }, ml: { md: 'auto' }, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', padding: '4px', background: t.cardBg, borderRadius: '999px' }}
+                  sx={{ flex: { xs: 1, md: 'none' }, ml: { md: 'auto' }, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', padding: '2px', background: t.cardBg, borderRadius: '999px' }}
                 >
                   {statusOptions.map(({ id, shortLabel }) => (
                     <Box key={id} component="button" type="button" aria-pressed={filter === id} onClick={() => setFilter(id)} sx={segmentSx(filter === id)}>
@@ -1390,7 +1402,7 @@ export default function Dashboard() {
                 <Box
                   role="group"
                   aria-label={tr('dashboard.viewLabel')}
-                  sx={{ display: { xs: 'none', sm: 'flex' }, padding: '4px', background: t.cardBg, borderRadius: '999px', flex: 'none' }}
+                  sx={{ display: { xs: 'none', sm: 'flex' }, padding: '2px', background: t.cardBg, borderRadius: '999px', flex: 'none' }}
                 >
                   {viewOptions.map(({ id, label, Icon }) => (
                     <Box
@@ -1456,10 +1468,10 @@ export default function Dashboard() {
             ) : (
               // Extra bottom clearance on phones so the floating view bar never
               // covers the last place.
-              <Box sx={{ padding: { xs: '16px 0 112px', sm: '20px 0 56px' } }}>
+              <Box sx={{ padding: { xs: '16px 0 calc(112px + env(safe-area-inset-bottom))', sm: '20px 0 56px' } }}>
                 {/* TILE — one photograph per row on a phone, a grid beyond */}
                 {view === 'tile' && (
-                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(auto-fill, minmax(300px, 1fr))' }, gap: { xs: '14px', sm: '16px' } }}>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(auto-fill, minmax(320px, 1fr))' }, gap: { xs: '14px', sm: '16px' } }}>
                     {listLoading
                       ? Array.from({ length: 6 }, (_, i) => <SkeletonCard key={i} tokens={t} />)
                       : sorted.map((r) => <PlaceCard key={r.id} r={r} tokens={t} onView={handleViewRestaurant} />)}
@@ -1477,7 +1489,7 @@ export default function Dashboard() {
 
                 {/* TABLE — an index for when the list gets long */}
                 {view === 'table' && (
-                  <Box sx={{ overflowX: 'auto', borderRadius: '22px', background: t.cardBg, padding: '6px 8px' }}>
+                  <Box sx={{ overflowX: 'auto', borderRadius: '22px', ...haloSx(t), padding: '6px 8px' }}>
                     <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                       <Box component="thead">
                         <Box component="tr">
@@ -1509,7 +1521,7 @@ export default function Dashboard() {
                             sx={{ cursor: 'pointer', '& td': { padding: '8px 12px', borderTop: `1px solid ${t.border}` }, '@media (hover: hover)': { '&:hover': { background: t.rowHover } } }}
                           >
                             <Box component="td" sx={{ width: 68 }}>
-                              <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 44, aspectRatio: '1', borderRadius: '12px' }} />
+                              <RestaurantThumb image={r.image} name={r.name} alt="" tokens={t} sx={{ width: 44, aspectRatio: '1', borderRadius: '16px' }} />
                             </Box>
                             <Box component="td" sx={{ fontWeight: 600, fontSize: 15, minWidth: 160 }}>
                               <Box
@@ -1579,9 +1591,9 @@ export default function Dashboard() {
                           onKeyDown={activateOnKey(() => handleViewRestaurant(r))}
                           onMouseEnter={() => setHoveredId(syncKey)}
                           onMouseLeave={() => setHoveredId((cur) => (cur === syncKey ? null : cur))}
-                          sx={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', borderRadius: '18px', cursor: 'pointer', background: hoveredId === syncKey ? t.raised : t.cardBg, transition: 'background .12s' }}
+                          sx={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', borderRadius: '22px', cursor: 'pointer', background: hoveredId === syncKey ? t.raised : t.cardBg, transition: 'background .12s' }}
                         >
-                          <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 48, aspectRatio: '1', borderRadius: '12px' }} />
+                          <RestaurantThumb image={r.image} name={r.name} alt="" tokens={t} sx={{ width: 48, aspectRatio: '1', borderRadius: '16px' }} />
                           <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Box sx={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</Box>
                             {r.meta && <Box sx={{ color: t.muted, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.meta}</Box>}
@@ -1629,7 +1641,7 @@ export default function Dashboard() {
                 aria-pressed={view === id}
                 aria-label={label}
                 onClick={() => setView(id)}
-                sx={{ ...roundSx, width: 52, height: 44, borderRadius: '999px', background: view === id ? t.raised : 'transparent', color: view === id ? t.ink : t.muted }}
+                sx={{ ...roundSx, width: 52, height: 44, borderRadius: '999px', background: view === id ? t.pBg : 'transparent', color: view === id ? t.pFg : t.muted }}
               >
                 <Icon sx={{ fontSize: 20 }} />
               </Box>
@@ -1683,7 +1695,7 @@ export default function Dashboard() {
 
         {/* new list dialog */}
         <Dialog open={newListOpen} onClose={() => setNewListOpen(false)} maxWidth="xs" fullWidth>
-          <DialogTitle sx={{ fontWeight: 700 }}>{tr('dashboard.newList')}</DialogTitle>
+          <DialogTitle sx={{ fontWeight: 600 }}>{tr('dashboard.newList')}</DialogTitle>
           <DialogContent>
             <TextField
               fullWidth
@@ -1702,7 +1714,7 @@ export default function Dashboard() {
 
         {/* rename list dialog */}
         <Dialog open={Boolean(renameListTarget)} onClose={() => setRenameListTarget(null)} maxWidth="xs" fullWidth>
-          <DialogTitle sx={{ fontWeight: 700 }}>{tr('lists.renameTitle')}</DialogTitle>
+          <DialogTitle sx={{ fontWeight: 600 }}>{tr('lists.renameTitle')}</DialogTitle>
           <DialogContent>
             <TextField
               fullWidth
@@ -1721,7 +1733,7 @@ export default function Dashboard() {
 
         {/* delete list confirmation */}
         <Dialog open={Boolean(deleteListTarget)} onClose={() => setDeleteListTarget(null)} maxWidth="xs" fullWidth>
-          <DialogTitle sx={{ fontWeight: 700 }}>{tr('lists.deleteTitle')}</DialogTitle>
+          <DialogTitle sx={{ fontWeight: 600 }}>{tr('lists.deleteTitle')}</DialogTitle>
           <DialogContent>
             <Box sx={{ color: 'text.secondary' }}>
               {tr('lists.deleteConfirm', { name: deleteListTarget?.name ?? '' })}
@@ -1735,7 +1747,7 @@ export default function Dashboard() {
 
         {/* save / rename view dialog */}
         <Dialog open={Boolean(viewDialog)} onClose={() => setViewDialog(null)} maxWidth="xs" fullWidth>
-          <DialogTitle sx={{ fontWeight: 700 }}>
+          <DialogTitle sx={{ fontWeight: 600 }}>
             {viewDialog?.mode === 'rename' ? tr('views.renameTitle') : tr('views.saveTitle')}
           </DialogTitle>
           <DialogContent>

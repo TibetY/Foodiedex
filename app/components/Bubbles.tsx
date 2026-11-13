@@ -40,7 +40,7 @@ function dotSx(fill: 'full' | 'half' | 'empty', size: number, color: string) {
     borderRadius: '50%',
     overflow: 'hidden',
     // The ghost: the dot's own colour at low strength, on any background.
-    '&::before': { content: '""', position: 'absolute', inset: 0, background: color, opacity: fill === 'full' ? 1 : 0.22 },
+    '&::before': { content: '""', position: 'absolute', inset: 0, background: color, opacity: fill === 'full' ? 1 : 0.35 },
     '&::after': fill === 'half' ? { content: '""', position: 'absolute', inset: '0 50% 0 0', background: color } : undefined,
   };
 }

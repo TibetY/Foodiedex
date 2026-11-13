@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getListTokens, type AccentName, type ListMode, type ListTokens } from '~/listTheme';
+import { ON_PHOTO } from '~/components/PlacePills';
 
 /**
  * Contrast floor for the brand palette.
@@ -128,6 +129,42 @@ describe('brand palette contrast (WCAG AA)', () => {
           .map(([name, ratio]) => `${name}: ${ratio}`);
         expect(failures).toEqual([]);
       });
+
+      it(`${label}: text on glass stays readable over a black or a white page`, () => {
+        const failures: string[] = [];
+        for (const backdrop of ['#000000', '#FFFFFF']) {
+          const bg = over(t.glass, backdrop);
+          for (const token of ['ink', 'muted'] as const) {
+            const ratio = contrast(t[token], bg);
+            if (ratio < 4.5) failures.push(`${token} on glass over ${backdrop}: ${ratio}`);
+          }
+        }
+        expect(failures).toEqual([]);
+      });
     }
   }
+});
+
+/** A translucent colour laid over an opaque one, as an opaque hex. */
+function over(top: string, under: string): string {
+  const [r, g, b] = flatten(top, under);
+  return '#' + [r, g, b].map((c) => Math.round(c).toString(16).padStart(2, '0')).join('');
+}
+
+describe('text over photographs', () => {
+  // Pills sit at the top of a photo, behind ON_PHOTO.glass (plus the top of the
+  // scrim, ignored here so the check is the worst case). The photo itself can
+  // be pure white.
+  const pill = over(ON_PHOTO.glass, '#FFFFFF');
+
+  it('pill text clears 4.5:1 on a white photo', () => {
+    expect(contrast(ON_PHOTO.ink, pill)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('Michelin stars on a pill clear 3:1 on a white photo, for every accent', () => {
+    const failures = ACCENTS.map((a) => [a, contrast(getListTokens('dark', a).onPhotoAccent, pill)] as const)
+      .filter(([, ratio]) => ratio < 3)
+      .map(([a, ratio]) => `${a}: ${ratio}`);
+    expect(failures).toEqual([]);
+  });
 });

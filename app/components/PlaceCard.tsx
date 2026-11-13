@@ -1,8 +1,8 @@
 import Box from '@mui/material/Box';
 import type { Restaurant } from '~/types/restaurant';
 import type { DecoratedRestaurant } from '~/utils/decorateRestaurant';
-import type { ListTokens } from '~/listTheme';
-import { usePlacePhoto, photoSx, haloSx } from '~/components/RestaurantThumb';
+import { haloSx, type ListTokens } from '~/listTheme';
+import { usePlacePhoto, photoSx } from '~/components/RestaurantThumb';
 import Bubbles from '~/components/Bubbles';
 import { DistinctionPill, WantPill, ON_PHOTO } from '~/components/PlacePills';
 
@@ -23,6 +23,7 @@ const nameSx = {
   WebkitLineClamp: 2,
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
+  overflowWrap: 'anywhere',
 } as const;
 
 /**

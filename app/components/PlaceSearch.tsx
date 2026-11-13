@@ -234,7 +234,7 @@ export default function PlaceSearch({
                   padding: '10px 14px',
                   cursor: 'pointer',
                   borderBottom: i === results.length - 1 ? 'none' : `1px solid ${t.borderSoft}`,
-                  background: active === i ? t.searchBg : 'transparent',
+                  background: active === i ? t.raised : 'transparent',
                 }}
               >
                 <Box sx={{ flex: 1, minWidth: 0 }}>

@@ -171,7 +171,7 @@ const MODE_BASE: Record<
     paper: '#F3EFEA',
     card: '#FFFFFF',
     raised: '#EDE7E0',
-    glass: 'rgba(255,255,255,.78)',
+    glass: 'rgba(255,255,255,.9)',
     canvas: '#F3EFEA',
     rule: 'rgba(27,23,20,.14)',
     hair: 'rgba(27,23,20,.10)',
@@ -194,7 +194,7 @@ const MODE_BASE: Record<
     paper: '#0E0C0B',
     card: '#1A1715',
     raised: '#2A2522',
-    glass: 'rgba(26,23,21,.72)',
+    glass: 'rgba(26,23,21,.88)',
     canvas: '#0E0C0B',
     rule: 'rgba(246,240,234,.16)',
     hair: 'rgba(246,240,234,.12)',
@@ -208,9 +208,13 @@ const MODE_BASE: Record<
   },
 };
 
-/** A fixed decorative fill (independent of the chosen accent) for the second
- *  avatar in a stack. */
+/** Fixed decorative fills, independent of the chosen accent: the logo's second
+ *  dot, and the second avatar in a stack. */
 const DECORATIVE = {
+  sakura: {
+    light: { bg: '#E7A9A9', fg: '#8A4040' },
+    dark: { bg: '#C98A8A', fg: '#EEB9B9' },
+  },
   peach: {
     light: { bg: '#F6DCC8', fg: '#8A5A32' },
     dark: { bg: '#47372B', fg: '#EDC49F' },
@@ -233,6 +237,8 @@ export interface ListTokens {
   /** The accent as drawn over a photograph, which is always dark-scrimmed:
    *  the dark-mode accent, whichever mode the page is in. */
   onPhotoAccent: string;
+  /** The logo mark's second dot — decorative and fixed, never a status colour. */
+  markDot: string;
   footerBg: string;
   ink: string;
   muted: string;
@@ -308,6 +314,7 @@ export function getListTokens(mode: ListMode, accent: AccentName): ListTokens {
     glass: b.glass,
     halo: hexToRgba(a.deep, mode === 'dark' ? 0.16 : 0.1),
     onPhotoAccent: ACCENTS[accent].dark.deep,
+    markDot: DECORATIVE.sakura[mode].bg,
     footerBg: b.paper,
     ink: b.ink,
     muted: b.ink60,
@@ -368,6 +375,17 @@ export function getListTokens(mode: ListMode, accent: AccentName): ListTokens {
     pinLabelFg: b.ink,
     pinLabelBorder: b.hair,
   };
+}
+
+/**
+ * The soft accent glow in the top-right corner of a surface: cards, sheets,
+ * dialogs and menus. `base` is the surface colour under it.
+ */
+export function haloSx(t: ListTokens, base: string = t.cardBg) {
+  return {
+    backgroundColor: base,
+    backgroundImage: `radial-gradient(120% 100% at 100% 0%, ${t.halo} 0%, transparent 62%)`,
+  } as const;
 }
 
 /** Swatches + copy for the Account page's accent picker cards. */
@@ -537,10 +555,11 @@ export function makeListTheme(mode: ListMode, accent: AccentName): Theme {
           },
           outlined: {
             // The quiet button is a filled surface pill, not an outline.
-            border: 'none',
+            border: '1px solid transparent',
             backgroundColor: t.cardBg,
             color: t.ink,
-            '&:hover': { border: 'none', backgroundColor: t.raised },
+            '&:hover': { borderColor: 'transparent', backgroundColor: t.raised },
+            '&.Mui-disabled': { borderColor: 'transparent' },
           },
           text: {
             color: t.accent,
@@ -549,25 +568,41 @@ export function makeListTheme(mode: ListMode, accent: AccentName): Theme {
         },
       },
       // Dark-mode MUI lightens raised Paper with a gradient overlay; the
-      // surfaces here are flat, set by token.
+      // surfaces here are set by token instead.
       MuiPaper: {
         styleOverrides: { root: { backgroundImage: 'none' } },
+      },
+      // Anything modal blurs the page behind it, so sheets and dialogs read as
+      // glass laid over the list. Menus and popovers keep an invisible backdrop.
+      MuiBackdrop: {
+        styleOverrides: {
+          root: ({ ownerState }) =>
+            ownerState.invisible
+              ? {}
+              : {
+                  backgroundColor: mode === 'dark' ? 'rgba(0,0,0,.45)' : 'rgba(27,23,20,.28)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                },
+        },
       },
       MuiDialog: {
         styleOverrides: {
           paper: {
-            backgroundColor: t.panelBg,
-            backgroundImage: 'none',
+            ...haloSx(t, t.panelBg),
             borderRadius: RADIUS.dialog,
             boxShadow: `0 0 0 1px ${t.border}, ${t.shadow3}`,
           },
+          // A full-screen dialog fills the phone; rounded corners would show the
+          // page behind them at the screen edges.
+          paperFullScreen: { borderRadius: 0 },
         },
       },
       MuiMenu: {
         styleOverrides: {
           paper: {
             borderRadius: RADIUS.surface,
-            backgroundColor: t.cardBg,
+            ...haloSx(t),
             boxShadow: `0 0 0 1px ${t.border}, ${t.shadow2}`,
           },
           list: { padding: 6 },
@@ -670,6 +705,7 @@ export function KanpaiThemeProvider({
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', mode);
     document.documentElement.setAttribute('data-accent', accent);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', getListTokens(mode, accent).pageBg);
   }, [mode, accent]);
 
   const setMode = (m: ListMode) => {

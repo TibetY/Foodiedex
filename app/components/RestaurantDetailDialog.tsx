@@ -26,12 +26,13 @@ import AddIcon from '@mui/icons-material/Add';
 import ChevronRight from '@mui/icons-material/ChevronRight';
 import { useTranslation } from 'react-i18next';
 import type { Restaurant, RestaurantRating } from '~/types/restaurant';
-import type { ListTokens } from '~/listTheme';
+import { haloSx, type ListTokens } from '~/listTheme';
 import { decorate, monogram } from '~/utils/decorateRestaurant';
 import { distinctionIds, distinctionLabel } from '~/utils/distinctions';
-import { usePlacePhoto, photoSx, haloSx } from '~/components/RestaurantThumb';
+import { usePlacePhoto, photoSx } from '~/components/RestaurantThumb';
 import MichelinStars from '~/components/MichelinStars';
 import { ON_PHOTO, glassOnPhotoSx } from '~/components/PlacePills';
+import { safeHttpUrl } from '~/utils/safeHref';
 import Bubbles, { BubbleInput } from '~/components/Bubbles';
 
 type Tokens = ListTokens;
@@ -109,6 +110,7 @@ export default function RestaurantDetailDialog({
   const locations = r.locations ?? [];
   const safeIdx = locations.length ? Math.min(activeLoc, locations.length - 1) : 0;
   const loc = locations[safeIdx] ?? {};
+  const reservationUrl = safeHttpUrl(loc.reservationUrl);
   // The headline score is the group's average once anyone has rated
   // individually; the spot's own column stays the fallback for everything
   // added before per-person ratings existed.
@@ -135,13 +137,22 @@ export default function RestaurantDetailDialog({
   // Directions, call and website are the round action buttons; this list is
   // the rest.
   if (loc.email) links.push({ key: 'email', Icon: MailOutline, label: loc.email, href: `mailto:${loc.email}` });
-  if (r.socialMedia?.instagram) links.push({ key: 'ig', Icon: Instagram, label: 'Instagram', href: r.socialMedia.instagram, external: true });
-  if (r.socialMedia?.facebook) links.push({ key: 'fb', Icon: Facebook, label: 'Facebook', href: r.socialMedia.facebook, external: true });
-  if (r.socialMedia?.twitter) links.push({ key: 'x', Icon: Twitter, label: 'Twitter / X', href: r.socialMedia.twitter, external: true });
-  if (r.socialMedia?.tiktok) links.push({ key: 'tt', Icon: MusicNote, label: 'TikTok', href: r.socialMedia.tiktok, external: true });
+  // Every stored link is re-checked here: rows can be written straight through
+  // the database API, and this dialog is also shown on the public share page.
+  const website = safeHttpUrl(r.url);
+  const social = {
+    instagram: safeHttpUrl(r.socialMedia?.instagram),
+    facebook: safeHttpUrl(r.socialMedia?.facebook),
+    twitter: safeHttpUrl(r.socialMedia?.twitter),
+    tiktok: safeHttpUrl(r.socialMedia?.tiktok),
+  };
+  if (social.instagram) links.push({ key: 'ig', Icon: Instagram, label: 'Instagram', href: social.instagram, external: true });
+  if (social.facebook) links.push({ key: 'fb', Icon: Facebook, label: 'Facebook', href: social.facebook, external: true });
+  if (social.twitter) links.push({ key: 'x', Icon: Twitter, label: 'Twitter / X', href: social.twitter, external: true });
+  if (social.tiktok) links.push({ key: 'tt', Icon: MusicNote, label: 'TikTok', href: social.tiktok, external: true });
 
   const sectionLabel = { color: t.muted, fontSize: 13, fontWeight: 600, mb: '10px' };
-  const blockSx = { borderRadius: '22px', background: t.cardBg, padding: '18px' };
+  const blockSx = { borderRadius: '22px', ...haloSx(t), padding: '18px' };
   const onPhoto = photo.show;
   /** Round button in the hero: frosted over a photo, a plain surface otherwise. */
   const heroButtonSx = {
@@ -149,7 +160,10 @@ export default function RestaurantDetailDialog({
     height: 44,
     flex: 'none',
     ...(onPhoto ? glassOnPhotoSx : { background: t.cardBg, color: t.ink }),
-    '&:hover': onPhoto ? { background: 'rgba(20,17,15,.65)' } : { background: t.raised },
+    '@media (hover: hover)': { '&:hover': onPhoto ? { background: 'rgba(20,17,15,.85)' } : { background: t.raised } },
+    // The accent ring vanishes on a bright photo; a light ring with a dark
+    // halo shows on anything.
+    ...(onPhoto ? { '&.Mui-focusVisible': { outline: '2px solid #F6F0EA', outlineOffset: '2px', boxShadow: '0 0 0 5px rgba(10,8,7,.75)' } } : {}),
   };
   const honourPillSx = {
     display: 'inline-flex',
@@ -167,8 +181,8 @@ export default function RestaurantDetailDialog({
   // The few things you do with a place, as one row of round buttons. Reserve is
   // the one in the accent.
   const actions: { key: string; Icon: typeof SvgIcon; label: string; href: string; external?: boolean; primary?: boolean }[] = [];
-  if (loc.reservationUrl) {
-    actions.push({ key: 'reserve', Icon: EventOutlined, label: tr('detail.actionReserve'), href: loc.reservationUrl, external: true, primary: true });
+  if (reservationUrl) {
+    actions.push({ key: 'reserve', Icon: EventOutlined, label: tr('detail.actionReserve'), href: reservationUrl, external: true, primary: true });
   }
   if (loc.address) {
     actions.push({
@@ -180,7 +194,7 @@ export default function RestaurantDetailDialog({
     });
   }
   if (loc.phone) actions.push({ key: 'call', Icon: PhoneOutlined, label: tr('detail.actionCall'), href: `tel:${loc.phone}` });
-  if (r.url) actions.push({ key: 'web', Icon: Language, label: tr('detail.actionWebsite'), href: r.url, external: true });
+  if (website) actions.push({ key: 'web', Icon: Language, label: tr('detail.actionWebsite'), href: website, external: true });
 
   const reservePlatform = reservationLabel(loc.reservationPlatform || '');
 
@@ -209,7 +223,7 @@ export default function RestaurantDetailDialog({
           flexDirection: 'column',
           justifyContent: 'space-between',
           gap: '28px',
-          minHeight: onPhoto ? { xs: 420, sm: 360 } : 0,
+          minHeight: onPhoto ? { xs: 440, sm: 360 } : 0,
           // 28px of the hero sits under the sheet's rounded top edge.
           padding: { xs: '16px 16px 52px', sm: '16px 16px 52px' },
           color: onPhoto ? ON_PHOTO.ink : t.ink,
@@ -219,7 +233,7 @@ export default function RestaurantDetailDialog({
         {r.image && photo.show && (
           <>
             <Box component="img" alt="" {...photo.imgProps} sx={photoSx(photo.pending)} />
-            <Box aria-hidden sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(10,8,7,.35) 0%, rgba(10,8,7,0) 30%, rgba(10,8,7,.78) 100%)' }} />
+            <Box aria-hidden sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(10,8,7,.45) 0%, rgba(10,8,7,0) 26%, rgba(10,8,7,.58) 58%, rgba(10,8,7,.86) 100%)' }} />
           </>
         )}
         <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'space-between' }}>
@@ -267,7 +281,7 @@ export default function RestaurantDetailDialog({
               })}
             </Box>
           )}
-          <Box id="restaurant-detail-title" component="h2" sx={{ fontFamily: serifFont, fontSize: { xs: 36, sm: 40 }, fontWeight: 600, letterSpacing: '-.045em', m: 0, lineHeight: 1.02, textWrap: 'balance' }}>
+          <Box id="restaurant-detail-title" component="h2" sx={{ fontFamily: serifFont, fontSize: 40, fontWeight: 600, letterSpacing: '-.045em', m: 0, lineHeight: 1.02, textWrap: 'balance', overflowWrap: 'anywhere' }}>
             {r.name}
           </Box>
         </Box>
@@ -279,7 +293,7 @@ export default function RestaurantDetailDialog({
           position: 'relative',
           mt: '-28px',
           borderRadius: '28px 28px 0 0',
-          background: t.pageBg,
+          ...haloSx(t, t.pageBg),
           padding: { xs: '24px 20px calc(28px + env(safe-area-inset-bottom))', sm: '24px 24px 28px' },
           display: 'flex',
           flexDirection: 'column',
@@ -310,7 +324,7 @@ export default function RestaurantDetailDialog({
 
         {/* The location switcher sits above everything that depends on it. */}
         {locations.length > 1 && (
-          <Box role="group" sx={{ display: 'flex', padding: '4px', background: t.cardBg, borderRadius: '999px', width: 'fit-content', maxWidth: '100%', overflowX: 'auto' }}>
+          <Box role="group" sx={{ display: 'flex', padding: '2px', background: t.cardBg, borderRadius: '999px', width: 'fit-content', maxWidth: '100%', overflowX: 'auto' }}>
             {locations.map((l, i) => (
               <Box
                 key={i}
@@ -324,12 +338,12 @@ export default function RestaurantDetailDialog({
                   font: 'inherit',
                   fontSize: 15,
                   fontWeight: 600,
-                  height: 40,
+                  height: 44,
                   padding: '0 16px',
                   borderRadius: '999px',
                   whiteSpace: 'nowrap',
-                  background: safeIdx === i ? t.raised : 'transparent',
-                  color: safeIdx === i ? t.ink : t.muted,
+                  background: safeIdx === i ? t.pBg : 'transparent',
+                  color: safeIdx === i ? t.pFg : t.muted,
                 }}
               >
                 {l.label?.trim() || tr('form.locationN', { n: i + 1 })}
@@ -362,15 +376,15 @@ export default function RestaurantDetailDialog({
             ))}
           </Box>
         )}
-        {!loc.reservationUrl && loc.reservationPlatform === 'walkin' && (
+        {!reservationUrl && loc.reservationPlatform === 'walkin' && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', color: t.muted, fontSize: 14 }}>
             <EventSeatOutlined sx={{ fontSize: 18 }} /> {tr('detail.walkinBadge')}
           </Box>
         )}
 
         {/* Status + visits: the two things you update after a meal */}
-        <Box sx={{ ...blockSx, padding: '10px 10px 10px 18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Box component="span" sx={{ flex: 1, minWidth: 0, color: t.muted, fontSize: 15 }}>
+        <Box sx={{ ...blockSx, padding: '10px 10px 10px 18px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
+          <Box component="span" sx={{ flex: '1 1 120px', minWidth: 0, color: t.muted, fontSize: 15 }}>
             {tr('detail.visitedTimes', { count: r.visitCount ?? 0 })}
           </Box>
           {canEdit && onAddVisit && (

@@ -108,7 +108,7 @@ export async function renderShareCard(
     ctx.fill();
   };
   circle(0, 3, 17, t.accent);
-  circle(9, 0, 12, t.wantBg);
+  circle(9, 0, 12, t.markDot);
   circle(13, 12, 8, t.avatar2);
 
   ctx.fillStyle = t.ink;
