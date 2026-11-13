@@ -296,8 +296,8 @@ export default function FilterSheet(props: FilterSheetProps) {
 
   // Glass: a translucent surface with the page blurred behind it.
   const glassPaper = {
-    background: t.glass,
-    backgroundImage: 'none',
+    backgroundColor: t.glass,
+    backgroundImage: `radial-gradient(120% 70% at 100% 0%, ${t.halo} 0%, transparent 62%)`,
     color: t.ink,
     backdropFilter: 'blur(30px) saturate(1.2)',
     WebkitBackdropFilter: 'blur(30px) saturate(1.2)',

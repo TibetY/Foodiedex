@@ -111,7 +111,7 @@ export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: leafletStylesHref },
 ];
 import { useTranslation } from 'react-i18next';
-import { useKanpaiTheme, FONT } from '~/listTheme';
+import { useKanpaiTheme, FONT, haloSx } from '~/listTheme';
 
 /**
  * Turn whatever was thrown into a human-readable message. Supabase/PostgREST
@@ -1141,7 +1141,7 @@ export default function Dashboard() {
               height: 'calc(100dvh - 32px)',
               overflowY: 'auto',
               borderRadius: '28px',
-              background: t.cardBg,
+              ...haloSx(t),
               padding: '28px 20px 20px',
             }}
           >
@@ -1482,7 +1482,7 @@ export default function Dashboard() {
 
                 {/* TABLE — an index for when the list gets long */}
                 {view === 'table' && (
-                  <Box sx={{ overflowX: 'auto', borderRadius: '22px', background: t.cardBg, padding: '6px 8px' }}>
+                  <Box sx={{ overflowX: 'auto', borderRadius: '22px', ...haloSx(t), padding: '6px 8px' }}>
                     <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                       <Box component="thead">
                         <Box component="tr">

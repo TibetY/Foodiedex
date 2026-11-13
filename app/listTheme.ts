@@ -370,6 +370,17 @@ export function getListTokens(mode: ListMode, accent: AccentName): ListTokens {
   };
 }
 
+/**
+ * The soft accent glow in the top-right corner of a surface: cards, sheets,
+ * dialogs and menus. `base` is the surface colour under it.
+ */
+export function haloSx(t: ListTokens, base: string = t.cardBg) {
+  return {
+    backgroundColor: base,
+    backgroundImage: `radial-gradient(120% 100% at 100% 0%, ${t.halo} 0%, transparent 62%)`,
+  } as const;
+}
+
 /** Swatches + copy for the Account page's accent picker cards. */
 export function accentSwatch(name: AccentName, mode: ListMode) {
   const meta = ACCENTS[name];
@@ -549,25 +560,41 @@ export function makeListTheme(mode: ListMode, accent: AccentName): Theme {
         },
       },
       // Dark-mode MUI lightens raised Paper with a gradient overlay; the
-      // surfaces here are flat, set by token.
+      // surfaces here are set by token instead.
       MuiPaper: {
         styleOverrides: { root: { backgroundImage: 'none' } },
+      },
+      // Anything modal blurs the page behind it, so sheets and dialogs read as
+      // glass laid over the list. Menus and popovers keep an invisible backdrop.
+      MuiBackdrop: {
+        styleOverrides: {
+          root: ({ ownerState }) =>
+            ownerState.invisible
+              ? {}
+              : {
+                  backgroundColor: mode === 'dark' ? 'rgba(0,0,0,.45)' : 'rgba(27,23,20,.28)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                },
+        },
       },
       MuiDialog: {
         styleOverrides: {
           paper: {
-            backgroundColor: t.panelBg,
-            backgroundImage: 'none',
+            ...haloSx(t, t.panelBg),
             borderRadius: RADIUS.dialog,
             boxShadow: `0 0 0 1px ${t.border}, ${t.shadow3}`,
           },
+          // A full-screen dialog fills the phone; rounded corners would show the
+          // page behind them at the screen edges.
+          paperFullScreen: { borderRadius: 0 },
         },
       },
       MuiMenu: {
         styleOverrides: {
           paper: {
             borderRadius: RADIUS.surface,
-            backgroundColor: t.cardBg,
+            ...haloSx(t),
             boxShadow: `0 0 0 1px ${t.border}, ${t.shadow2}`,
           },
           list: { padding: 6 },

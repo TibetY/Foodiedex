@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import { type SxProps, type Theme } from '@mui/material/styles';
-import type { ListTokens } from '~/listTheme';
+import { haloSx, type ListTokens } from '~/listTheme';
 import { RESTAURANT_IMAGE_BUCKET } from '~/supabaseConfig';
 import { monogram } from '~/utils/decorateRestaurant';
 
@@ -99,14 +99,6 @@ export function photoSx(pending: boolean) {
     opacity: pending ? 0 : 1,
     transition: 'opacity .25s ease',
     '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
-  } as const;
-}
-
-/** The fill behind a monogram: a raised tile with the accent glowing in from one corner. */
-export function haloSx(t: Tokens, base: string = t.cardBg) {
-  return {
-    backgroundColor: base,
-    backgroundImage: `radial-gradient(120% 100% at 100% 0%, ${t.halo} 0%, transparent 62%)`,
   } as const;
 }
 

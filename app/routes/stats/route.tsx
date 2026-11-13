@@ -18,7 +18,7 @@ import { getProfile } from '~/services/profiles.server';
 import type { Restaurant } from '~/types/restaurant';
 import { computeFoodStats, type LabelCount } from '~/utils/foodStats';
 import { downloadShareCard, type ShareSize } from '~/utils/shareCard.client';
-import { useKanpaiTheme, type ListTokens } from '~/listTheme';
+import { useKanpaiTheme, haloSx, type ListTokens } from '~/listTheme';
 import type { RestaurantMapProps } from '~/components/RestaurantMap';
 
 const RestaurantMap = lazy<React.ComponentType<RestaurantMapProps>>(() =>
@@ -135,7 +135,7 @@ export default function StatsPage() {
 
         <Box sx={{ flexGrow: 1, width: '100%', maxWidth: 980, mx: 'auto', padding: { xs: '14px 20px 48px', md: '20px 40px 64px' } }}>
           {stats.total === 0 ? (
-            <Box sx={{ py: { xs: 6, md: 10 }, px: 3, textAlign: 'center', borderRadius: '28px', background: t.cardBg }}>
+            <Box sx={{ py: { xs: 6, md: 10 }, px: 3, textAlign: 'center', borderRadius: '28px', ...haloSx(t) }}>
               <Box sx={{ fontWeight: 600, fontSize: 24, letterSpacing: '-.03em', mb: 1 }}>{tr('stats.emptyTitle')}</Box>
               <Box sx={{ color: t.muted, fontSize: 16, mb: 3 }}>{tr('stats.emptyBody')}</Box>
               <Button component={Link} to={backHref} variant="contained">{tr('stats.back')}</Button>
@@ -143,7 +143,7 @@ export default function StatsPage() {
           ) : (
             <>
               {/* hero — the collection, as one big light numeral */}
-              <Box sx={{ borderRadius: '28px', padding: '22px', display: 'flex', flexDirection: 'column', gap: '4px', backgroundColor: t.cardBg, backgroundImage: `radial-gradient(100% 120% at 100% 0%, ${t.halo}, transparent 60%)` }}>
+              <Box sx={{ borderRadius: '28px', padding: '22px', display: 'flex', flexDirection: 'column', gap: '4px', ...haloSx(t) }}>
                 <Box component="span" sx={{ fontSize: 14, fontWeight: 600, color: t.muted }}>{listName}</Box>
                 <Box component="h1" sx={{ m: 0, fontWeight: 300, fontSize: { xs: 72, md: 96 }, letterSpacing: '-.06em', lineHeight: 1 }}>
                   {stats.total}
@@ -188,7 +188,7 @@ export default function StatsPage() {
               )}
 
               {/* share */}
-              <Box sx={{ mt: '10px', padding: '22px', borderRadius: '28px', background: t.cardBg }}>
+              <Box sx={{ mt: '10px', padding: '22px', borderRadius: '28px', ...haloSx(t) }}>
                 <Box sx={{ fontWeight: 600, fontSize: 24, letterSpacing: '-.03em', color: t.ink }}>{tr('stats.shareTitle')}</Box>
                 <Box sx={{ color: t.muted, fontSize: 14, mt: 1, mb: 2.5, maxWidth: 520 }}>{tr('stats.shareBody')}</Box>
                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
@@ -215,7 +215,7 @@ function SectionTitle({ children, tokens: t }: { children: React.ReactNode; toke
 
 function StatTile({ tokens: t, value, label, accent }: { tokens: Tokens; value: number | string; label: string; accent?: boolean }) {
   return (
-    <Box sx={{ padding: '16px 18px', borderRadius: '22px', background: t.cardBg }}>
+    <Box sx={{ padding: '16px 18px', borderRadius: '22px', ...haloSx(t) }}>
       <Box sx={{ fontWeight: 500, fontSize: 32, letterSpacing: '-.04em', lineHeight: 1.2, color: accent ? t.accent : t.ink }}>{value}</Box>
       <Box sx={{ color: t.muted, fontSize: 14 }}>{label}</Box>
     </Box>
@@ -242,7 +242,7 @@ function BarSection({
   // tier, not by count, so the first row is not necessarily the biggest.
   const max = Math.max(1, ...rows.map((r) => r.count));
   return (
-    <Box sx={{ borderRadius: '22px', background: t.cardBg, padding: '18px' }}>
+    <Box sx={{ borderRadius: '22px', ...haloSx(t), padding: '18px' }}>
       <SectionTitle tokens={t}>{title}</SectionTitle>
       <Box sx={{ mt: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {rows.length === 0 ? (
@@ -279,7 +279,7 @@ function MostVisited({
   emptyLabel: string;
 }) {
   return (
-    <Box sx={{ borderRadius: '22px', background: t.cardBg, padding: '18px' }}>
+    <Box sx={{ borderRadius: '22px', ...haloSx(t), padding: '18px' }}>
       <SectionTitle tokens={t}>{title}</SectionTitle>
       <Box sx={{ mt: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {rows.length === 0 ? (

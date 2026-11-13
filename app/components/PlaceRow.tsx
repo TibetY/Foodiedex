@@ -4,7 +4,7 @@ import BookmarkBorder from '@mui/icons-material/BookmarkBorder';
 import { useTranslation } from 'react-i18next';
 import type { Restaurant } from '~/types/restaurant';
 import type { DecoratedRestaurant } from '~/utils/decorateRestaurant';
-import type { ListTokens } from '~/listTheme';
+import { haloSx, type ListTokens } from '~/listTheme';
 import RestaurantThumb from '~/components/RestaurantThumb';
 import Bubbles from '~/components/Bubbles';
 import MichelinStars from '~/components/MichelinStars';
@@ -41,14 +41,14 @@ export default function PlaceRow({ r, tokens: t, onView }: PlaceRowProps) {
         m: 0,
         border: 'none',
         borderRadius: '22px',
-        background: t.cardBg,
+        ...haloSx(t),
         color: t.ink,
         font: 'inherit',
         textAlign: 'left',
         cursor: 'pointer',
         transition: 'transform .2s ease, background-color .15s ease',
         '&:active': { transform: 'scale(.99)' },
-        '@media (hover: hover)': { '&:hover': { background: t.rowHover } },
+        '@media (hover: hover)': { '&:hover': { backgroundColor: t.rowHover } },
       }}
     >
       <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 66, aspectRatio: '1' }} />
