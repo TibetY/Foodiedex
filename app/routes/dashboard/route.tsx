@@ -1059,8 +1059,9 @@ export default function Dashboard() {
           width: 36,
           height: 36,
           borderRadius: '50%',
-          background: m.profile?.avatarUrl ? `center/cover url(${m.profile.avatarUrl})` : bg,
+          background: bg,
           color: fg,
+          overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1070,7 +1071,11 @@ export default function Dashboard() {
           ml: idx === 0 ? 0 : '-10px',
         }}
       >
-        {!m.profile?.avatarUrl && initial}
+        {m.profile?.avatarUrl ? (
+          <Box component="img" src={m.profile.avatarUrl} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        ) : (
+          initial
+        )}
       </Box>
     );
   };

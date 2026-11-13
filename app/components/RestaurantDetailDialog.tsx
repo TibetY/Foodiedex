@@ -32,6 +32,7 @@ import { distinctionIds, distinctionLabel } from '~/utils/distinctions';
 import { usePlacePhoto, photoSx, haloSx } from '~/components/RestaurantThumb';
 import MichelinStars from '~/components/MichelinStars';
 import { ON_PHOTO, glassOnPhotoSx } from '~/components/PlacePills';
+import { safeHttpUrl } from '~/utils/safeHref';
 import Bubbles, { BubbleInput } from '~/components/Bubbles';
 
 type Tokens = ListTokens;
@@ -109,6 +110,7 @@ export default function RestaurantDetailDialog({
   const locations = r.locations ?? [];
   const safeIdx = locations.length ? Math.min(activeLoc, locations.length - 1) : 0;
   const loc = locations[safeIdx] ?? {};
+  const reservationUrl = safeHttpUrl(loc.reservationUrl);
   // The headline score is the group's average once anyone has rated
   // individually; the spot's own column stays the fallback for everything
   // added before per-person ratings existed.
@@ -135,10 +137,19 @@ export default function RestaurantDetailDialog({
   // Directions, call and website are the round action buttons; this list is
   // the rest.
   if (loc.email) links.push({ key: 'email', Icon: MailOutline, label: loc.email, href: `mailto:${loc.email}` });
-  if (r.socialMedia?.instagram) links.push({ key: 'ig', Icon: Instagram, label: 'Instagram', href: r.socialMedia.instagram, external: true });
-  if (r.socialMedia?.facebook) links.push({ key: 'fb', Icon: Facebook, label: 'Facebook', href: r.socialMedia.facebook, external: true });
-  if (r.socialMedia?.twitter) links.push({ key: 'x', Icon: Twitter, label: 'Twitter / X', href: r.socialMedia.twitter, external: true });
-  if (r.socialMedia?.tiktok) links.push({ key: 'tt', Icon: MusicNote, label: 'TikTok', href: r.socialMedia.tiktok, external: true });
+  // Every stored link is re-checked here: rows can be written straight through
+  // the database API, and this dialog is also shown on the public share page.
+  const website = safeHttpUrl(r.url);
+  const social = {
+    instagram: safeHttpUrl(r.socialMedia?.instagram),
+    facebook: safeHttpUrl(r.socialMedia?.facebook),
+    twitter: safeHttpUrl(r.socialMedia?.twitter),
+    tiktok: safeHttpUrl(r.socialMedia?.tiktok),
+  };
+  if (social.instagram) links.push({ key: 'ig', Icon: Instagram, label: 'Instagram', href: social.instagram, external: true });
+  if (social.facebook) links.push({ key: 'fb', Icon: Facebook, label: 'Facebook', href: social.facebook, external: true });
+  if (social.twitter) links.push({ key: 'x', Icon: Twitter, label: 'Twitter / X', href: social.twitter, external: true });
+  if (social.tiktok) links.push({ key: 'tt', Icon: MusicNote, label: 'TikTok', href: social.tiktok, external: true });
 
   const sectionLabel = { color: t.muted, fontSize: 13, fontWeight: 600, mb: '10px' };
   const blockSx = { borderRadius: '22px', background: t.cardBg, padding: '18px' };
@@ -167,8 +178,8 @@ export default function RestaurantDetailDialog({
   // The few things you do with a place, as one row of round buttons. Reserve is
   // the one in the accent.
   const actions: { key: string; Icon: typeof SvgIcon; label: string; href: string; external?: boolean; primary?: boolean }[] = [];
-  if (loc.reservationUrl) {
-    actions.push({ key: 'reserve', Icon: EventOutlined, label: tr('detail.actionReserve'), href: loc.reservationUrl, external: true, primary: true });
+  if (reservationUrl) {
+    actions.push({ key: 'reserve', Icon: EventOutlined, label: tr('detail.actionReserve'), href: reservationUrl, external: true, primary: true });
   }
   if (loc.address) {
     actions.push({
@@ -180,7 +191,7 @@ export default function RestaurantDetailDialog({
     });
   }
   if (loc.phone) actions.push({ key: 'call', Icon: PhoneOutlined, label: tr('detail.actionCall'), href: `tel:${loc.phone}` });
-  if (r.url) actions.push({ key: 'web', Icon: Language, label: tr('detail.actionWebsite'), href: r.url, external: true });
+  if (website) actions.push({ key: 'web', Icon: Language, label: tr('detail.actionWebsite'), href: website, external: true });
 
   const reservePlatform = reservationLabel(loc.reservationPlatform || '');
 
@@ -362,7 +373,7 @@ export default function RestaurantDetailDialog({
             ))}
           </Box>
         )}
-        {!loc.reservationUrl && loc.reservationPlatform === 'walkin' && (
+        {!reservationUrl && loc.reservationPlatform === 'walkin' && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', color: t.muted, fontSize: 14 }}>
             <EventSeatOutlined sx={{ fontSize: 18 }} /> {tr('detail.walkinBadge')}
           </Box>

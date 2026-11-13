@@ -129,7 +129,10 @@ export default function App() {
           <style
             key={chunk.key + chunk.ids}
             data-emotion={`${chunk.key} ${chunk.ids}`}
-            dangerouslySetInnerHTML={{ __html: chunk.css }}
+            // A "<" has no business in CSS outside strings and url()s, where the
+            // escape "\3c " means the same thing — so no value interpolated into
+            // a style can ever close this tag and start a <script>.
+            dangerouslySetInnerHTML={{ __html: chunk.css.replace(/</g, '\\3c ') }}
           />
         ))}
       </head>

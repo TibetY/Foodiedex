@@ -6,6 +6,7 @@ import type {
   RestaurantRating,
   ShareLink,
 } from '~/types/restaurant';
+import { safeHttpUrl } from '~/utils/safeHref';
 
 export interface ProfileRow {
   id: string;
@@ -17,7 +18,10 @@ export function rowToProfile(row: ProfileRow): Profile {
   return {
     id: row.id,
     displayName: row.display_name ?? undefined,
-    avatarUrl: row.avatar_url ?? undefined,
+    // Anyone can set their own avatar_url to any text through the API, and it
+    // is shown to every member of a shared list, so only a real web address
+    // gets through.
+    avatarUrl: safeHttpUrl(row.avatar_url),
   };
 }
 
