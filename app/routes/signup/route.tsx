@@ -8,6 +8,9 @@ import { safeRedirect } from "~/utils/safeRedirect";
 import { getSiteUrl } from "~/utils/siteUrl.server";
 import { getFixedT } from "~/i18n.server";
 import GoogleButton from "~/components/GoogleButton";
+import Captcha from "~/components/Captcha";
+import { captchaRequired } from "~/supabaseConfig";
+import { isCaptchaError, readCaptchaToken } from "~/utils/captcha";
 import Logo from "~/components/Logo";
 import { useKanpaiTheme } from "~/listTheme";
 import Box from '@mui/material/Box';
@@ -53,6 +56,11 @@ export const action: ActionFunction = async ({ request }) => {
     return json<ActionData>({ error: t("signup.passwordsNoMatch") });
   }
 
+  const captchaToken = readCaptchaToken(formData);
+  if (captchaRequired() && !captchaToken) {
+    return json<ActionData>({ error: t("auth.captchaFailed") });
+  }
+
   const { supabase, headers } = createSupabaseServerClient(request);
   const origin = getSiteUrl(request);
   const { data, error } = await supabase.auth.signUp({
@@ -62,12 +70,13 @@ export const action: ActionFunction = async ({ request }) => {
       // Where the confirmation email link returns to. Our /auth/confirm route
       // verifies the token and signs the user in, then forwards to `next`.
       emailRedirectTo: `${origin}/auth/confirm?next=${encodeURIComponent(next)}`,
+      captchaToken,
     },
   });
 
   if (error) {
     console.error("Signup error:", error.message);
-    return json<ActionData>({ error: error.message });
+    return json<ActionData>({ error: isCaptchaError(error) ? t("auth.captchaFailed") : error.message });
   }
 
   // When email confirmation is enabled, no session is returned yet. Return the
@@ -216,6 +225,7 @@ export default function SignUpPage() {
               ),
             }}
           />
+          <Captcha resetKey={actionData} />
           <Button
             type="submit"
             variant="contained"

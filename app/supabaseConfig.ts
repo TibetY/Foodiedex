@@ -5,6 +5,8 @@
  *
  *   SUPABASE_URL        e.g. https://xxxx.supabase.co
  *   SUPABASE_ANON_KEY   the project's anon / public key
+ *   TURNSTILE_SITE_KEY  optional: Cloudflare Turnstile site key (public) for the
+ *                       bot check on the auth forms; see app/utils/captcha.ts
  *
  * The anon key is public (row-level security protects the data), so it is safe
  * to ship to the browser. The server reads `process.env` directly; the browser
@@ -16,6 +18,8 @@ export const RESTAURANT_IMAGE_BUCKET = 'restaurant-images';
 export interface PublicEnv {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
+  /** Public Turnstile site key; absent means the bot check is off. */
+  TURNSTILE_SITE_KEY?: string;
 }
 
 declare global {
@@ -66,7 +70,13 @@ export function getServerSupabaseEnv(): PublicEnv {
         'instead, and rotate the leaked secret key.'
     );
   }
-  return { SUPABASE_URL, SUPABASE_ANON_KEY };
+  const TURNSTILE_SITE_KEY = (process.env.TURNSTILE_SITE_KEY ?? '').trim();
+  return { SUPABASE_URL, SUPABASE_ANON_KEY, ...(TURNSTILE_SITE_KEY ? { TURNSTILE_SITE_KEY } : {}) };
+}
+
+/** Whether the auth forms must carry a Turnstile token (server only). */
+export function captchaRequired(): boolean {
+  return !!(process.env.TURNSTILE_SITE_KEY ?? '').trim();
 }
 
 /** Read the public env in the browser (injected via window.ENV). */
