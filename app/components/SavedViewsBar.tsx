@@ -54,7 +54,8 @@ export default function SavedViewsBar({
             sx={{
               display: 'inline-flex',
               alignItems: 'center',
-              border: `1px solid ${active ? t.pBg : t.pillBorder}`,
+              height: 44,
+              border: `1px solid ${active ? t.pBg : t.divider}`,
               background: active ? t.pBg : 'transparent',
               borderRadius: '999px',
               overflow: 'hidden',
@@ -70,10 +71,12 @@ export default function SavedViewsBar({
                 gap: '6px',
                 border: 'none',
                 background: 'transparent',
-                color: active ? t.pFg : t.muted,
-                fontSize: '14px',
-                fontWeight: 500,
-                padding: '7px 6px 7px 14px',
+                height: '100%',
+                color: active ? t.pFg : t.ink,
+                font: 'inherit',
+                fontSize: 15,
+                fontWeight: 600,
+                padding: '0 4px 0 16px',
                 cursor: 'pointer',
               }}
             >
@@ -85,7 +88,7 @@ export default function SavedViewsBar({
               type="button"
               aria-label={tr('views.options', { name: view.name })}
               onClick={(e: React.MouseEvent<HTMLButtonElement>) => setMenu({ anchor: e.currentTarget, view })}
-              sx={{ display: 'inline-flex', alignItems: 'center', border: 'none', background: 'transparent', color: active ? t.pFg : t.faint, cursor: 'pointer', padding: '7px 8px 7px 2px' }}
+              sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: 40, border: 'none', background: 'transparent', color: active ? t.pFg : t.muted, cursor: 'pointer', p: 0 }}
             >
               <MoreVert sx={{ fontSize: 16 }} />
             </Box>
@@ -102,13 +105,15 @@ export default function SavedViewsBar({
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
-            border: `1px dashed ${t.pillBorder}`,
+            height: 44,
+            border: `1px dashed ${t.borderStrong}`,
             background: 'transparent',
-            color: t.ink,
-            borderRadius: '10px',
-            fontSize: '14px',
+            color: t.accent,
+            borderRadius: '999px',
+            font: 'inherit',
+            fontSize: 15,
             fontWeight: 600,
-            padding: '7px 14px',
+            padding: '0 16px',
             cursor: 'pointer',
           }}
         >

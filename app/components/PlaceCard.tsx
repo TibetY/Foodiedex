@@ -1,11 +1,10 @@
 import Box from '@mui/material/Box';
-import { useTranslation } from 'react-i18next';
 import type { Restaurant } from '~/types/restaurant';
 import type { DecoratedRestaurant } from '~/utils/decorateRestaurant';
 import type { ListTokens } from '~/listTheme';
-import RestaurantThumb from '~/components/RestaurantThumb';
+import { usePlacePhoto, photoSx, haloSx } from '~/components/RestaurantThumb';
 import Bubbles from '~/components/Bubbles';
-import MichelinStars from '~/components/MichelinStars';
+import { DistinctionPill, WantPill, ON_PHOTO } from '~/components/PlacePills';
 
 type Tokens = ListTokens;
 
@@ -15,23 +14,40 @@ interface PlaceCardProps {
   onView: (r: Restaurant) => void;
 }
 
+const nameSx = {
+  fontSize: 24,
+  fontWeight: 600,
+  letterSpacing: '-.03em',
+  lineHeight: 1.1,
+  display: '-webkit-box',
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+} as const;
+
 /**
- * THE place card — one source of truth for the tile grid (dashboard and the
- * public shared view). It carries only what you scan a grid for:
+ * THE place card — one source of truth for the grid (dashboard and the public
+ * shared view). The photograph runs edge to edge and everything sits on it:
  *
- *   photo            3:2, with a "Want to try" label when that's the status
- *                    and its Michelin stars, if it has any, top right
- *   name             its own line, up to two
- *   meta             one quiet line — cuisine · city · price
- *   rating           only when the place has one
+ *   top       its first distinction (left) and "Want to try" (right), as glass pills
+ *   bottom    name, then one line — cuisine · city · price — with the rating dots
  *
- * There is no card surface: the photo sits straight on the page. Everything
- * else about a place (favourite, note, visits, booking, tags, honours, status
- * toggle, edit/delete) lives one tap away in the detail dialog, so the whole
- * card is a single button that opens it.
+ * A place with no usable photo gets the same card as a softly lit surface with
+ * its monogram, so the grid never shows an empty frame.
+ *
+ * Everything else about a place (favourite, note, visits, booking, tags, status
+ * toggle, edit/delete) lives one tap away in the detail view, so the whole card
+ * is a single button that opens it.
  */
 export default function PlaceCard({ r, tokens: t, onView }: PlaceCardProps) {
-  const { t: tr } = useTranslation();
+  const photo = usePlacePhoto(r.image);
+
+  const meta = (color: string, dots: string) => (
+    <Box component="span" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', fontSize: 14, lineHeight: 1.3, color }}>
+      <Box component="span" sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.meta}</Box>
+      {r.rated && <Bubbles value={r.rating ?? 0} tokens={t} color={dots} />}
+    </Box>
+  );
 
   return (
     <Box
@@ -40,87 +56,62 @@ export default function PlaceCard({ r, tokens: t, onView }: PlaceCardProps) {
       onClick={() => onView(r)}
       sx={{
         display: 'block',
+        position: 'relative',
         width: '100%',
-        // A stretched <button> centres its content vertically, which would drop
-        // shorter cards (no rating) below their neighbours in the same row.
-        alignSelf: 'start',
         // Grid items default to min-width:auto, so a long name would force the
-        // card wider than its track on narrow (2-up phone) grids.
+        // card wider than its track.
         minWidth: 0,
         p: 0,
         m: 0,
         border: 'none',
-        background: 'transparent',
-        color: 'inherit',
+        color: t.ink,
         font: 'inherit',
         textAlign: 'left',
         cursor: 'pointer',
-        borderRadius: '14px',
-        '& .place-photo': { transition: 'filter .15s ease' },
-        '&:hover .place-photo': { filter: 'brightness(.95)' },
+        overflow: 'hidden',
+        borderRadius: '28px',
+        // A photograph holds its shape. Without one, a phone gets a compact card
+        // (most places have no photo, and a column of empty frames is a long
+        // scroll); in a grid it keeps the shape so the rows stay even.
+        aspectRatio: photo.show ? { xs: '3 / 2.15', sm: '3 / 2' } : { sm: '3 / 2' },
+        ...haloSx(t),
+        transition: 'transform .2s ease',
+        '&:active': { transform: 'scale(.985)' },
+        '& .place-photo': { transition: 'opacity .25s ease, transform .5s ease' },
+        '@media (hover: hover)': { '&:hover .place-photo': { transform: 'scale(1.03)' } },
+        '@media (prefers-reduced-motion: reduce)': {
+          transition: 'none',
+          '& .place-photo': { transition: 'none', transform: 'none !important' },
+        },
       }}
     >
-      <Box sx={{ position: 'relative' }}>
-        <RestaurantThumb className="place-photo" image={r.image} name={r.name} tokens={t} />
-        {/* "Been" is the common case and goes unmarked; only the exception is labelled. */}
-        {r.isWant && (
-          <Box
-            component="span"
-            sx={{
-              position: 'absolute',
-              top: 8,
-              left: 8,
-              background: t.cardBg,
-              color: t.ink,
-              fontSize: 12,
-              fontWeight: 500,
-              lineHeight: 1,
-              padding: '5px 9px',
-              borderRadius: '999px',
-            }}
-          >
-            {tr('dashboard.statusWant')}
+      {photo.show ? (
+        <>
+          <Box component="img" className="place-photo" alt="" {...photo.imgProps} sx={photoSx(photo.pending)} />
+          <Box aria-hidden sx={{ position: 'absolute', inset: 0, background: ON_PHOTO.scrim }} />
+          <Box sx={{ position: 'absolute', top: 14, left: 14, right: 14, display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+            <DistinctionPill r={r} tokens={t} onPhoto />
+            {r.isWant && <WantPill tokens={t} onPhoto sx={{ ml: 'auto', flex: 'none' }} />}
           </Box>
-        )}
-        {/* Michelin stars are the one honour shown on the card; the rest are in the
-            detail view. White in both modes, so the red reads the same everywhere. */}
-        {(r.michelinStars ?? 0) > 0 && (
-          <Box
-            component="span"
-            sx={{ position: 'absolute', top: 8, right: 8, display: 'flex', background: '#fff', padding: '4px 7px', borderRadius: '999px' }}
-          >
-            <MichelinStars count={r.michelinStars ?? 0} size={14} />
+          <Box sx={{ position: 'absolute', left: 20, right: 20, bottom: 18, color: ON_PHOTO.ink, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <Box component="span" sx={nameSx}>{r.name}</Box>
+            {(r.meta || r.rated) && meta(ON_PHOTO.soft, t.onPhotoAccent)}
           </Box>
-        )}
-      </Box>
-
-      <Box
-        sx={{
-          mt: '10px',
-          fontSize: 16,
-          fontWeight: 600,
-          lineHeight: 1.3,
-          letterSpacing: '-.01em',
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-        }}
-      >
-        {r.name}
-      </Box>
-
-      {r.meta && (
-        <Box sx={{ mt: '2px', fontSize: 14, lineHeight: 1.4, color: t.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {r.meta}
-        </Box>
-      )}
-
-      {r.rated && (
-        <Box sx={{ mt: '6px', display: 'flex', alignItems: 'center', gap: '7px' }}>
-          <Bubbles value={r.rating ?? 0} tokens={t} size={9} gap={4} />
-          <Box component="span" sx={{ fontSize: 12, color: t.muted, lineHeight: 1 }}>
-            {(r.rating ?? 0).toFixed(1)}
+        </>
+      ) : (
+        <Box sx={{ position: { sm: 'absolute' }, inset: { sm: 0 }, minHeight: { xs: 150, sm: 0 }, padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '22px' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+            <Box component="span" aria-hidden sx={{ fontSize: { xs: 56, sm: 64 }, fontWeight: 300, letterSpacing: '-.05em', lineHeight: 0.9, color: t.accent }}>
+              {r.initial}
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', minWidth: 0 }}>
+              {r.isWant && <WantPill tokens={t} />}
+              <DistinctionPill r={r} tokens={t} sx={{ maxWidth: '100%' }} />
+            </Box>
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <Box component="span" sx={nameSx}>{r.name}</Box>
+            {(r.meta || r.rated) && meta(t.muted, t.rating)}
           </Box>
         </Box>
       )}

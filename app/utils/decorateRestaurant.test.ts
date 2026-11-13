@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decorate } from './decorateRestaurant';
+import { decorate, monogram } from './decorateRestaurant';
 
 describe('decorate().meta — the one line under a place name', () => {
   it('joins cuisine, city and price', () => {
@@ -37,5 +37,22 @@ describe('decorate() status and rating', () => {
     expect(r.rating).toBe(4.5);
     expect(r.rated).toBe(true);
     expect(decorate({ name: 'A' }).rated).toBe(false);
+  });
+});
+
+describe('monogram', () => {
+  it('uses the first letter, ignoring a leading "The"', () => {
+    expect(monogram('Bar Ardoise')).toBe('B');
+    expect(monogram('The Long Table')).toBe('L');
+    expect(monogram('édulis')).toBe('É');
+  });
+
+  it('uses the leading number of a name that starts with one', () => {
+    expect(monogram('88 Lanterns Noodle Bar')).toBe('88');
+    expect(monogram('1909 Oyster & Chophouse')).toBe('1909');
+  });
+
+  it('falls back to "?" for an empty name', () => {
+    expect(monogram('  ')).toBe('?');
   });
 });

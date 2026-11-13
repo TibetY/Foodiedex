@@ -5,25 +5,25 @@
 /* Custom properties — fallback values only; brandCssVars() (listTheme.ts)
    drives the live --bg/--accent/etc. everywhere the app actually renders. */
 :root {
-  --color-bg: #FDFBF7;
-  --color-surface: #FFFFFF;
-  --color-accent: #5B6E48;
-  --color-accent-hover: #8FA477;
-  --color-text: #2B2B2B;
-  --color-text-secondary: rgba(43,43,43,.6);
+  --color-bg: #0E0C0B;
+  --color-surface: #1A1715;
+  --color-accent: #F2A07B;
+  --color-accent-hover: #F7C2A8;
+  --color-text: #F6F0EA;
+  --color-text-secondary: #ADA398;
 }
 
 html,
 body {
   background-color: var(--bg, var(--color-bg));
   color: var(--ink, var(--color-text));
-  color-scheme: light;
+  color-scheme: dark;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-[data-theme="dark"] {
-  color-scheme: dark;
+[data-theme="light"] {
+  color-scheme: light;
 }
 
 /* Skip to main content link (WCAG): hidden off-screen until keyboard-focused.
@@ -35,10 +35,10 @@ body {
   left: 16px;
   z-index: 9999;
   padding: 12px 24px;
-  background: var(--accent, #5B6E48);
+  background: var(--accent, #F2A07B);
   /* The accent flips light in dark mode, so a hardcoded white label sat at
      1.7:1 — the on-accent token is the one that tracks it. */
-  color: var(--accent-text, #FDFBF7);
+  color: var(--accent-text, #2A140A);
   border-radius: 0 0 12px 12px;
   font-weight: 600;
   text-decoration: none;
@@ -167,7 +167,7 @@ body {
 /* Focus visible styles for WCAG. Uses the live brand accent (injected by
    brandCssVars) so it follows the theme, not the legacy template orange. */
 *:focus-visible {
-  outline: 2px solid var(--accent, #5B6E48);
+  outline: 2px solid var(--accent, #F2A07B);
   outline-offset: 2px;
 }
 

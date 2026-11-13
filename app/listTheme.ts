@@ -2,14 +2,19 @@ import { createElement, createContext, useContext, useEffect, useMemo, useState,
 import { ThemeProvider as MuiThemeProvider, createTheme, type Theme } from '@mui/material/styles';
 
 /**
- * Single source of truth for the Kanpai brand: a warm-paper "Daylight" (light)
- * mode and a charcoal "Supper" (dark) mode, each recolorable by one of three
- * accents. These tokens drive every MUI component in the app AND (via
+ * Single source of truth for the look, "Nocturne": a near-black dark mode the
+ * design is led by, and a warm-paper light mode, each recolorable by an accent
+ * (ember by default). These tokens drive every MUI component in the app AND (via
  * brandCssVars, injected once in root.tsx) the plain-CSS layer, so the two
  * can never drift apart.
  */
 export type ListMode = 'light' | 'dark';
-export type AccentName = 'matcha' | 'sakura' | 'peach';
+export type AccentName = 'ember' | 'matcha' | 'sakura' | 'peach';
+
+/** What a visitor who has never chosen gets. */
+export const DEFAULT_MODE: ListMode = 'dark';
+export const DEFAULT_ACCENT: AccentName = 'ember';
+const ACCENT_PATTERN = 'ember|matcha|sakura|peach';
 
 const MODE_STORAGE_KEY = 'thelist.theme';
 const ACCENT_STORAGE_KEY = 'thelist.accent';
@@ -18,7 +23,7 @@ export const THEME_COOKIE_KEY = 'thelist_theme';
 export const ACCENT_COOKIE_KEY = 'thelist_accent';
 
 /** The saved mode, or null when the visitor has never chosen one. Callers that
- *  want a value regardless should fall back to 'light'. */
+ *  want a value regardless should fall back to DEFAULT_MODE. */
 export function readStoredMode(): ListMode | null {
   if (typeof window === 'undefined') return null;
   const v = window.localStorage.getItem(MODE_STORAGE_KEY);
@@ -26,14 +31,14 @@ export function readStoredMode(): ListMode | null {
 }
 
 export function getStoredMode(): ListMode {
-  return readStoredMode() ?? 'light';
+  return readStoredMode() ?? DEFAULT_MODE;
 }
 
 /**
  * Persist a preference to BOTH localStorage (the long-standing store) and a
  * cookie, because localStorage is invisible to the server: without the cookie
- * every SSR render guesses light/matcha, and a sakura-dark user watches the
- * page paint in daylight and then flip after hydration.
+ * every SSR render guesses the defaults, and a sakura-light user watches the
+ * page paint dark and then flip after hydration.
  */
 function persist(storageKey: string, cookieKey: string, value: string): void {
   if (typeof window === 'undefined') return;
@@ -49,25 +54,25 @@ export function storeMode(mode: ListMode): void {
 }
 
 /**
- * Read the mode a request carries, for use in loaders. Falls back to light,
- * which matches getStoredMode()'s default for a brand-new visitor.
+ * Read the mode a request carries, for use in loaders. Falls back to
+ * DEFAULT_MODE, which matches getStoredMode() for a brand-new visitor.
  */
 export function modeFromCookieHeader(cookieHeader: string | null): ListMode {
   const m = cookieHeader?.match(
     new RegExp(`(?:^|;\\s*)${THEME_COOKIE_KEY}=(light|dark)(?:;|$)`)
   );
-  return (m?.[1] as ListMode) ?? 'light';
+  return (m?.[1] as ListMode) ?? DEFAULT_MODE;
 }
 
 /** The saved accent, or null when the visitor has never chosen one. */
 export function readStoredAccent(): AccentName | null {
   if (typeof window === 'undefined') return null;
   const v = window.localStorage.getItem(ACCENT_STORAGE_KEY);
-  return v === 'matcha' || v === 'sakura' || v === 'peach' ? v : null;
+  return v === 'ember' || v === 'matcha' || v === 'sakura' || v === 'peach' ? v : null;
 }
 
 export function getStoredAccent(): AccentName {
-  return readStoredAccent() ?? 'matcha';
+  return readStoredAccent() ?? DEFAULT_ACCENT;
 }
 
 export function storeAccent(accent: AccentName): void {
@@ -77,9 +82,9 @@ export function storeAccent(accent: AccentName): void {
 /** Accent counterpart of modeFromCookieHeader, same fallback contract. */
 export function accentFromCookieHeader(cookieHeader: string | null): AccentName {
   const m = cookieHeader?.match(
-    new RegExp(`(?:^|;\\s*)${ACCENT_COOKIE_KEY}=(matcha|sakura|peach)(?:;|$)`)
+    new RegExp(`(?:^|;\\s*)${ACCENT_COOKIE_KEY}=(${ACCENT_PATTERN})(?:;|$)`)
   );
-  return (m?.[1] as AccentName) ?? 'matcha';
+  return (m?.[1] as AccentName) ?? DEFAULT_ACCENT;
 }
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -90,33 +95,41 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-/** Per-accent color pair (light/dark), lifted from the Kanpai design's own
- *  THEMES table: acc (bright) + deep (readable-on-paper) + tint/soft (fills). */
+/** Per-accent colours for one mode: deep (the accent itself, readable as text
+ *  on every surface), acc (its hover), tint/soft (fills), and optionally the
+ *  text colour that sits on it. */
 interface AccentColors {
   acc: string;
   deep: string;
   tint: string;
   soft: string;
+  on?: string;
 }
 
 export const ACCENTS: Record<AccentName, { label: string; note: string; light: AccentColors; dark: AccentColors }> = {
+  ember: {
+    label: 'Ember',
+    note: 'warm ember glow',
+    light: { acc: '#8C3A18', deep: '#A3461F', tint: '#F6E6DD', soft: '#EBCDBD' },
+    dark: { acc: '#F7C2A8', deep: '#F2A07B', tint: '#2E211B', soft: '#44291D', on: '#2A140A' },
+  },
   matcha: {
     label: 'Matcha',
     note: 'soft matcha green',
     light: { acc: '#8FA477', deep: '#5B6E48', tint: '#EEF2E8', soft: '#DCE6D0' },
-    dark: { acc: '#A8C08A', deep: '#BCD1A0', tint: '#2A2F24', soft: '#3B452F' },
+    dark: { acc: '#CFE0B8', deep: '#BCD1A0', tint: '#22271D', soft: '#3B452F' },
   },
   sakura: {
     label: 'Sakura',
     note: 'cherry blossom pink',
     light: { acc: '#D68484', deep: '#9B4F4F', tint: '#FBF0F0', soft: '#F3D3D3' },
-    dark: { acc: '#E5A3A3', deep: '#EEB9B9', tint: '#332626', soft: '#46312F' },
+    dark: { acc: '#F6D2D2', deep: '#EEB9B9', tint: '#2C2020', soft: '#46312F' },
   },
   peach: {
     label: 'Peach',
     note: 'pale peach',
     light: { acc: '#D9A273', deep: '#8A5A32', tint: '#FCF2E8', soft: '#F4DCC4' },
-    dark: { acc: '#E0B189', deep: '#EDC49F', tint: '#332921', soft: '#47372B' },
+    dark: { acc: '#F5D9BE', deep: '#EDC49F', tint: '#2C231C', soft: '#47372B' },
   },
 };
 
@@ -131,6 +144,8 @@ const MODE_BASE: Record<
     ink25: string;
     paper: string;
     card: string;
+    raised: string;
+    glass: string;
     canvas: string;
     rule: string;
     hair: string;
@@ -144,61 +159,58 @@ const MODE_BASE: Record<
   }
 > = {
   light: {
-    onAcc: '#FDFBF7',
-    ink: '#2B2B2B',
-    // The ink ramp is held to WCAG AA against the DARKEST surface text sits on
-    // (canvas), not just against white — see contrast.test.ts, which fails the
-    // build if any of these slip. The design's original .6/.45/.25 measured
-    // 3.7 / 2.5 / 1.6:1, which is what an automated audit reports on every one
-    // of the hundreds of elements these two tokens colour.
-    ink60: 'rgba(43,43,43,.8)',
-    ink45: 'rgba(43,43,43,.68)',
-    // Carries the empty bubble and other component boundaries: 3:1 (1.4.11).
-    ink25: 'rgba(43,43,43,.56)',
-    paper: '#FDFBF7',
+    onAcc: '#FFFFFF',
+    ink: '#1B1714',
+    // The ink ramp is held to WCAG AA against every surface text sits on — see
+    // contrast.test.ts, which fails the build if any of these slip.
+    ink60: '#6B6259',
+    ink45: '#6B6259',
+    // Carries the empty bubble in the rating picker and other component
+    // boundaries: 3:1 (1.4.11).
+    ink25: 'rgba(27,23,20,.5)',
+    paper: '#F3EFEA',
     card: '#FFFFFF',
-    canvas: '#F0EDE6',
-    rule: 'rgba(43,43,43,.14)',
-    hair: 'rgba(43,43,43,.08)',
+    raised: '#EDE7E0',
+    glass: 'rgba(255,255,255,.78)',
+    canvas: '#F3EFEA',
+    rule: 'rgba(27,23,20,.14)',
+    hair: 'rgba(27,23,20,.10)',
     // Input outlines are a component boundary, so they need 3:1 — the
-    // decorative `hair` they used to share is a quarter of that.
-    control: 'rgba(43,43,43,.55)',
-    chip: '#F4F1EA',
-    track: '#F2EFE9',
-    rowHover: '#FAF7F1',
-    lift: '0 1px 2px rgba(43,43,43,.04),0 10px 26px rgba(43,43,43,.055)',
-    liftLg: '0 2px 4px rgba(43,43,43,.05),0 22px 50px rgba(43,43,43,.09)',
-    shadow1: '0 1px 2px rgba(43,43,43,.04)',
+    // decorative `hair` is a fraction of that.
+    control: 'rgba(27,23,20,.55)',
+    chip: '#EDE7E0',
+    track: '#FFFFFF',
+    rowHover: '#FAF7F3',
+    lift: '0 1px 2px rgba(27,23,20,.04),0 10px 26px rgba(27,23,20,.06)',
+    liftLg: '0 2px 4px rgba(27,23,20,.05),0 22px 50px rgba(27,23,20,.1)',
+    shadow1: '0 1px 2px rgba(27,23,20,.08)',
   },
   dark: {
-    onAcc: '#1B1A18',
-    ink: '#F0EDE6',
-    ink60: 'rgba(240,237,230,.72)',
-    ink45: 'rgba(240,237,230,.6)',
-    ink25: 'rgba(240,237,230,.42)',
-    paper: '#201F1D',
-    card: '#292724',
-    canvas: '#171614',
-    rule: 'rgba(240,237,230,.16)',
-    hair: 'rgba(240,237,230,.09)',
-    control: 'rgba(240,237,230,.45)',
-    chip: '#302E2A',
-    track: '#302E2A',
-    rowHover: '#262421',
+    onAcc: '#1B1714',
+    ink: '#F6F0EA',
+    ink60: '#ADA398',
+    ink45: '#9C9288',
+    ink25: 'rgba(246,240,234,.42)',
+    paper: '#0E0C0B',
+    card: '#1A1715',
+    raised: '#2A2522',
+    glass: 'rgba(26,23,21,.72)',
+    canvas: '#0E0C0B',
+    rule: 'rgba(246,240,234,.16)',
+    hair: 'rgba(246,240,234,.12)',
+    control: 'rgba(246,240,234,.45)',
+    chip: '#2A2522',
+    track: '#1A1715',
+    rowHover: '#211D1A',
     lift: '0 1px 2px rgba(0,0,0,.3),0 10px 26px rgba(0,0,0,.34)',
     liftLg: '0 2px 4px rgba(0,0,0,.35),0 22px 50px rgba(0,0,0,.5)',
-    shadow1: '0 1px 2px rgba(0,0,0,.3)',
+    shadow1: '0 1px 2px rgba(0,0,0,.2)',
   },
 };
 
-/** Fixed decorative pair (independent of the chosen accent) used for the
- *  "want to go" pill and the logo's third dot — mirrors the design's own
- *  static --sakura/--peach root vars, which never change with the picker. */
+/** A fixed decorative fill (independent of the chosen accent) for the second
+ *  avatar in a stack. */
 const DECORATIVE = {
-  sakura: {
-    light: { bg: '#F3C9C9', fg: '#8A4040' },
-    dark: { bg: '#46312F', fg: '#EEB9B9' },
-  },
   peach: {
     light: { bg: '#F6DCC8', fg: '#8A5A32' },
     dark: { bg: '#47372B', fg: '#EDC49F' },
@@ -206,9 +218,21 @@ const DECORATIVE = {
 };
 
 export interface ListTokens {
+  /** The page, and the body of full-screen sheets and dialogs. */
   pageBg: string;
   panelBg: string;
+  /** "Surface": cards, rows, and the resting fill of every control. */
   cardBg: string;
+  /** One step above the surface: the selected segment, tiles inside a card. */
+  raised: string;
+  /** Translucent surface for sheets and bars that float over content; pair it
+   *  with a backdrop blur. */
+  glass: string;
+  /** The soft accent glow in the corner of photo-less cards and hero tiles. */
+  halo: string;
+  /** The accent as drawn over a photograph, which is always dark-scrimmed:
+   *  the dark-mode accent, whichever mode the page is in. */
+  onPhotoAccent: string;
   footerBg: string;
   ink: string;
   muted: string;
@@ -274,16 +298,16 @@ export interface ListTokens {
 export function getListTokens(mode: ListMode, accent: AccentName): ListTokens {
   const b = MODE_BASE[mode];
   const a = ACCENTS[accent][mode];
-  const sakura = DECORATIVE.sakura[mode];
   const peach = DECORATIVE.peach[mode];
 
   return {
-    // Light mode puts the page on the same warm paper as the header, so the two
-    // read as one surface and photos get more contrast. Dark keeps its deeper
-    // canvas under the panels.
-    pageBg: mode === 'light' ? b.paper : b.canvas,
+    pageBg: b.canvas,
     panelBg: b.paper,
     cardBg: b.card,
+    raised: b.raised,
+    glass: b.glass,
+    halo: hexToRgba(a.deep, mode === 'dark' ? 0.16 : 0.1),
+    onPhotoAccent: ACCENTS[accent].dark.deep,
     footerBg: b.paper,
     ink: b.ink,
     muted: b.ink60,
@@ -301,10 +325,10 @@ export function getListTokens(mode: ListMode, accent: AccentName): ListTokens {
     searchBg: b.track,
     accent: a.deep,
     accentHover: a.acc,
-    accentText: b.onAcc,
+    accentText: a.on ?? b.onAcc,
     secondary: a.acc,
     success: mode === 'light' ? '#3F6B43' : '#8FBF86',
-    error: mode === 'light' ? '#B3453A' : '#E0857A',
+    error: mode === 'light' ? '#A83E34' : '#E0857A',
     cost: b.ink60,
     rating: a.deep,
     notRated: b.ink25,
@@ -312,8 +336,10 @@ export function getListTokens(mode: ListMode, accent: AccentName): ListTokens {
     bubbleShadow: b.lift,
     beenBg: a.tint,
     beenFg: a.deep,
-    wantBg: sakura.bg,
-    wantFg: sakura.fg,
+    // "Want to go" is a quiet neutral pill; the accent is kept for ratings and
+    // the one primary action.
+    wantBg: b.raised,
+    wantFg: b.ink,
     avatar2: peach.bg,
     avatar3: a.soft,
     segBg: b.track,
@@ -354,7 +380,8 @@ export function accentSwatch(name: AccentName, mode: ListMode) {
 const CSS_VAR_MAP: [cssVar: string, token: keyof ListTokens][] = [
   ['--bg', 'pageBg'],
   ['--surface', 'panelBg'],
-  ['--raised', 'cardBg'],
+  ['--raised', 'raised'],
+  ['--card', 'cardBg'],
   ['--footer', 'footerBg'],
   ['--ink', 'ink'],
   ['--muted', 'muted'],
@@ -391,22 +418,22 @@ const CSS_VAR_MAP: [cssVar: string, token: keyof ListTokens][] = [
 ];
 
 const ALL_MODES: ListMode[] = ['light', 'dark'];
-const ALL_ACCENTS: AccentName[] = ['matcha', 'sakura', 'peach'];
+const ALL_ACCENTS: AccentName[] = ['ember', 'matcha', 'sakura', 'peach'];
 
 /**
  * Generate the brand's CSS custom properties for every (mode, accent) pair,
  * scoped to [data-theme][data-accent]. Injected once in root.tsx; the
  * KanpaiThemeProvider stamps those attributes on <html> so the whole app —
  * including plain-CSS bits outside MUI's reach — repaints together. Default
- * (`:root`) is light/matcha, the brand's daylight look.
+ * (`:root`) is the dark, ember look.
  */
 export function brandCssVars(): string {
   const block = (mode: ListMode, accent: AccentName) => {
     const t = getListTokens(mode, accent);
     return CSS_VAR_MAP.map(([cssVar, token]) => `${cssVar}:${t[token]}`).join(';');
   };
-  const statics = '--radius:14px;--radius-control:10px;--radius-pill:999px;--space:4px';
-  const rules: string[] = [`:root{${block('light', 'matcha')};${statics}}`];
+  const statics = '--radius:22px;--radius-control:16px;--radius-pill:999px;--space:4px';
+  const rules: string[] = [`:root{${block(DEFAULT_MODE, DEFAULT_ACCENT)};${statics}}`];
   for (const mode of ALL_MODES) {
     for (const accent of ALL_ACCENTS) {
       rules.push(`[data-theme="${mode}"][data-accent="${accent}"]{${block(mode, accent)}}`);
@@ -416,31 +443,35 @@ export function brandCssVars(): string {
 }
 
 /**
- * The type scale. Five sizes, and nothing in between: text that is not one of
- * these is a bug. Inputs are the one exception on phones, where they stay at
- * 16px so iOS does not zoom the page on focus.
+ * The type scale for running text. Titles step up from here (24 for a card or
+ * sheet title, 34 for the one page title), and big numerals and monograms are
+ * set light (300). Inputs stay at 16px on phones so iOS does not zoom the page
+ * on focus.
  */
 export const TYPE = {
   /** Labels, counts, captions. */
-  caption: 12,
+  caption: 13,
   /** Secondary text: meta lines, controls, table cells. */
   body: 14,
   /** Primary text: names, notes, link rows. */
   bodyLg: 16,
-  /** Section and list titles. */
-  title: 20,
-  /** One per screen: the place or page name. */
-  display: 28,
+  /** Card and sheet titles. */
+  title: 24,
+  /** One per screen: the page name. */
+  display: 34,
 } as const;
 
-/**
- * Corner radii. A full pill is reserved for things that are a toggle or a
- * status, so those read differently from buttons and fields.
- */
-export const RADIUS = { chip: 8, control: 10, surface: 14, dialog: 22, pill: 999 } as const;
+/** The one typeface. */
+export const FONT = ['Manrope', 'system-ui', '-apple-system', 'sans-serif'].join(',');
 
-/** Build the MUI theme for one (mode, accent) pair — Archivo type on the TYPE
- *  scale, RADIUS corners, and either a border or a shadow per surface. */
+/**
+ * Corner radii: soft and large. Buttons, chips and toggles are full pills;
+ * cards and sheets 28; rows and grouped blocks 22; thumbnails and text fields 16.
+ */
+export const RADIUS = { thumb: 16, control: 16, surface: 22, card: 28, dialog: 28, pill: 999 } as const;
+
+/** Build the MUI theme for one (mode, accent) pair — Manrope on the TYPE
+ *  scale, RADIUS corners, flat surfaces. */
 export function makeListTheme(mode: ListMode, accent: AccentName): Theme {
   const t = getListTokens(mode, accent);
 
@@ -456,11 +487,13 @@ export function makeListTheme(mode: ListMode, accent: AccentName): Theme {
       success: { main: t.success },
     },
     typography: {
-      fontFamily: ['Archivo', 'system-ui', '-apple-system', 'sans-serif'].join(','),
-      h1: { fontWeight: 600, letterSpacing: '-.022em' },
-      h2: { fontWeight: 600, letterSpacing: '-.022em' },
-      h3: { fontWeight: 600, letterSpacing: '-.022em' },
-      h4: { fontWeight: 600, letterSpacing: '-.022em' },
+      fontFamily: FONT,
+      h1: { fontWeight: 600, letterSpacing: '-.04em' },
+      h2: { fontWeight: 600, letterSpacing: '-.04em' },
+      h3: { fontWeight: 600, letterSpacing: '-.04em' },
+      h4: { fontWeight: 600, letterSpacing: '-.04em' },
+      h5: { fontWeight: 600, letterSpacing: '-.03em' },
+      h6: { fontWeight: 600, letterSpacing: '-.03em' },
       body1: { fontSize: TYPE.bodyLg },
       body2: { fontSize: TYPE.body },
       caption: { fontSize: TYPE.caption },
@@ -488,8 +521,8 @@ export function makeListTheme(mode: ListMode, accent: AccentName): Theme {
       MuiButton: {
         styleOverrides: {
           root: ({ ownerState }) => ({
-            borderRadius: RADIUS.control,
-            padding: '9px 18px',
+            borderRadius: RADIUS.pill,
+            padding: '9px 20px',
             // The "squish": buttons compress a touch when pressed.
             transition: 'transform .12s ease, background-color .15s ease, border-color .15s ease',
             '&:active': { transform: 'scale(.97)' },
@@ -503,9 +536,11 @@ export function makeListTheme(mode: ListMode, accent: AccentName): Theme {
             '&:hover': { boxShadow: 'none', backgroundColor: t.accentHover },
           },
           outlined: {
-            borderColor: t.borderStrong,
+            // The quiet button is a filled surface pill, not an outline.
+            border: 'none',
+            backgroundColor: t.cardBg,
             color: t.ink,
-            '&:hover': { borderColor: t.accent, backgroundColor: 'transparent' },
+            '&:hover': { border: 'none', backgroundColor: t.raised },
           },
           text: {
             color: t.accent,
@@ -513,19 +548,38 @@ export function makeListTheme(mode: ListMode, accent: AccentName): Theme {
           },
         },
       },
+      // Dark-mode MUI lightens raised Paper with a gradient overlay; the
+      // surfaces here are flat, set by token.
+      MuiPaper: {
+        styleOverrides: { root: { backgroundImage: 'none' } },
+      },
       MuiDialog: {
         styleOverrides: {
           paper: {
             backgroundColor: t.panelBg,
             backgroundImage: 'none',
             borderRadius: RADIUS.dialog,
-            boxShadow: t.shadow3,
+            boxShadow: `0 0 0 1px ${t.border}, ${t.shadow3}`,
           },
         },
       },
       MuiMenu: {
         styleOverrides: {
-          paper: { borderRadius: RADIUS.surface, boxShadow: t.shadow2 },
+          paper: {
+            borderRadius: RADIUS.surface,
+            backgroundColor: t.cardBg,
+            boxShadow: `0 0 0 1px ${t.border}, ${t.shadow2}`,
+          },
+          list: { padding: 6 },
+        },
+      },
+      MuiMenuItem: {
+        styleOverrides: {
+          root: {
+            borderRadius: 14,
+            minHeight: 44,
+            '&.Mui-selected, &.Mui-selected:hover': { backgroundColor: t.raised },
+          },
         },
       },
       MuiTextField: {
@@ -543,7 +597,7 @@ export function makeListTheme(mode: ListMode, accent: AccentName): Theme {
         },
       },
       MuiChip: {
-        styleOverrides: { root: { borderRadius: RADIUS.chip, fontWeight: 500 } },
+        styleOverrides: { root: { borderRadius: RADIUS.pill, fontWeight: 600 } },
       },
       MuiAlert: {
         styleOverrides: { root: { borderRadius: RADIUS.control } },
@@ -579,8 +633,8 @@ const KanpaiThemeContext = createContext<KanpaiThemeState | null>(null);
  */
 export function KanpaiThemeProvider({
   children,
-  initialMode = 'light',
-  initialAccent = 'matcha',
+  initialMode = DEFAULT_MODE,
+  initialAccent = DEFAULT_ACCENT,
 }: {
   children: ReactNode;
   initialMode?: ListMode;
@@ -595,7 +649,7 @@ export function KanpaiThemeProvider({
   //
   // Only an ACTUAL saved value may override the cookie the server rendered
   // from: read*Stored* returns null when nothing was ever chosen, and treating
-  // that absence as "light/matcha" would clobber a real cookie preference on
+  // that absence as the default would clobber a real cookie preference on
   // any browser whose localStorage is empty (a cleared site-data profile, a
   // restored cookie jar) and flip the page back to the default after paint.
   useEffect(() => {

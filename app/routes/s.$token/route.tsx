@@ -23,10 +23,11 @@ import { DEFAULT_SORT, sortPlaces, type SortMode } from '~/utils/sortPlaces';
 import type { Restaurant } from '~/types/restaurant';
 import RestaurantThumb from '~/components/RestaurantThumb';
 import RestaurantDetailDialog from '~/components/RestaurantDetailDialog';
-import Bubbles from '~/components/Bubbles';
+
 import PlaceCard from '~/components/PlaceCard';
+import PlaceRow from '~/components/PlaceRow';
 import { LogoMark } from '~/components/Logo';
-import { useKanpaiTheme } from '~/listTheme';
+import { useKanpaiTheme, FONT } from '~/listTheme';
 import type { RestaurantMapProps } from '~/components/RestaurantMap';
 
 const RestaurantMap = lazy<React.ComponentType<RestaurantMapProps>>(() =>
@@ -113,7 +114,22 @@ export default function SharedListPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [selected, setSelected] = useState<Restaurant | null>(null);
 
-  const serif = "'Archivo',sans-serif";
+  const serif = FONT;
+  /** One option in a pill-shaped segmented control. */
+  const segmentSx = (selected: boolean) => ({
+    height: 40,
+    padding: '0 14px',
+    border: 0,
+    borderRadius: '999px',
+    cursor: 'pointer',
+    font: 'inherit',
+    fontSize: 15,
+    fontWeight: 600,
+    whiteSpace: 'nowrap',
+    background: selected ? t.raised : 'transparent',
+    color: selected ? t.ink : t.muted,
+    boxShadow: selected ? t.shadow1 : 'none',
+  });
 
   const decorated = useMemo(() => (shared?.restaurants ?? []).map((r) => decorate(r)), [shared]);
 
@@ -193,15 +209,16 @@ export default function SharedListPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: { xs: '14px 18px', md: '18px 40px' },
-            borderBottom: `1px solid ${t.border}`,
-            background: t.panelBg,
+            width: '100%',
+            maxWidth: 1320,
+            mx: 'auto',
+            padding: { xs: '14px 20px 0', md: '20px 40px 0' },
             gap: 2,
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
-            <LogoMark size={27} />
-            <Box component={Link} to="/" sx={{ fontFamily: serif, fontSize: { xs: 20, sm: 26 }, letterSpacing: '.01em', color: t.ink, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <LogoMark size={22} />
+            <Box component={Link} to="/" sx={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: t.ink, textDecoration: 'none', whiteSpace: 'nowrap', minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>
               {tr('brand')}
             </Box>
           </Box>
@@ -209,7 +226,7 @@ export default function SharedListPage() {
             <IconButton
               onClick={() => setMode(mode === 'light' ? 'dark' : 'light')}
               aria-label={mode === 'light' ? tr('dashboard.themeDark') : tr('dashboard.themeLight')}
-              sx={{ color: t.muted }}
+              sx={{ width: 44, height: 44, background: t.cardBg, color: t.ink, '&:hover': { background: t.raised } }}
             >
               {mode === 'light' ? <DarkModeOutlined sx={{ fontSize: 20 }} /> : <LightModeOutlined sx={{ fontSize: 20 }} />}
             </IconButton>
@@ -217,18 +234,18 @@ export default function SharedListPage() {
         </Box>
 
         {/* body */}
-        <Box sx={{ flexGrow: 1, width: '100%', maxWidth: 1320, mx: 'auto', padding: { xs: '24px 18px 0', md: '30px 40px 0' } }}>
+        <Box sx={{ flexGrow: 1, width: '100%', maxWidth: 1320, mx: 'auto', padding: { xs: '20px 20px 0', md: '28px 40px 0' } }}>
           {/* title + save-a-copy */}
           <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
             <Box>
-              <Box component="h1" sx={{ fontFamily: serif, fontSize: { xs: 34, md: 44 }, fontWeight: 600, letterSpacing: '-.02em', m: 0, lineHeight: 1.05 }}>
+              <Box component="h1" sx={{ fontFamily: serif, fontSize: { xs: 34, md: 44 }, fontWeight: 600, letterSpacing: '-.04em', m: 0, lineHeight: 1.05 }}>
                 {shared.list.name}
               </Box>
-              <Box component="p" sx={{ color: t.muted, fontSize: 16, mt: '8px', mb: 0 }}>
+              <Box component="p" sx={{ color: t.muted, fontSize: 15, mt: '8px', mb: 0 }}>
                 {shared.ownerName ? tr('shared.byline', { name: shared.ownerName }) + ' · ' : ''}
                 {tr('dashboard.stats', { total, been: beenCount, want: wantCount })}
               </Box>
-              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '6px', mt: '8px', color: t.faint, fontSize: 12 }}>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: '6px', mt: '6px', color: t.faint, fontSize: 13 }}>
                 {tr('shared.readOnly')}
               </Box>
             </Box>
@@ -252,24 +269,26 @@ export default function SharedListPage() {
             )}
           </Box>
 
-          {/* controls — same bar as the dashboard: search · status · sort · view */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: '8px', sm: '12px' }, mt: { xs: '20px', sm: '28px' }, flexWrap: 'wrap' }}>
+          {/* controls — the dashboard's: search, then status · sort · view */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: '12px 8px', md: '12px' }, mt: '20px', flexWrap: { xs: 'wrap', md: 'nowrap' } }}>
             <Box
               component="label"
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                flex: { xs: '1 1 100%', sm: '1 1 auto' },
-                maxWidth: { sm: 340 },
-                height: 40,
-                background: t.searchBg,
-                borderRadius: '10px',
-                padding: '0 12px',
+                gap: '10px',
+                flex: { xs: '1 1 100%', md: '1 1 auto' },
+                maxWidth: { md: 360 },
+                minWidth: 0,
+                height: 50,
+                background: t.cardBg,
+                borderRadius: '999px',
+                padding: '0 18px',
                 cursor: 'text',
+                '&:focus-within': { boxShadow: `0 0 0 2px ${t.accent}` },
               }}
             >
-              <Search aria-hidden sx={{ fontSize: 18, color: t.faint, flex: 'none' }} />
+              <Search aria-hidden sx={{ fontSize: 20, color: t.muted, flex: 'none' }} />
               <Box
                 component="input"
                 value={searchQuery}
@@ -281,33 +300,18 @@ export default function SharedListPage() {
                   outline: 'none',
                   background: 'transparent',
                   color: t.ink,
-                  // ≥16px on phones — iOS auto-zooms on smaller inputs.
-                  fontSize: { xs: '16px', sm: '14px' },
+                  font: 'inherit',
+                  // 16px — iOS auto-zooms on smaller inputs.
+                  fontSize: 16,
                   width: '100%',
                   minWidth: 0,
-                  '::placeholder': { color: t.faint },
+                  '::placeholder': { color: t.muted, opacity: 1 },
                 }}
               />
             </Box>
-            <Box role="group" aria-label={tr('dashboard.filterStatusLabel')} sx={{ display: 'flex', gap: '2px', padding: '3px', background: t.track, borderRadius: '999px' }}>
+            <Box role="group" aria-label={tr('dashboard.filterStatusLabel')} sx={{ flex: { xs: '1 1 100%', md: 'none' }, ml: { md: 'auto' }, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', padding: '4px', background: t.cardBg, borderRadius: '999px' }}>
               {(['all', 'been', 'want'] as FilterMode[]).map((f) => (
-                <Box
-                  key={f}
-                  component="button"
-                  aria-pressed={filter === f}
-                  onClick={() => setFilter(f)}
-                  sx={{
-                    border: 0,
-                    cursor: 'pointer',
-                    fontSize: 14,
-                    fontWeight: filter === f ? 600 : 400,
-                    padding: { xs: '10px 12px', sm: '6px 14px' },
-                    borderRadius: '999px',
-                    background: filter === f ? t.cardBg : 'transparent',
-                    color: filter === f ? t.ink : t.muted,
-                    boxShadow: filter === f ? t.shadow1 : 'none',
-                  }}
-                >
+                <Box key={f} component="button" type="button" aria-pressed={filter === f} onClick={() => setFilter(f)} sx={segmentSx(filter === f)}>
                   {tr(f === 'all' ? 'dashboard.filterAll' : f === 'been' ? 'dashboard.filterBeen' : 'dashboard.filterWantShort')}
                 </Box>
               ))}
@@ -317,34 +321,23 @@ export default function SharedListPage() {
               value={sort}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSort(e.target.value as SortMode)}
               aria-label={tr('dashboard.sortLabel')}
-              sx={{ background: t.searchBg, border: 'none', borderRadius: '10px', height: 40, padding: '0 12px', color: t.muted, fontSize: 14, cursor: 'pointer' }}
+              sx={{ flex: { xs: 1, md: 'none' }, minWidth: 0, background: t.cardBg, border: 'none', borderRadius: '999px', height: 48, padding: '0 16px', color: t.ink, font: 'inherit', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
             >
               {SHARE_SORT_MODES.map((m) => (
                 <option key={m} value={m}>{tr(`dashboard.sort_${m}`)}</option>
               ))}
             </Box>
-            <Box role="group" aria-label={tr('dashboard.viewLabel')} sx={{ ml: { sm: 'auto' }, display: 'flex', gap: '2px', padding: '3px', background: t.track, borderRadius: '999px' }}>
+            <Box role="group" aria-label={tr('dashboard.viewLabel')} sx={{ flex: 'none', display: 'flex', padding: '4px', background: t.cardBg, borderRadius: '999px' }}>
               {viewOptions.map(({ id, label, Icon }) => (
                 <Box
                   key={id}
                   component="button"
+                  type="button"
                   aria-pressed={view === id}
                   aria-label={label}
                   title={label}
                   onClick={() => setView(id)}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 36,
-                    height: 30,
-                    border: 0,
-                    cursor: 'pointer',
-                    borderRadius: '999px',
-                    background: view === id ? t.cardBg : 'transparent',
-                    color: view === id ? t.ink : t.muted,
-                    boxShadow: view === id ? t.shadow1 : 'none',
-                  }}
+                  sx={{ ...segmentSx(view === id), display: 'grid', placeItems: 'center', width: 44, padding: 0 }}
                 >
                   <Icon sx={{ fontSize: 19 }} />
                 </Box>
@@ -356,76 +349,42 @@ export default function SharedListPage() {
           {sorted.length === 0 ? (
             <Box sx={{ mt: '24px', mb: '40px', textAlign: 'center', py: { xs: 6, md: 10 }, px: 3, borderRadius: '14px' }}>
               <SearchOff aria-hidden sx={{ fontSize: 40, color: t.faint, mb: 1.5 }} />
-              <Box sx={{ fontFamily: serif, fontSize: 20, fontWeight: 600, mb: 1 }}>{tr('dashboard.noMatchesTitle')}</Box>
+              <Box sx={{ fontSize: 24, fontWeight: 600, letterSpacing: '-.03em', mb: 1 }}>{tr('dashboard.noMatchesTitle')}</Box>
               <Box sx={{ color: t.muted, fontSize: 16 }}>{tr('dashboard.emptyTryFilter')}</Box>
             </Box>
           ) : view === 'map' ? (
-            <Box sx={{ padding: '24px 0 40px', display: 'flex', gap: '18px', flexDirection: { xs: 'column', md: 'row' } }}>
-              <Box sx={{ flex: 1, height: 540, borderRadius: '16px', border: `1px solid ${t.border}`, overflow: 'hidden', background: t.mapBg }}>
+            <Box sx={{ padding: '20px 0 40px', display: 'flex', gap: '16px', flexDirection: { xs: 'column', md: 'row' } }}>
+              <Box sx={{ flex: { xs: 'none', md: 1 }, height: { xs: 420, md: 540 }, borderRadius: '28px', overflow: 'hidden', background: t.mapBg }}>
                 {mounted ? (
                   <Suspense fallback={<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: t.muted }}>{tr('dashboard.loadingMap')}</Box>}>
                     <RestaurantMap restaurants={sorted} accent={t.accent} onSelect={openDetail} />
                   </Suspense>
                 ) : null}
               </Box>
-              <Box sx={{ width: { xs: '100%', md: 330 }, flex: 'none', height: 540, overflowY: 'auto', border: `1px solid ${t.border}`, borderRadius: '16px', background: t.cardBg }}>
+              <Box sx={{ width: { xs: '100%', md: 340 }, flex: 'none', height: { md: 540 }, overflowY: { md: 'auto' }, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {sorted.map((r) => (
                   <Box key={r.id} role="button" tabIndex={0} aria-label={r.name} onClick={() => openDetail(r)} onKeyDown={activateOnKey(() => openDetail(r))}
-                    sx={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderBottom: `1px solid ${t.borderSoft}`, cursor: 'pointer', '&:hover': { filter: 'brightness(0.98)' } }}>
-                    <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 54, borderRadius: '8px' }} />
+                    sx={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px', borderRadius: '18px', background: t.cardBg, cursor: 'pointer' }}>
+                    <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: 48, aspectRatio: '1', borderRadius: '12px' }} />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box sx={{ fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</Box>
-                      {r.meta && <Box sx={{ color: t.muted, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.meta}</Box>}
+                      <Box sx={{ fontSize: 15, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</Box>
+                      {r.meta && <Box sx={{ color: t.muted, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.meta}</Box>}
                     </Box>
                   </Box>
                 ))}
               </Box>
             </Box>
           ) : view === 'list' ? (
-            <Box sx={{ padding: { xs: '12px 0 40px', sm: '16px 0 40px' } }}>
+            <Box sx={{ padding: '20px 0 40px', display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' }, gap: '8px' }}>
               {sorted.map((r) => (
-                <Box
-                  key={r.id}
-                  onClick={() => openDetail(r)}
-                  sx={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px', margin: '0 -12px', borderRadius: '10px', cursor: 'pointer', '&:hover': { background: t.rowHover } }}
-                >
-                  <RestaurantThumb image={r.image} name={r.name} tokens={t} sx={{ width: { xs: 72, sm: 96 }, borderRadius: '8px' }} />
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Box
-                      component="button"
-                      type="button"
-                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); openDetail(r); }}
-                      sx={{ fontSize: 16, fontWeight: 600, border: 'none', background: 'transparent', p: 0, m: 0, color: 'inherit', textAlign: 'left', cursor: 'pointer', display: 'block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                    >
-                      {r.name}
-                    </Box>
-                    {r.meta && <Box sx={{ color: t.muted, fontSize: 14, mt: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.meta}</Box>}
-                  </Box>
-                  {r.rated && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 'none' }}>
-                      {/* Phones get one bubble and the number; wider rows the full five. */}
-                      <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-                        <Bubbles value={r.rating ?? 0} tokens={t} size={10} gap={4} />
-                      </Box>
-                      <Box aria-hidden sx={{ display: { xs: 'block', sm: 'none' }, width: 9, height: 9, borderRadius: '50%', background: t.rating }} />
-                      <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' }, fontSize: 14, color: t.muted }}>{(r.rating ?? 0).toFixed(1)}</Box>
-                    </Box>
-                  )}
-                  {r.isWant && (
-                    <Box component="span" sx={{ flex: 'none', fontSize: 12, color: t.muted, width: { sm: 80 }, textAlign: 'right' }}>
-                      {tr('dashboard.statusWant')}
-                    </Box>
-                  )}
-                </Box>
+                <PlaceRow key={r.id} r={r} tokens={t} onView={openDetail} />
               ))}
             </Box>
           ) : (
-            <Box sx={{ padding: { xs: '20px 0 56px', sm: '28px 0 56px' } }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(auto-fill, minmax(160px, 1fr))', sm: 'repeat(auto-fill, minmax(240px, 1fr))' }, gap: { xs: '22px 12px', sm: '32px 20px' } }}>
-                {sorted.map((r) => (
-                  <PlaceCard key={r.id} r={r} tokens={t} onView={openDetail} />
-                ))}
-              </Box>
+            <Box sx={{ padding: '20px 0 56px', display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(auto-fill, minmax(300px, 1fr))' }, gap: { xs: '14px', sm: '16px' } }}>
+              {sorted.map((r) => (
+                <PlaceCard key={r.id} r={r} tokens={t} onView={openDetail} />
+              ))}
             </Box>
           )}
         </Box>

@@ -52,7 +52,7 @@ export function contrast(fg: string, bg: string): number {
 }
 
 const MODES: ListMode[] = ['light', 'dark'];
-const ACCENTS: AccentName[] = ['matcha', 'sakura', 'peach'];
+const ACCENTS: AccentName[] = ['ember', 'matcha', 'sakura', 'peach'];
 
 /** The surfaces text is actually painted on. */
 function surfaces(t: ListTokens): { name: string; bg: string }[] {
@@ -60,6 +60,7 @@ function surfaces(t: ListTokens): { name: string; bg: string }[] {
     { name: 'pageBg', bg: t.pageBg },
     { name: 'panelBg', bg: t.panelBg },
     { name: 'cardBg', bg: t.cardBg },
+    { name: 'raised', bg: t.raised },
   ];
 }
 
@@ -99,6 +100,7 @@ describe('brand palette contrast (WCAG AA)', () => {
           ['wantFg on wantBg', t.wantFg, t.wantBg],
           ['snackFg on snackBg', t.snackFg, t.snackBg],
           ['muted on chip', t.muted, t.chip],
+          ['ink on raised', t.ink, t.raised],
           ['ink on track', t.ink, t.track],
           ['muted on track', t.muted, t.track],
           ['muted on searchBg', t.muted, t.searchBg],
@@ -113,7 +115,7 @@ describe('brand palette contrast (WCAG AA)', () => {
 
       it(`${label}: non-text boundaries clear 3:1`, () => {
         const pairs: [string, string, string][] = [
-          // The empty bubble outline carries the rating's meaning.
+          // The empty bubble outline in the rating picker is a control boundary.
           ['notRated on cardBg', t.notRated, t.cardBg],
           ['notRated on panelBg', t.notRated, t.panelBg],
           // Input borders and the focus ring.
