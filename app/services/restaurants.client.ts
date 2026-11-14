@@ -53,9 +53,13 @@ export async function updateRestaurant(
 ): Promise<Restaurant> {
   const supabase = getSupabaseBrowserClient();
   // list_id / added_by are immutable on update; RLS already scopes the row.
-  const { list_id, added_by, ...payload } = restaurantToRow(data, listId, userId);
+  const { list_id, added_by, rating, ...rest } = restaurantToRow(data, listId, userId);
   void list_id;
   void added_by;
+  // The shared `rating` column is a legacy fallback; personal ratings live in
+  // restaurant_ratings. Only write it when the caller passed one explicitly,
+  // so an ordinary edit never wipes it.
+  const payload = data.rating === undefined ? rest : { ...rest, rating };
   let { data: row, error } = await supabase.from('restaurants').update(payload).eq('id', id).select().single();
   if (isMissingDistinctionsColumn(error)) {
     ({ data: row, error } = await supabase

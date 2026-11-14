@@ -63,8 +63,14 @@ interface RestaurantFormDialogProps {
   open: boolean;
   restaurant: Restaurant | null;
   onClose: () => void;
+  /** The signed-in user's own rating on `restaurant` (0 or absent = not rated).
+   *  The form's rating field is "Your rating": it starts here, and the saved
+   *  payload's `rating` is that personal rating, not a shared score. */
+  myRating?: number;
   /** `imageOrigin` says who chose the image URL in the payload: a website
-   *  scrape ("scraped", fully quality-gated on save) or the user ("user"). */
+   *  scrape ("scraped", fully quality-gated on save) or the user ("user").
+   *  `rating` in the payload is the user's own rating, and is left out when the
+   *  place is not marked "been" (the field is hidden then). */
   onSave: (
     restaurant: Partial<Restaurant>,
     imageFile?: File,
@@ -169,6 +175,7 @@ export default function RestaurantFormDialog({
   open,
   restaurant,
   onClose,
+  myRating,
   onSave,
   tokens,
   serifFont,
@@ -241,6 +248,10 @@ export default function RestaurantFormDialog({
   // URLs already scraped this dialog session — the automatic cascade must never
   // fetch the same site twice (user-initiated blurs bypass this via `force`).
   const scrapedUrls = useRef<Set<string>>(new Set());
+  // Read when the dialog opens only: a ratings refresh while it is open must
+  // not reset what the user is typing.
+  const myRatingRef = useRef(myRating);
+  myRatingRef.current = myRating;
 
   useEffect(() => {
     if (restaurant) {
@@ -248,7 +259,7 @@ export default function RestaurantFormDialog({
         name: restaurant.name || '',
         url: restaurant.url || '',
         image: restaurant.image || '',
-        rating: restaurant.rating || 0,
+        rating: myRatingRef.current || 0,
         priceRange: restaurant.priceRange || '$$',
         comment: restaurant.comment || '',
         cuisineType: restaurant.cuisineType || '',
@@ -748,6 +759,9 @@ export default function RestaurantFormDialog({
       } else if (payload.status === 'been') {
         payload.visitCount = 1;
       }
+      // "Your rating" only applies to a place you've been to; otherwise leave
+      // whatever personal rating you have untouched.
+      if (payload.status !== 'been') delete payload.rating;
       await onSave(payload, imageFile, imageOrigin.current);
       onClose();
     } catch (error) {
@@ -996,18 +1010,20 @@ export default function RestaurantFormDialog({
             />
           </Grid>
 
-          {/* Rating */}
-          <Grid item xs={12}>
-            <Typography component="label" sx={sectionLabelSx}>
-              {t('form.rating')}
-            </Typography>
-            <BubbleInput
-              value={formData.rating || 0}
-              onChange={(value) => setFormData({ ...formData, rating: value })}
-              tokens={tokens}
-              ariaLabel={t('form.rating')}
-            />
-          </Grid>
+          {/* Your rating: saved as your own verdict, so only for places you've been */}
+          {formData.status === 'been' && (
+            <Grid item xs={12}>
+              <Typography component="label" sx={sectionLabelSx}>
+                {t('form.yourRating')}
+              </Typography>
+              <BubbleInput
+                value={formData.rating || 0}
+                onChange={(value) => setFormData((prev) => ({ ...prev, rating: value }))}
+                tokens={tokens}
+                ariaLabel={t('form.yourRating')}
+              />
+            </Grid>
+          )}
 
           {/* Comment */}
           <Grid item xs={12}>

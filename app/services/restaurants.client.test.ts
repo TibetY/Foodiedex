@@ -49,6 +49,15 @@ describe('saving when the distinctions column does not exist yet', () => {
     expect(sent).toHaveLength(1);
   });
 
+  it('leaves the shared legacy rating alone on an ordinary edit', async () => {
+    results.push({ data: savedRow, error: null }, { data: savedRow, error: null });
+    await updateRestaurant('r1', { name: 'Alo' }, 'l1', 'u1');
+    expect(sent[0]).not.toHaveProperty('rating');
+    // ...but still writes it when a caller passes one (e.g. restoring a place)
+    await updateRestaurant('r1', { name: 'Alo', rating: 4 }, 'l1', 'u1');
+    expect(sent[1]).toHaveProperty('rating', 4);
+  });
+
   it('sends one request when the column exists', async () => {
     results.push({ data: { ...savedRow, distinctions: ['la-liste'] }, error: null });
     const saved = await createRestaurant({ name: 'Alo', distinctions: ['la-liste'] }, 'l1', 'u1');

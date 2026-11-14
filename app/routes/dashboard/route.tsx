@@ -93,7 +93,7 @@ import {
 } from '~/services/restaurants.client';
 import { createList, updateList, deleteList } from '~/services/lists.client';
 import { createListView, renameListView, deleteListView } from '~/services/views.client';
-import { upsertMyRating } from '~/services/ratings.client';
+import { deleteMyRating, upsertMyRating } from '~/services/ratings.client';
 import { geocodeAddress } from '~/services/geocode.client';
 import type { RestaurantMapProps } from '~/components/RestaurantMap';
 
@@ -659,12 +659,32 @@ export default function Dashboard() {
     setFormOpen(true);
   };
 
+  /** The signed-in user's own rating row on a place, if they've rated it. */
+  const myRatingFor = (restaurantId: string) =>
+    (ratings[restaurantId] ?? []).find((x) => x.userId === userId);
+
+  /**
+   * What the form's "Your rating" starts at: your own rating, or, for a place
+   * you added before personal ratings existed, its old shared score (saving
+   * the form then turns that into your own rating).
+   */
+  const formStartRating = (r: Restaurant | null): number | undefined => {
+    if (!r?.id) return undefined;
+    const mine = myRatingFor(r.id);
+    if (mine) return mine.rating;
+    return r.addedBy === userId ? r.rating : undefined;
+  };
+
   const handleSaveRestaurant = async (
-    restaurantData: Partial<Restaurant>,
+    formPayload: Partial<Restaurant>,
     imageFile?: File,
     imageOrigin: 'scraped' | 'user' = 'scraped'
   ) => {
     if (!activeList) return;
+    // The form's rating is the signed-in user's own verdict, saved to
+    // restaurant_ratings below, not to the place's shared legacy column.
+    // Undefined means "leave my rating alone" (the place isn't marked been).
+    const { rating: myNewRating, ...restaurantData } = formPayload;
     try {
       // The photo we store is always our own copy: an uploaded file goes
       // straight to storage, and an image URL passes the server's quality gate
@@ -714,14 +734,33 @@ export default function Dashboard() {
       }
       dataToSave.locations = locations;
 
-      if (selectedRestaurant?.id) {
-        await updateRestaurant(selectedRestaurant.id, dataToSave, activeList.id, userId);
-      } else {
-        await createRestaurant(dataToSave, activeList.id, userId);
+      const saved = selectedRestaurant?.id
+        ? await updateRestaurant(selectedRestaurant.id, dataToSave, activeList.id, userId)
+        : await createRestaurant(dataToSave, activeList.id, userId);
+
+      // The place is saved; now the user's own rating. A failure here keeps the
+      // place and says only the rating didn't save.
+      let ratingFailed = false;
+      if (myNewRating !== undefined && saved.id) {
+        const mine = selectedRestaurant?.id ? myRatingFor(selectedRestaurant.id) : undefined;
+        try {
+          if (myNewRating > 0 && myNewRating !== mine?.rating) {
+            // Keep any note already written in the detail dialog.
+            await upsertMyRating(saved.id, userId, myNewRating, mine?.note);
+          } else if (myNewRating === 0 && mine) {
+            await deleteMyRating(saved.id, userId);
+          }
+        } catch (error) {
+          console.error('Error saving rating:', error);
+          ratingFailed = true;
+        }
       }
+
       // Saved fine — but if the address couldn't be located, tell the user the
       // map pin won't appear (rather than failing silently and looking buggy).
-      if (geocodeFailed) {
+      if (ratingFailed) {
+        setSnackbar({ open: true, message: tr('dashboard.snackRatingFailed'), severity: 'error' });
+      } else if (geocodeFailed) {
         setSnackbar({ open: true, message: tr('dashboard.snackGeocodeFailed'), severity: 'warning' });
       } else if (imageRejected) {
         setSnackbar({ open: true, message: tr('dashboard.snackImageRejected'), severity: 'warning' });
@@ -1670,6 +1709,7 @@ export default function Dashboard() {
           open={formOpen}
           restaurant={selectedRestaurant}
           onClose={() => setFormOpen(false)}
+          myRating={formStartRating(selectedRestaurant)}
           onSave={handleSaveRestaurant}
           tokens={t}
           serifFont={serif}
