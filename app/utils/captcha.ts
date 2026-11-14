@@ -7,8 +7,9 @@
  * verifies it with the Turnstile secret key set in the Supabase dashboard
  * (Authentication → Attack Protection). The secret never lives in this app.
  *
- * Everything is off until TURNSTILE_SITE_KEY is set, so local development and
- * deploys without the key behave exactly as before.
+ * The widget's site key is built in (supabaseConfig.ts); TURNSTILE_SITE_KEY can
+ * override it, or be set to `off` to turn the check off. Tokens are harmless
+ * until Supabase's CAPTCHA protection is switched on.
  */
 
 /** The form field the widget writes its token into. */
