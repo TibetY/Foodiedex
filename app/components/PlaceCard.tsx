@@ -4,7 +4,7 @@ import type { DecoratedRestaurant } from '~/utils/decorateRestaurant';
 import { haloSx, type ListTokens } from '~/listTheme';
 import { usePlacePhoto, photoSx } from '~/components/RestaurantThumb';
 import Bubbles from '~/components/Bubbles';
-import { DistinctionPill, WantPill, ON_PHOTO } from '~/components/PlacePills';
+import { DistinctionPill, WantPill, FavoritePill, ON_PHOTO } from '~/components/PlacePills';
 
 type Tokens = ListTokens;
 
@@ -30,13 +30,14 @@ const nameSx = {
  * THE place card — one source of truth for the grid (dashboard and the public
  * shared view). The photograph runs edge to edge and everything sits on it:
  *
- *   top       its first distinction (left) and "Want to try" (right), as glass pills
+ *   top       its first distinction (left), "Want to try" and a favourite heart
+ *             (right), as glass pills
  *   bottom    name, then one line — cuisine · city · price — with the rating dots
  *
  * A place with no usable photo gets the same card as a softly lit surface with
  * its monogram, so the grid never shows an empty frame.
  *
- * Everything else about a place (favourite, note, visits, booking, tags, status
+ * Everything else about a place (note, visits, booking, tags, status
  * toggle, edit/delete) lives one tap away in the detail view, so the whole card
  * is a single button that opens it.
  */
@@ -92,7 +93,12 @@ export default function PlaceCard({ r, tokens: t, onView }: PlaceCardProps) {
           <Box aria-hidden sx={{ position: 'absolute', inset: 0, background: ON_PHOTO.scrim }} />
           <Box sx={{ position: 'absolute', top: 14, left: 14, right: 14, display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
             <DistinctionPill r={r} tokens={t} onPhoto />
-            {r.isWant && <WantPill tokens={t} onPhoto sx={{ ml: 'auto', flex: 'none' }} />}
+            {(r.isWant || r.favorite) && (
+              <Box sx={{ ml: 'auto', flex: 'none', display: 'flex', gap: '6px' }}>
+                {r.isWant && <WantPill tokens={t} onPhoto />}
+                {r.favorite && <FavoritePill tokens={t} onPhoto />}
+              </Box>
+            )}
           </Box>
           <Box sx={{ position: 'absolute', left: 20, right: 20, bottom: 18, color: ON_PHOTO.ink, display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <Box component="span" sx={nameSx}>{r.name}</Box>
@@ -106,7 +112,12 @@ export default function PlaceCard({ r, tokens: t, onView }: PlaceCardProps) {
               {r.initial}
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', minWidth: 0 }}>
-              {r.isWant && <WantPill tokens={t} />}
+              {(r.isWant || r.favorite) && (
+                <Box sx={{ display: 'flex', gap: '6px' }}>
+                  {r.isWant && <WantPill tokens={t} />}
+                  {r.favorite && <FavoritePill tokens={t} />}
+                </Box>
+              )}
               <DistinctionPill r={r} tokens={t} sx={{ maxWidth: '100%' }} />
             </Box>
           </Box>

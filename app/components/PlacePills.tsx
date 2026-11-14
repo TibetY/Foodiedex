@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import { type SxProps, type Theme } from '@mui/material/styles';
 import BookmarkBorder from '@mui/icons-material/BookmarkBorder';
+import Favorite from '@mui/icons-material/Favorite';
 import { useTranslation } from 'react-i18next';
 import type { Restaurant } from '~/types/restaurant';
 import type { ListTokens } from '~/listTheme';
@@ -60,6 +61,21 @@ export function WantPill({ tokens: t, onPhoto, sx }: PillProps) {
     <Box component="span" sx={[pillSx(t, onPhoto), ...(Array.isArray(sx) ? sx : [sx])]}>
       <BookmarkBorder aria-hidden sx={{ fontSize: 15, ml: '-2px' }} />
       {tr('dashboard.statusWant')}
+    </Box>
+  );
+}
+
+/** A round heart badge marking a favourite, the same height as the pills. */
+export function FavoritePill({ tokens: t, onPhoto, sx }: PillProps) {
+  const { t: tr } = useTranslation();
+  return (
+    <Box
+      component="span"
+      role="img"
+      aria-label={tr('dashboard.favorited')}
+      sx={[pillSx(t, onPhoto), { width: 32, padding: 0, justifyContent: 'center', flex: 'none' }, ...(Array.isArray(sx) ? sx : [sx])]}
+    >
+      <Favorite aria-hidden sx={{ fontSize: 16, color: onPhoto ? t.onPhotoAccent : t.accent }} />
     </Box>
   );
 }
