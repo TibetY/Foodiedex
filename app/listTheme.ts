@@ -232,6 +232,10 @@ export interface ListTokens {
   /** Translucent surface for sheets and bars that float over content; pair it
    *  with a backdrop blur. */
   glass: string;
+  /** A see-through surface for blocks that sit ON a glowing sheet: the same
+   *  lift as cardBg over pageBg, but it lets the sheet's halo show through
+   *  so the glow reads as one wash instead of a copy per block. */
+  pane: string;
   /** The soft accent glow in the corner of photo-less cards and hero tiles. */
   halo: string;
   /** The accent as drawn over a photograph, which is always dark-scrimmed:
@@ -312,6 +316,7 @@ export function getListTokens(mode: ListMode, accent: AccentName): ListTokens {
     cardBg: b.card,
     raised: b.raised,
     glass: b.glass,
+    pane: mode === 'dark' ? 'rgba(246,240,234,.05)' : 'rgba(255,255,255,.72)',
     halo: hexToRgba(a.deep, mode === 'dark' ? 0.16 : 0.1),
     onPhotoAccent: ACCENTS[accent].dark.deep,
     markDot: DECORATIVE.sakura[mode].bg,
@@ -385,6 +390,21 @@ export function haloSx(t: ListTokens, base: string = t.cardBg) {
   return {
     backgroundColor: base,
     backgroundImage: `radial-gradient(120% 100% at 100% 0%, ${t.halo} 0%, transparent 62%)`,
+  } as const;
+}
+
+/**
+ * The glow for a tall sheet whose blocks use `pane`: the corner halo, stretched
+ * so it keeps flowing down behind every block, plus a fainter echo lower on
+ * the opposite side so the bottom of a long sheet isn't flat.
+ */
+export function sheetGlowSx(t: ListTokens, base: string = t.pageBg) {
+  return {
+    backgroundColor: base,
+    backgroundImage: [
+      `radial-gradient(130% 55% at 100% 0%, ${t.halo} 0%, transparent 75%)`,
+      `radial-gradient(110% 45% at 0% 70%, ${t.halo} 0%, transparent 70%)`,
+    ].join(', '),
   } as const;
 }
 

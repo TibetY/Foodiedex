@@ -26,7 +26,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ChevronRight from '@mui/icons-material/ChevronRight';
 import { useTranslation } from 'react-i18next';
 import type { Restaurant, RestaurantRating } from '~/types/restaurant';
-import { haloSx, type ListTokens } from '~/listTheme';
+import { haloSx, sheetGlowSx, type ListTokens } from '~/listTheme';
 import { decorate, monogram } from '~/utils/decorateRestaurant';
 import { distinctionIds, distinctionLabel } from '~/utils/distinctions';
 import { usePlacePhoto, photoSx } from '~/components/RestaurantThumb';
@@ -152,7 +152,8 @@ export default function RestaurantDetailDialog({
   if (social.tiktok) links.push({ key: 'tt', Icon: MusicNote, label: 'TikTok', href: social.tiktok, external: true });
 
   const sectionLabel = { color: t.muted, fontSize: 13, fontWeight: 600, mb: '10px' };
-  const blockSx = { borderRadius: '22px', ...haloSx(t), padding: '18px' };
+  // Blocks are see-through so the sheet's one glow flows behind all of them.
+  const blockSx = { borderRadius: '22px', background: t.pane, padding: '18px' };
   const onPhoto = photo.show;
   /** Round button in the hero: frosted over a photo, a plain surface otherwise. */
   const heroButtonSx = {
@@ -293,7 +294,7 @@ export default function RestaurantDetailDialog({
           position: 'relative',
           mt: '-28px',
           borderRadius: '28px 28px 0 0',
-          ...haloSx(t, t.pageBg),
+          ...sheetGlowSx(t),
           padding: { xs: '24px 20px calc(28px + env(safe-area-inset-bottom))', sm: '24px 24px 28px' },
           display: 'flex',
           flexDirection: 'column',
@@ -479,7 +480,7 @@ export default function RestaurantDetailDialog({
         {tags.length > 0 && (
           <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {tags.map((tag) => (
-              <Box key={tag} component="span" sx={{ display: 'inline-flex', alignItems: 'center', height: 36, background: t.cardBg, color: t.muted, fontSize: 14, fontWeight: 600, padding: '0 14px', borderRadius: '999px' }}>
+              <Box key={tag} component="span" sx={{ display: 'inline-flex', alignItems: 'center', height: 36, background: t.pane, color: t.muted, fontSize: 14, fontWeight: 600, padding: '0 14px', borderRadius: '999px' }}>
                 {tag}
               </Box>
             ))}
