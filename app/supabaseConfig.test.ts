@@ -21,6 +21,13 @@ describe('turnstileSiteKey', () => {
     expect(turnstileSiteKey()).toBe('0xOTHER');
   });
 
+  it('treats "on" or any non-key value as the built-in key', () => {
+    process.env.TURNSTILE_SITE_KEY = 'on';
+    expect(turnstileSiteKey()).toBe(DEFAULT_TURNSTILE_SITE_KEY);
+    process.env.TURNSTILE_SITE_KEY = 'true';
+    expect(turnstileSiteKey()).toBe(DEFAULT_TURNSTILE_SITE_KEY);
+  });
+
   it('turns the check off with "off"', () => {
     process.env.TURNSTILE_SITE_KEY = 'OFF';
     expect(turnstileSiteKey()).toBeUndefined();

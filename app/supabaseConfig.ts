@@ -88,8 +88,11 @@ export const DEFAULT_TURNSTILE_SITE_KEY = '0x4AAAAAAGANeN4Mng0Auilr';
  */
 export function turnstileSiteKey(): string | undefined {
   const fromEnv = (process.env.TURNSTILE_SITE_KEY ?? '').trim();
-  if (fromEnv.toLowerCase() === 'off') return undefined;
-  return fromEnv || DEFAULT_TURNSTILE_SITE_KEY;
+  const word = fromEnv.toLowerCase();
+  if (word === 'off' || word === 'false') return undefined;
+  // Real site keys start with "0x"; anything else ("on", "true", a typo) means
+  // "use the built-in key" rather than sending an invalid key to Cloudflare.
+  return fromEnv.startsWith('0x') ? fromEnv : DEFAULT_TURNSTILE_SITE_KEY;
 }
 
 /** Whether the auth forms must carry a Turnstile token (server only). */
