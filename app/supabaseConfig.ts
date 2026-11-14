@@ -5,8 +5,9 @@
  *
  *   SUPABASE_URL        e.g. https://xxxx.supabase.co
  *   SUPABASE_ANON_KEY   the project's anon / public key
- *   TURNSTILE_SITE_KEY  optional: Cloudflare Turnstile site key (public) for the
- *                       bot check on the auth forms; see app/utils/captcha.ts
+ *   TURNSTILE_SITE_KEY  optional: overrides the built-in Cloudflare Turnstile
+ *                       site key for the auth forms' bot check, or `off` to
+ *                       disable it; see app/utils/captcha.ts
  *
  * The anon key is public (row-level security protects the data), so it is safe
  * to ship to the browser. The server reads `process.env` directly; the browser
@@ -70,13 +71,33 @@ export function getServerSupabaseEnv(): PublicEnv {
         'instead, and rotate the leaked secret key.'
     );
   }
-  const TURNSTILE_SITE_KEY = (process.env.TURNSTILE_SITE_KEY ?? '').trim();
+  const TURNSTILE_SITE_KEY = turnstileSiteKey();
   return { SUPABASE_URL, SUPABASE_ANON_KEY, ...(TURNSTILE_SITE_KEY ? { TURNSTILE_SITE_KEY } : {}) };
+}
+
+/**
+ * The Foodiedex Turnstile widget's site key. It is public by design (it ships
+ * in every page); the matching secret key lives only in the Supabase dashboard
+ * (Authentication → Attack Protection), which verifies the tokens.
+ */
+export const DEFAULT_TURNSTILE_SITE_KEY = '0x4AAAAAAGANeN4Mng0Auilr';
+
+/**
+ * The site key in use: TURNSTILE_SITE_KEY overrides the default, and the value
+ * `off` turns the bot check off (e.g. on a host not listed on the widget).
+ */
+export function turnstileSiteKey(): string | undefined {
+  const fromEnv = (process.env.TURNSTILE_SITE_KEY ?? '').trim();
+  const word = fromEnv.toLowerCase();
+  if (word === 'off' || word === 'false') return undefined;
+  // Real site keys start with "0x"; anything else ("on", "true", a typo) means
+  // "use the built-in key" rather than sending an invalid key to Cloudflare.
+  return fromEnv.startsWith('0x') ? fromEnv : DEFAULT_TURNSTILE_SITE_KEY;
 }
 
 /** Whether the auth forms must carry a Turnstile token (server only). */
 export function captchaRequired(): boolean {
-  return !!(process.env.TURNSTILE_SITE_KEY ?? '').trim();
+  return !!turnstileSiteKey();
 }
 
 /** Read the public env in the browser (injected via window.ENV). */
