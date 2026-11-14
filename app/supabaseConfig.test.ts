@@ -19,6 +19,9 @@ describe('turnstileSiteKey', () => {
   it('lets the env var override the key', () => {
     process.env.TURNSTILE_SITE_KEY = ' 0xOTHER \n';
     expect(turnstileSiteKey()).toBe('0xOTHER');
+    // Cloudflare's test key that always shows the checkbox.
+    process.env.TURNSTILE_SITE_KEY = '3x00000000000000000000FF';
+    expect(turnstileSiteKey()).toBe('3x00000000000000000000FF');
   });
 
   it('treats "on" or any non-key value as the built-in key', () => {
