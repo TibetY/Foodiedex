@@ -63,6 +63,7 @@ export default function Captcha({ resetKey }: CaptchaProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
   const [token, setToken] = useState('');
+  const [compact, setCompact] = useState(false);
 
   useEffect(() => {
     if (!siteKey || !containerRef.current) return;
@@ -72,13 +73,15 @@ export default function Captcha({ resetKey }: CaptchaProps) {
     loadTurnstile()
       .then((api) => {
         if (cancelled) return;
+        const size = el.clientWidth >= 300 ? 'flexible' : 'compact';
+        setCompact(size === 'compact');
         widgetId.current = api.render(el, {
           sitekey: siteKey,
           theme: mode,
-          // Only appears when Cloudflare wants a click. "flexible" needs 300px;
-          // narrower phones get the compact box.
+          // Only appears when Cloudflare wants a click. "flexible" fills the
+          // form (min 300px); narrower containers get the compact box.
           appearance: 'interaction-only',
-          size: el.clientWidth >= 300 ? 'flexible' : 'compact',
+          size,
           callback: (value: string) => update(value),
           'expired-callback': () => update(null),
           'error-callback': () => update(null),
@@ -102,8 +105,14 @@ export default function Captcha({ resetKey }: CaptchaProps) {
 
   if (!siteKey) return null;
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-      <div ref={containerRef} />
+    // Full width, so "flexible" spans the form like the inputs above it. (The
+    // container must have a width before the widget renders, or Turnstile
+    // measures 0px and falls back to the small compact box.)
+    <Box sx={{ width: '100%' }}>
+      <div
+        ref={containerRef}
+        style={compact ? { width: '100%', display: 'flex', justifyContent: 'center' } : { width: '100%' }}
+      />
       <input type="hidden" name={CAPTCHA_FIELD} value={token} />
     </Box>
   );
